@@ -10,4 +10,14 @@
     <string name="edit">Edit Server</string>
     <string name="add">Add New Server</string>
     <string name="reset">Reset Servers</string>
+    <string name="add2">Add Server</string>
+    <string name="username">Username</string>
+    <string name="phonetic">Phonetic</string>
+    <string name="server_name">Server Name</string>
+    <string name="hostname">Hostname / IP</string>
+    <string name="port">Port</string>
+    <string name="password">Password</string>
+    <string name="required">*</string>
+    <string name="required_field">( * ) = Required Field</string>
+    <string name="colon">:</string>
 </resources>

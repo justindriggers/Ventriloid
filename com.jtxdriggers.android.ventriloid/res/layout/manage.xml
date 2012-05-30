@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:background="@color/white"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
@@ -15,7 +14,9 @@
     	android:padding="5dp"
     	android:background="@color/blue"
     	android:layout_alignParentTop="true"
-    	android:paddingLeft="5dp" />
+    	android:paddingLeft="10dp"
+    	android:paddingTop="5dp"
+    	android:paddingBottom="5dp" />
     	
     <TextView android:id="@+id/selectText"
     	android:text="@string/select_server"

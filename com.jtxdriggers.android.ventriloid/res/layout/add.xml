@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical"
+	android:background="@color/white"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent">
+    
+    <TextView android:id="@+id/title"
+    	android:text="@string/add2"
+    	android:layout_height="wrap_content"
+    	android:layout_width="fill_parent"
+    	android:textColor="@color/white"
+    	android:textSize="20dp"
+    	android:textStyle="bold"
+    	android:background="@color/blue"
+    	android:layout_alignParentTop="true"
+    	android:paddingLeft="10dp"
+    	android:paddingTop="5dp"
+    	android:paddingBottom="5dp" />
+    	
+    <ScrollView android:layout_height="fill_parent"
+    	android:layout_width="fill_parent"
+    	android:padding="15dp">
+    	
+        <LinearLayout android:orientation="vertical"
+        	android:layout_height="wrap_content"
+        	android:layout_width="fill_parent">
+    	
+    		<LinearLayout android:layout_height="wrap_content"
+    			android:layout_width="wrap_content"
+    			android:layout_marginLeft="10dp">
+    			
+			    <TextView android:text="@string/username"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/black" />
+			    	
+			    <TextView android:text="@string/required"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/red" />
+			    	
+			    <TextView android:text="@string/colon"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/black" />
+		    	
+		    </LinearLayout>
+		    	
+		    <EditText android:id="@+id/username"
+		    	android:layout_height="wrap_content"
+		    	android:layout_width="fill_parent"
+		    	android:paddingBottom="15dp"
+		    	android:inputType="text" />
+		    	
+    		<LinearLayout android:layout_height="wrap_content"
+    			android:layout_width="wrap_content"
+    			android:layout_marginLeft="10dp">
+    			
+			    <TextView android:text="@string/phonetic"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/black" />
+			    	
+			    <TextView android:text="@string/colon"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/black" />
+		    	
+		    </LinearLayout>
+		    	
+		    <EditText android:id="@+id/phonetic"
+		    	android:layout_height="wrap_content"
+		    	android:layout_width="fill_parent"
+		    	android:paddingBottom="15dp"
+		    	android:inputType="text" />
+		    	
+    		<LinearLayout android:layout_height="wrap_content"
+    			android:layout_width="wrap_content"
+    			android:layout_marginLeft="10dp">
+    			
+			    <TextView android:text="@string/server_name"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/black" />
+			    	
+			    <TextView android:text="@string/required"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/red" />
+			    	
+			    <TextView android:text="@string/colon"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/black" />
+		    	
+		    </LinearLayout>
+		    	
+		    <EditText android:id="@+id/servername"
+		    	android:layout_height="wrap_content"
+		    	android:layout_width="fill_parent"
+		    	android:paddingBottom="15dp"
+		    	android:nextFocusDown="@+id/hostname"
+		    	android:nextFocusRight="@+id/hostname"
+		    	android:inputType="text" />
+		    	
+		    <RelativeLayout android:layout_height="wrap_content"
+		    	android:layout_width="wrap_content">
+		    
+   	    		<LinearLayout android:id="@+id/hostnameLayout"
+   	    			android:layout_height="wrap_content"
+	    			android:layout_width="wrap_content"
+	    			android:layout_marginLeft="10dp">
+	    			
+				    <TextView android:text="@string/hostname"
+				    	android:layout_height="wrap_content"
+				    	android:layout_width="wrap_content"
+				    	android:textColor="@color/black" />
+				    	
+				    <TextView android:text="@string/required"
+				    	android:layout_height="wrap_content"
+				    	android:layout_width="wrap_content"
+				    	android:textColor="@color/red" />
+				    	
+				    <TextView android:text="@string/colon"
+				    	android:layout_height="wrap_content"
+				    	android:layout_width="wrap_content"
+				    	android:textColor="@color/black" />
+			    	
+			    </LinearLayout>
+			    	
+			    <EditText android:id="@+id/hostname"
+			    	android:layout_below="@+id/hostnameLayout"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="175dp"
+			    	android:paddingBottom="15dp"
+			    	android:nextFocusDown="@+id/port"
+			    	android:nextFocusRight="@+id/port"
+		    		android:inputType="textUri" />
+			    	
+			    <TextView android:id="@+id/colon"
+			    	android:text="@string/colon"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:layout_toRightOf="@+id/hostname"
+			    	android:layout_alignBaseline="@+id/hostname"
+			    	android:layout_marginLeft="10dp"
+			    	android:layout_marginRight="10dp"
+			    	android:textColor="@color/black"
+			    	android:textSize="20dp" />
+			    
+				<LinearLayout android:layout_height="wrap_content"
+	    			android:layout_width="wrap_content"
+	    			android:layout_toRightOf="@+id/colon"
+	    			android:layout_alignBottom="@+id/hostnameLayout"
+	    			android:layout_marginLeft="10dp">
+	    			
+				    <TextView android:text="@string/port"
+				    	android:layout_height="wrap_content"
+				    	android:layout_width="wrap_content"
+				    	android:textColor="@color/black" />
+				    	
+				    <TextView android:text="@string/required"
+				    	android:layout_height="wrap_content"
+				    	android:layout_width="wrap_content"
+				    	android:textColor="@color/red" />
+				    	
+				    <TextView android:text="@string/colon"
+				    	android:layout_height="wrap_content"
+				    	android:layout_width="wrap_content"
+				    	android:textColor="@color/black" />
+			    	
+			    </LinearLayout>
+			    	
+			    <EditText android:id="@+id/port"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="fill_parent"
+			    	android:layout_toRightOf="@+id/colon"
+			    	android:layout_alignBaseline="@+id/colon"
+			    	android:paddingBottom="15dp"
+			    	android:nextFocusDown="@+id/password"
+			    	android:nextFocusRight="@+id/password"
+		    		android:inputType="number" />
+		    	
+		    </RelativeLayout>
+		    
+		    <LinearLayout android:layout_height="wrap_content"
+    			android:layout_width="wrap_content"
+    			android:layout_marginLeft="10dp">
+    			
+			    <TextView android:text="@string/password"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/black" />
+			    	
+			    <TextView android:text="@string/colon"
+			    	android:layout_height="wrap_content"
+			    	android:layout_width="wrap_content"
+			    	android:textColor="@color/black" />
+		    	
+		    </LinearLayout>
+		    	
+		    <EditText android:id="@+id/password"
+		    	android:layout_height="wrap_content"
+		    	android:layout_width="fill_parent"
+		    	android:paddingBottom="15dp"
+		    	android:inputType="textPassword" />
+		    	
+		    <Button android:id="@+id/add"
+		    	android:text="@string/add2"
+		    	android:layout_height="wrap_content"
+		    	android:layout_width="wrap_content"
+		    	android:layout_gravity="center_horizontal" />
+        
+        </LinearLayout>
+        
+    </ScrollView>
+  
+</LinearLayout>
