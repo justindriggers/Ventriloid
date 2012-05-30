@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@color/white"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    
+    <TextView android:id="@+id/title"
+    	android:text="@string/app_name"
+    	android:layout_height="wrap_content"
+    	android:layout_width="fill_parent"
+    	android:textColor="@color/white"
+    	android:textSize="20dp"
+    	android:textStyle="bold"
+    	android:padding="5dp"
+    	android:background="@color/blue"
+    	android:layout_alignParentTop="true"
+    	android:gravity="center" />
+    	
+    <TextView android:id="@+id/selectText"
+    	android:text="@string/select_server"
+    	android:textColor="@color/black"
+    	android:layout_height="wrap_content"
+    	android:layout_width="wrap_content"
+    	android:layout_below="@id/title"
+    	android:layout_marginTop="20dp"
+    	android:layout_marginLeft="20dp" />
+    	
+    <Spinner android:id="@+id/servers"
+    	android:layout_below="@id/selectText"
+    	android:layout_height="wrap_content"
+    	android:layout_width="fill_parent"
+    	android:layout_marginLeft="10dp"
+    	android:layout_marginRight="10dp" />
+    	
+    <LinearLayout android:id="@+id/buttonLayout"
+    	android:layout_below="@id/servers"
+    	android:layout_height="wrap_content"
+    	android:layout_width="fill_parent"
+    	android:gravity="center_horizontal">
+    	
+    	<Button android:id="@+id/connect"
+    		android:text="@string/connect"
+    		android:layout_height="wrap_content"
+    		android:layout_width="140dp" />
+    		
+    	<Button android:id="@+id/manage"
+    		android:text="@string/manage"
+    		android:layout_height="wrap_content"
+    		android:layout_width="140dp" />
+    	
+    </LinearLayout>
+    
+    <Button android:id="@+id/settings"
+    	android:text="@string/settings"
+    	android:layout_alignParentBottom="true"
+    	android:layout_height="wrap_content"
+    	android:layout_width="fill_parent"
+    	android:layout_marginLeft="10dp"
+    	android:layout_marginRight="10dp" />
+    
+</RelativeLayout>
