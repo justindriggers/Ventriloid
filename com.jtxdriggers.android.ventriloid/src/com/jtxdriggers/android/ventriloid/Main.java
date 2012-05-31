@@ -46,7 +46,7 @@ public class Main extends Activity {
     }
     
     private void loadServers() {
-    	ArrayList<String> servers = db.getAllServers();
+    	ArrayList<String> servers = db.getAllServersAsStrings();
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, servers);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner.setAdapter(adapter);

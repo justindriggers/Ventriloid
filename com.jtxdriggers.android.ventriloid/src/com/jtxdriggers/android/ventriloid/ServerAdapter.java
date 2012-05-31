@@ -61,9 +61,9 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	public Server getServer(int id) {
 	    SQLiteDatabase db = this.getReadableDatabase();
 	 
-	    Cursor cursor = db.query(TABLE_SERVERS, new String[] { KEY_ID, KEY_USERNAME,
-	            KEY_PHONETIC, KEY_SERVERNAME, KEY_HOSTNAME, KEY_PORT, KEY_PASSWORD }, KEY_ID + "=?",
-	            new String[] { String.valueOf(id) }, null, null, null, null);
+	    Cursor cursor = db.query(true, TABLE_SERVERS, new String[] { KEY_ID, KEY_USERNAME,
+	            KEY_PHONETIC, KEY_SERVERNAME, KEY_HOSTNAME, KEY_PORT, KEY_PASSWORD }, KEY_ID + "=" + id,
+	            null, null, null, null, null);
 	    if (cursor != null)
 	        cursor.moveToFirst();
 	 
@@ -73,9 +73,9 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	    return server;
 	}
 	
-	public ArrayList<String> getAllServers() {
-	    ArrayList<String> serverList = new ArrayList<String>();
-	    String selectQuery = "SELECT  * FROM " + TABLE_SERVERS;
+	public ArrayList<Server> getAllServers() {
+	    ArrayList<Server> serverList = new ArrayList<Server>();
+	    String selectQuery = "SELECT * FROM " + TABLE_SERVERS;
 	 
 	    SQLiteDatabase db = this.getWritableDatabase();
 	    Cursor cursor = db.rawQuery(selectQuery, null);
@@ -90,6 +90,28 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	            server.setHostname(cursor.getString(4));
 	            server.setPort(Integer.parseInt(cursor.getString(5)));
 	            server.setPassword(cursor.getString(6));
+	            
+	            serverList.add(server);
+	        } while (cursor.moveToNext());
+	    }
+	 
+	    return serverList;
+	}
+	
+	public ArrayList<String> getAllServersAsStrings() {
+	    ArrayList<String> serverList = new ArrayList<String>();
+	    String selectQuery = "SELECT * FROM " + TABLE_SERVERS;
+	 
+	    SQLiteDatabase db = this.getWritableDatabase();
+	    Cursor cursor = db.rawQuery(selectQuery, null);
+	 
+	    if (cursor.moveToFirst()) {
+	        do {
+	            Server server = new Server();
+	            server.setUsername(cursor.getString(1));
+	            server.setServername(cursor.getString(3));
+	            server.setHostname(cursor.getString(4));
+	            server.setPort(Integer.parseInt(cursor.getString(5)));
 	            
 	            serverList.add(server.getUsername() + "@" + server.getServername() + ": " + server.getHostname() + ":" + server.getPort());
 	        } while (cursor.moveToNext());
@@ -117,9 +139,9 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	    values.put(KEY_HOSTNAME, server.getHostname());
 	    values.put(KEY_PORT, server.getPort());
 	    values.put(KEY_PASSWORD, server.getPassword());
+	    values.put(KEY_ID, server.getId());
 	 
-	    return db.update(TABLE_SERVERS, values, KEY_ID + " = ?",
-	            new String[] { String.valueOf(server.getId()) });
+	    return db.update(TABLE_SERVERS, values, KEY_ID + " = " + server.getId(), null);
 	}
 	
 	public void deleteServer(Server server) {

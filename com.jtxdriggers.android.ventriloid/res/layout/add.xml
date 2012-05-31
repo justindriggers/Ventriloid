@@ -178,7 +178,9 @@
 			    	android:layout_toRightOf="@+id/colon"
 			    	android:layout_alignBaseline="@+id/colon"
 			    	android:paddingBottom="15dp"
+			    	android:nextFocusUp="@+id/hostname"
 			    	android:nextFocusDown="@+id/password"
+			    	android:nextFocusLeft="@+id/hostname"
 			    	android:nextFocusRight="@+id/password"
 		    		android:inputType="number" />
 		    	
@@ -204,6 +206,8 @@
 		    	android:layout_height="wrap_content"
 		    	android:layout_width="fill_parent"
 		    	android:paddingBottom="15dp"
+		    	android:nextFocusUp="@+id/port"
+		    	android:nextFocusLeft="@+id/port"
 		    	android:inputType="textPassword" />
 		    	
 		    <Button android:id="@+id/add"
