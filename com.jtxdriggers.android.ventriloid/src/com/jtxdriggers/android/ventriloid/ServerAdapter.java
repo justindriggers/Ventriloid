@@ -66,10 +66,10 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	            null, null, null, null, null);
 	    if (cursor != null)
 	        cursor.moveToFirst();
+	    db.close();
 	 
-	    Server server = new Server(cursor.getString(1), cursor.getString(2), cursor.getString(3),
+	    Server server = new Server(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3),
 	    		cursor.getString(4), Integer.parseInt(cursor.getString(5)), cursor.getString(6));
-	    server.setId(Integer.parseInt(cursor.getString(0)));
 	    return server;
 	}
 	
@@ -94,6 +94,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	            serverList.add(server);
 	        } while (cursor.moveToNext());
 	    }
+	    db.close();
 	 
 	    return serverList;
 	}
@@ -116,6 +117,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	            serverList.add(server.getUsername() + "@" + server.getServername() + ": " + server.getHostname() + ":" + server.getPort());
 	        } while (cursor.moveToNext());
 	    }
+	    db.close();
 	 
 	    return serverList;
 	}
@@ -126,10 +128,13 @@ public class ServerAdapter extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(countQuery, null);
         cursor.close();
  
-        return cursor.getCount();
+        int count = cursor.getCount();
+
+	    db.close();
+	    return count;
     }
 	
-	public int updateServer(Server server) {
+	public void updateServer(Server server) {
 	    SQLiteDatabase db = this.getWritableDatabase();
 	 
 	    ContentValues values = new ContentValues();
@@ -141,7 +146,9 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	    values.put(KEY_PASSWORD, server.getPassword());
 	    values.put(KEY_ID, server.getId());
 	 
-	    return db.update(TABLE_SERVERS, values, KEY_ID + " = " + server.getId(), null);
+	    db.update(TABLE_SERVERS, values, KEY_ID + " = " + server.getId(), null);
+
+	    db.close();
 	}
 	
 	public void deleteServer(Server server) {

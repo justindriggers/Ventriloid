@@ -56,4 +56,28 @@ public class Main extends Activity {
 		connect.setEnabled(isEnabled);
     }
     
+    private int getCurrentItemID(Spinner s) {
+    	ArrayList<Server> servers = db.getAllServers();
+    	String currentItem = s.getSelectedItem().toString();
+    	String[] split1 = currentItem.split("\\@");
+    	String[] split2 = split1[1].split("\\:");
+    	
+    	String username = split1[0];
+    	String servername = split2[0];
+    	String hostname = split2[1].trim();
+    	int port = Integer.parseInt(split2[2]);
+    	
+    	for (int i = 0; i < servers.size(); i++) {
+    		Server current = servers.get(i);
+    		if (username.equals(current.getUsername())
+    			&& servername.equals(current.getServername())
+    			&& hostname.equals(current.getHostname())
+    			&& port == current.getPort()) {
+    				return current.getId();
+    		}
+    	}
+    	
+    	return -1;
+    }
+    
 }
