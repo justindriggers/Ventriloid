@@ -3,20 +3,28 @@ package com.jtxdriggers.android.ventriloid;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 public class Main extends Activity {
 	
 	private Spinner spinner;
 	private Button connect, manage, settings;
 	private ServerAdapter db;
+	
+	private Intent serviceIntent;
+	private VentriloidService s;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -28,6 +36,14 @@ public class Main extends Activity {
         connect = (Button) findViewById(R.id.connect);
         manage = (Button) findViewById(R.id.manage);
         settings = (Button) findViewById(R.id.settings);
+        
+        connect.setOnClickListener(new OnClickListener() {
+        	public void onClick(View v) {
+        		serviceIntent = new Intent(Main.this, VentriloidService.class).putExtra("id", getCurrentItemID(spinner));
+        		//bindService(serviceIntent, mConnection, Context.BIND_AUTO_CREATE);
+    			startService(serviceIntent);
+        	}
+        });
         
         manage.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -79,5 +95,17 @@ public class Main extends Activity {
     	
     	return -1;
     }
+    
+	private ServiceConnection mConnection = new ServiceConnection() {
+		public void onServiceConnected(ComponentName className, IBinder binder) {
+			//s = ((VentriloidService.MyBinder) binder).getService();
+			Toast.makeText(Main.this, "Connected",
+					Toast.LENGTH_SHORT).show();
+		}
+
+		public void onServiceDisconnected(ComponentName className) {
+			s = null;
+		}
+	};
     
 }

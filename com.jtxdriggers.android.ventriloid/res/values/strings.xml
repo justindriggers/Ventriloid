@@ -20,4 +20,5 @@
     <string name="required">*</string>
     <string name="required_field">( * ) = Required Field</string>
     <string name="colon">:</string>
+    <string name="service_name">Ventriloid Service</string>
 </resources>

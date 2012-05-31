@@ -270,7 +270,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 
 JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_error(JNIEnv* env, jobject obj, jobject eventdata) {
 	jclass  event_class = get_class(env, eventdata);
-	jobject error = get_object(env, eventdata, event_class, "error", "Lorg/mangler/android/VentriloEventData$_error;");
+	jobject error = get_object(env, eventdata, event_class, "error", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_error;");
 	jclass  error_class = get_class(env, error);
 	set_byte_array(env, error, error_class, "message", _v3_error(NULL), 512);
 }
@@ -279,7 +279,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 	v3_user *u = v3_get_user(userid);
 	if(u) {
 		jclass  event_class = get_class(env, eventdata);
-		jobject text = get_object(env, eventdata, event_class, "text", "Lorg/mangler/android/VentriloEventData$_text;");
+		jobject text = get_object(env, eventdata, event_class, "text", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_text;");
 		jclass  text_class = get_class(env, text);
 		set_byte_array(env, text, text_class, "name", u->name, 32);
 		set_byte_array(env, text, text_class, "phonetic", u->phonetic, 32);
@@ -295,11 +295,11 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 	v3_channel *c = v3_get_channel(channelid);
 	if(c) {
 		jclass  event_class = get_class(env, eventdata);
-		jobject data = get_object(env, eventdata, event_class, "data", "Lorg/mangler/android/VentriloEventData$_data;");
+		jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 		jclass  data_class = get_class(env, data);
-		jobject channel = get_object(env, data, data_class, "channel", "Lorg/mangler/android/VentriloEventData$_data$_channel;");
+		jobject channel = get_object(env, data, data_class, "channel", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data$_channel;");
 		jclass  channel_class = get_class(env, channel);
-		jobject text = get_object(env, eventdata, event_class, "text", "Lorg/mangler/android/VentriloEventData$_text;");
+		jobject text = get_object(env, eventdata, event_class, "text", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_text;");
 		jclass  text_class = get_class(env, text);
 		set_short(env, channel, channel_class, "parent", c->parent);
 		set_short(env, channel, channel_class, "channel_codec", c->channel_codec);
@@ -321,7 +321,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_PLAY_AUDIO:
 				{
 					// PCM data.
-					jobject pcm = get_object(env, eventdata, event_class, "pcm", "Lorg/mangler/android/VentriloEventData$_pcm;");
+					jobject pcm = get_object(env, eventdata, event_class, "pcm", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_pcm;");
 					jclass	pcm_class = get_class(env, pcm);
 					set_int	 (env, pcm, pcm_class, "length", ev->pcm.length);
 					set_int	 (env, pcm, pcm_class, "rate", ev->pcm.rate);
@@ -329,12 +329,12 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					set_byte (env, pcm, pcm_class, "channels", ev->pcm.channels);
 					
 					// User ID.
-					jobject user = get_object(env, eventdata, event_class, "user", "Lorg/mangler/android/VentriloEventData$_user;");
+					jobject user = get_object(env, eventdata, event_class, "user", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_user;");
 					jclass  user_class = get_class(env, user);
 					set_short(env, user, user_class, "id", ev->user.id);
 					
 					// Sample.
-					jobject data = get_object(env, eventdata, event_class, "data", "Lorg/mangler/android/VentriloEventData$_data;");
+					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
 					set_byte_array(env, data, data_class, "sample", ev->data->sample, ev->pcm.length);
 				}
@@ -360,7 +360,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_USER_RANK_CHANGE:
 				{
 					// User ID.
-					jobject user = get_object(env, eventdata, event_class, "user", "Lorg/mangler/android/VentriloEventData$_user;");
+					jobject user = get_object(env, eventdata, event_class, "user", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_user;");
 					jclass  user_class = get_class(env, user);
 					set_short(env, user, user_class, "id", ev->user.id);
 				}
@@ -371,12 +371,12 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_CHAN_REMOVE:
 				{
 					// User ID.
-					jobject user = get_object(env, eventdata, event_class, "user", "Lorg/mangler/android/VentriloEventData$_user;");
+					jobject user = get_object(env, eventdata, event_class, "user", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_user;");
 					jclass  user_class = get_class(env, user);
 					set_short(env, user, user_class, "id", ev->user.id);
 					
 					// Channel ID.
-					jobject channel = get_object(env, eventdata, event_class, "channel", "Lorg/mangler/android/VentriloEventData$_channel;");
+					jobject channel = get_object(env, eventdata, event_class, "channel", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_channel;");
 					jclass  channel_class = get_class(env, channel);
 					set_short(env, channel, channel_class, "id", ev->channel.id);
 				}
@@ -386,12 +386,12 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_USER_LOGIN:
 				{
 					// User ID.
-					jobject user = get_object(env, eventdata, event_class, "user", "Lorg/mangler/android/VentriloEventData$_user;");
+					jobject user = get_object(env, eventdata, event_class, "user", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_user;");
 					jclass  user_class = get_class(env, user);
 					set_short(env, user, user_class, "id", ev->user.id);
 					
 					// Channel ID.
-					jobject channel = get_object(env, eventdata, event_class, "channel", "Lorg/mangler/android/VentriloEventData$_channel;");
+					jobject channel = get_object(env, eventdata, event_class, "channel", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_channel;");
 					jclass  channel_class = get_class(env, channel);
 					set_short(env, channel, channel_class, "id", ev->channel.id);
 					
@@ -403,7 +403,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_STATUS:
 				{
 					// Status message & percentage.
-					jobject status = get_object(env, eventdata, event_class, "status", "Lorg/mangler/android/VentriloEventData$_status;");
+					jobject status = get_object(env, eventdata, event_class, "status", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_status;");
 					jclass  status_class = get_class(env, status);
 					set_byte(env, status, status_class, "percent", ev->status.percent);
 					set_byte_array(env, status, status_class, "message", ev->status.message, sizeof(ev->status.message));
@@ -424,13 +424,13 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_PRIVATE_CHAT_MESSAGE:
 				{
 					// User IDs.
-					jobject user = get_object(env, eventdata, event_class, "user", "Lorg/mangler/android/VentriloEventData$_user;");
+					jobject user = get_object(env, eventdata, event_class, "user", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_user;");
 					jclass  user_class = get_class(env, user);
 					set_short(env, user, user_class, "privchat_user1", ev->user.privchat_user1);
 					set_short(env, user, user_class, "privchat_user2", ev->user.privchat_user2);
 					
 					// Chat message.
-					jobject data = get_object(env, eventdata, event_class, "data", "Lorg/mangler/android/VentriloEventData$_data;");
+					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
 					set_byte_array(env, data, data_class, "chatmessage", ev->data->chatmessage, sizeof(ev->data->chatmessage));
 					
@@ -443,9 +443,9 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_USERLIST_MODIFY:
 				{
 					// Account fields.
-					jobject data = get_object(env, eventdata, event_class, "data", "Lorg/mangler/android/VentriloEventData$_data;");
+					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
-					jobject account = get_object(env, data, data_class, "account", "Lorg/mangler/android/VentriloEventData$_data$_account;");
+					jobject account = get_object(env, data, data_class, "account", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data$_account;");
 					jclass  account_class = get_class(env, account);
 					set_byte_array(env, account, account_class, "username", ev->data->account.username, sizeof(ev->data->account.username));
 				}
@@ -455,7 +455,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_CHAN_MODIFY:
 				{
 					// Channel id.
-					jobject channel = get_object(env, eventdata, event_class, "channel", "Lorg/mangler/android/VentriloEventData$_channel;");
+					jobject channel = get_object(env, eventdata, event_class, "channel", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_channel;");
 					jclass  channel_class = get_class(env, channel);
 					set_short(env, channel, channel_class, "id", ev->channel.id);
 				}
@@ -465,7 +465,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 				{
 					/* don't deal with any MOTD events here because they're useless
 					// MOTD.
-					jobject data = get_object(env, eventdata, event_class, "data", "Lorg/mangler/android/VentriloEventData$_data;");
+					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
 					set_byte_array(env, data, data_class, "motd", ev->data->motd, sizeof(ev->data->motd));
 					
@@ -478,12 +478,12 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_CHAN_BADPASS:
 				{
 					// Channel ID.
-					jobject channel = get_object(env, eventdata, event_class, "channel", "Lorg/mangler/android/VentriloEventData$_channel;");
+					jobject channel = get_object(env, eventdata, event_class, "channel", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_channel;");
 					jclass  channel_class = get_class(env, channel);
 					set_short(env, channel, channel_class, "id", ev->channel.id);
 					
 					// Error message.
-					jobject error = get_object(env, eventdata, event_class, "error", "Lorg/mangler/android/VentriloEventData$_error;");
+					jobject error = get_object(env, eventdata, event_class, "error", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_error;");
 					jclass  error_class = get_class(env, error);
 					set_byte_array(env, error, error_class, "message", ev->error.message, sizeof(ev->error.message));
 				}
@@ -493,7 +493,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_ERROR_MSG:
 				{
 					// Error message & disconnect flag.
-					jobject error = get_object(env, eventdata, event_class, "error", "Lorg/mangler/android/VentriloEventData$_error;");
+					jobject error = get_object(env, eventdata, event_class, "error", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_error;");
 					jclass  error_class = get_class(env, error);
 					set_byte_array(env, error, error_class, "message", ev->error.message, sizeof(ev->error.message));
 					set_bool(env, error, error_class, "disconnected", ev->error.disconnected != 0);	
@@ -503,13 +503,13 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_USER_TALK_START:
 				{
 					// PCM data.
-					jobject pcm = get_object(env, eventdata, event_class, "pcm", "Lorg/mangler/android/VentriloEventData$_pcm;");
+					jobject pcm = get_object(env, eventdata, event_class, "pcm", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_pcm;");
 					jclass  pcm_class = get_class(env, pcm);
 					set_int  (env, pcm, pcm_class, "rate", ev->pcm.rate);
 					set_short(env, pcm, pcm_class, "send_type", ev->pcm.send_type);
 					
 					// User ID.
-					jobject user = get_object(env, eventdata, event_class, "user", "Lorg/mangler/android/VentriloEventData$_user;");
+					jobject user = get_object(env, eventdata, event_class, "user", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_user;");
 					jclass  user_class = get_class(env, user);
 					set_short(env, user, user_class, "id", ev->user.id);
 				}
@@ -518,12 +518,12 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_CHAT_MESSAGE:
 				{
 					// User ID.
-					jobject user = get_object(env, eventdata, event_class, "user", "Lorg/mangler/android/VentriloEventData$_user;");
+					jobject user = get_object(env, eventdata, event_class, "user", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_user;");
 					jclass  user_class = get_class(env, user);
 					set_short(env, user,user_class, "id", ev->user.id);
 					
 					// Chat message.
-					jobject data = get_object(env, eventdata, event_class, "data", "Lorg/mangler/android/VentriloEventData$_data;");
+					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
 					set_byte_array(env, data, data_class, "chatmessage", ev->data->chatmessage, sizeof(ev->data->chatmessage));
 				}
@@ -532,9 +532,9 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_USERLIST_REMOVE:
 				{
 					// Account ID.
-					jobject data = get_object(env, eventdata, event_class, "data", "Lorg/mangler/android/VentriloEventData$_data;");
+					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
-					jobject account = get_object(env, data, data_class, "account", "Lorg/mangler/android/VentriloEventData$_data$_account;");
+					jobject account = get_object(env, data, data_class, "account", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data$_account;");
 					jclass  account_class = get_class(env, account);
 					set_short(env, account, account_class, "id", ev->account.id);
 				}
@@ -543,9 +543,9 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_USERLIST_CHANGE_OWNER:
 				{
 					// Account IDs.
-					jobject data = get_object(env, eventdata, event_class, "data", "Lorg/mangler/android/VentriloEventData$_data;");
+					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
-					jobject account = get_object(env, data, data_class, "account", "Lorg/mangler/android/VentriloEventData$_data$_account;");
+					jobject account = get_object(env, data, data_class, "account", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data$_account;");
 					jclass  account_class = get_class(env, account);
 					set_short(env, account, account_class, "id", ev->account.id);
 					set_short(env, account, account_class, "id2", ev->account.id2);
@@ -554,7 +554,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_USER_PAGE:
 				{
 					// User ID.
-					jobject user = get_object(env, eventdata, event_class, "user", "Lorg/mangler/android/VentriloEventData$_user;");
+					jobject user = get_object(env, eventdata, event_class, "user", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_user;");
 					jclass  user_class = get_class(env, user);
 					set_short(env, user, user_class, "id", ev->user.id);
 				}

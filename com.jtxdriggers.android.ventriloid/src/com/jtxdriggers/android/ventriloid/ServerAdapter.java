@@ -59,7 +59,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	}
 	
 	public Server getServer(int id) {
-	    SQLiteDatabase db = this.getReadableDatabase();
+	    SQLiteDatabase db = getReadableDatabase();
 	 
 	    Cursor cursor = db.query(true, TABLE_SERVERS, new String[] { KEY_ID, KEY_USERNAME,
 	            KEY_PHONETIC, KEY_SERVERNAME, KEY_HOSTNAME, KEY_PORT, KEY_PASSWORD }, KEY_ID + "=" + id,

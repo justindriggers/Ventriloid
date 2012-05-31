@@ -5,6 +5,12 @@
     <uses-sdk android:minSdkVersion="7" />
 
     <application android:icon="@drawable/icon" android:label="@string/app_name">
+	    <service
+			android:name=".VentriloidService"
+			android:process=":ventriloid_service" 
+			android:icon="@drawable/icon"
+			android:label="@string/service_name" />
+			
         <activity android:name=".Main"
         	android:label="@string/app_name">
             <intent-filter>
@@ -20,4 +26,7 @@
         	android:label="@string/add2" />
 
     </application>
+    
+    <uses-permission android:name="android.permission.INTERNET"></uses-permission>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"></uses-permission>
 </manifest>
