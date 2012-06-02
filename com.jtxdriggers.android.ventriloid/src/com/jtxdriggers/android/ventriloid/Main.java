@@ -39,9 +39,10 @@ public class Main extends Activity {
         
         connect.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
-        		serviceIntent = new Intent(Main.this, VentriloidService.class).putExtra("id", getCurrentItemID(spinner));
+        		//serviceIntent = new Intent(Main.this, VentriloidService.class).putExtra("id", getCurrentItemID(spinner));
         		//bindService(serviceIntent, mConnection, Context.BIND_AUTO_CREATE);
-    			startService(serviceIntent);
+    			//startService(serviceIntent);
+        		startActivity(new Intent(Main.this, ViewPagerActivity.class));
         	}
         });
         

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, Main!</string>
     <string name="app_name">Ventriloid</string>
     <string name="select_server">Select a Server:</string>
     <string name="connect">Connect</string>
@@ -21,4 +20,5 @@
     <string name="required_field">( * ) = Required Field</string>
     <string name="colon">:</string>
     <string name="service_name">Ventriloid Service</string>
+    <string name="user_status">User Microphone Status</string>
 </resources>
