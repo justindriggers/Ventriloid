@@ -11,6 +11,9 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.WindowManager.LayoutParams;
+import android.widget.ImageView;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TabHost.TabContentFactory;
@@ -89,7 +92,7 @@ public class ViewPagerActivity extends FragmentActivity {
 			public void onPageScrollStateChanged(int state) { }
 			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) { }
 			public void onPageSelected(int position) {
-				mTabHost.setCurrentTab(position);
+				mTabHost.setCurrentTabByTag("Tab" + position);
 			}
 		});
 		mViewPager.setOffscreenPageLimit(3);
@@ -98,29 +101,45 @@ public class ViewPagerActivity extends FragmentActivity {
 	private void initialiseTabHost(Bundle args) {
 		mTabHost = (TabHost)findViewById(android.R.id.tabhost);
         mTabHost.setup();
+        
+        ImageView divider1 = new ImageView(this);
+        divider1.setImageResource(R.drawable.tab_separator);
+        ImageView divider2 = new ImageView(this);
+        divider2.setImageResource(R.drawable.tab_separator);
+        
         TabInfo tabInfo = null;
         final View[] tabs = new View[3];
         for (int i = 0; i < tabs.length; i++) {
         	tabs[i] = getLayoutInflater().inflate(R.layout.tab_indicator, null);
         }
+        final float scale = getResources().getDisplayMetrics().density;
+        int pixels = (int) (scale + 0.5f);
+        
         ((TextView)tabs[0].findViewById(android.R.id.text1)).setText("Server");
-        ViewPagerActivity.AddTab(this, mTabHost, mTabHost.newTabSpec("ServerView").setIndicator(tabs[0]), ( tabInfo = new TabInfo("ServerView", ServerView.class, args)));
+        ViewPagerActivity.AddTab(this, mTabHost, mTabHost.newTabSpec("Tab0").setIndicator(tabs[0]), ( tabInfo = new TabInfo("Tab0", ServerView.class, args)));
         mapTabInfo.put(tabInfo.tag, tabInfo);
+        mTabHost.getTabWidget().addView(divider1, pixels, LayoutParams.FILL_PARENT);
         ((TextView)tabs[1].findViewById(android.R.id.text1)).setText("Channel");
-        ViewPagerActivity.AddTab(this, mTabHost, mTabHost.newTabSpec("ChannelView").setIndicator(tabs[1]), ( tabInfo = new TabInfo("ChannelView", ChannelView.class, args)));
+        ViewPagerActivity.AddTab(this, mTabHost, mTabHost.newTabSpec("Tab1").setIndicator(tabs[1]), ( tabInfo = new TabInfo("Tab1", ChannelView.class, args)));
         mapTabInfo.put(tabInfo.tag, tabInfo);
+        mTabHost.getTabWidget().addView(divider2, pixels, LayoutParams.FILL_PARENT);
         ((TextView)tabs[2].findViewById(android.R.id.text1)).setText("Chat");
-        ViewPagerActivity.AddTab(this, mTabHost, mTabHost.newTabSpec("ChatView").setIndicator(tabs[2]), ( tabInfo = new TabInfo("ChatView", ChatView.class, args)));
+        ViewPagerActivity.AddTab(this, mTabHost, mTabHost.newTabSpec("Tab2").setIndicator(tabs[2]), ( tabInfo = new TabInfo("Tab2", ChatView.class, args)));
         mapTabInfo.put(tabInfo.tag, tabInfo);
 
         mTabHost.setOnTabChangedListener(new OnTabChangeListener() {
 			public void onTabChanged(String tabId) {
-				for (int i = 0; i < tabs.length; i++) {
-					tabs[i].findViewById(R.id.selected).setBackgroundColor(getResources().getColor(R.color.black));
-					((TextView) tabs[i].findViewById(android.R.id.text1)).setTextColor(getResources().getColor(R.color.gray));
+				for (int i = 0; i < 3; i++) {
+					if (tabId.equals("Tab" + i)) {
+						tabs[i].findViewById(R.id.selected).setBackgroundColor(getResources().getColor(R.color.blue));
+						((TextView) tabs[i].findViewById(android.R.id.text1)).setTextColor(getResources().getColor(R.color.white));
+					} else {
+						tabs[i].findViewById(R.id.selected).setBackgroundColor(getResources().getColor(R.color.black));
+						((TextView) tabs[i].findViewById(android.R.id.text1)).setTextColor(getResources().getColor(R.color.gray));
+					}
 				}
-				mTabHost.getCurrentTabView().findViewById(R.id.selected).setBackgroundColor(getResources().getColor(R.color.blue));
-				((TextView) mTabHost.getCurrentTabView().findViewById(android.R.id.text1)).setTextColor(getResources().getColor(R.color.white));
+				int pos = mTabHost.getCurrentTab();
+				mViewPager.setCurrentItem(pos);
 			}
         });
         
@@ -128,8 +147,13 @@ public class ViewPagerActivity extends FragmentActivity {
 		((TextView) mTabHost.getCurrentTabView().findViewById(android.R.id.text1)).setTextColor(getResources().getColor(R.color.white));
 	}
 
-	private static void AddTab(ViewPagerActivity activity, TabHost tabHost, TabHost.TabSpec tabSpec, TabInfo tabInfo) {
+	private static void AddTab(ViewPagerActivity activity, final TabHost tabHost, TabHost.TabSpec tabSpec, final TabInfo tabInfo) {
 		tabSpec.setContent(activity.new TabFactory(activity));
         tabHost.addTab(tabSpec);
+        tabHost.getTabWidget().getChildTabViewAt(tabHost.getTabWidget().getTabCount() - 1).setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				tabHost.setCurrentTabByTag(tabInfo.tag);
+			}
+        });
 	}
 }

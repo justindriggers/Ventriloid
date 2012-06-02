@@ -15,7 +15,8 @@
 	            android:orientation="horizontal"
 	            android:layout_width="fill_parent"
 	            android:layout_height="40dp"
-	            android:layout_alignParentTop="true" />
+	            android:layout_alignParentTop="true"
+	            android:background="@drawable/tab_separator" />
 	        
 	        <View android:id="@+id/bar"
 	            android:layout_height="3dp"
