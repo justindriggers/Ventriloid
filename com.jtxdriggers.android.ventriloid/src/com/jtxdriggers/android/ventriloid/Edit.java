@@ -9,6 +9,7 @@ import android.view.View.OnKeyListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public class Edit extends Activity {
 	
@@ -28,6 +29,8 @@ public class Edit extends Activity {
         
         id = getIntent().getExtras().getInt("id");
         server = db.getServer(id);
+        
+        ((TextView) findViewById(R.id.title)).setText("Edit Server");
         
         username = (EditText) findViewById(R.id.username);
         username.setText(server.getUsername());
