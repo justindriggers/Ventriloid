@@ -3,28 +3,32 @@ package com.jtxdriggers.android.ventriloid;
 import java.util.ArrayList;
 
 import android.app.Activity;
-import android.content.ComponentName;
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 public class Main extends Activity {
+	
+	public static String RECEIVER = "com.jtxdriggers.android.ventriloid.MAIN_RECEIVER";
 	
 	private Spinner spinner;
 	private Button connect, manage, settings;
 	private ServerAdapter db;
+	private ProgressDialog dialog;
 	
 	private Intent serviceIntent;
-	private VentriloidService s;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,10 +43,21 @@ public class Main extends Activity {
         
         connect.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
-        		//serviceIntent = new Intent(Main.this, VentriloidService.class).putExtra("id", getCurrentItemID(spinner));
-        		//bindService(serviceIntent, mConnection, Context.BIND_AUTO_CREATE);
-    			//startService(serviceIntent);
-        		startActivity(new Intent(Main.this, ViewPagerActivity.class));
+        		Log.d("ventriloid", "Setting up dialog");
+        		dialog = new ProgressDialog(Main.this);
+				dialog.setMessage("Connecting. Please wait...");
+				dialog.setCancelable(true);
+				dialog.setOnCancelListener(new OnCancelListener() {
+					public void onCancel(DialogInterface dialog) {
+						stopService(serviceIntent);
+					}
+				});
+				Log.d("ventriloid", "Showing dialog");
+				dialog.show();
+				
+        		serviceIntent = new Intent(VentriloidService.SERVICE_INTENT).putExtra("id", getCurrentItemID(spinner));
+				Log.d("ventriloid", "Starting service");
+				startService(serviceIntent);
         	}
         });
         
@@ -54,12 +69,20 @@ public class Main extends Activity {
         
         db = new ServerAdapter(this);
         loadServers();
+        
+        registerReceiver(receiver, new IntentFilter(RECEIVER));
     }
     
     @Override
     public void onResume() {
     	super.onResume();
     	loadServers();
+    }
+    
+    @Override
+    public void onDestroy() {
+    	unregisterReceiver(receiver);
+    	super.onDestroy();
     }
     
     private void loadServers() {
@@ -97,16 +120,17 @@ public class Main extends Activity {
     	return -1;
     }
     
-	private ServiceConnection mConnection = new ServiceConnection() {
-		public void onServiceConnected(ComponentName className, IBinder binder) {
-			//s = ((VentriloidService.MyBinder) binder).getService();
-			Toast.makeText(Main.this, "Connected",
-					Toast.LENGTH_SHORT).show();
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			int type = intent.getExtras().getInt("type");
+			switch (type) {
+			case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
+				Log.d("ventriloid", "Dismissing dialog");
+				dialog.dismiss();
+				startActivity(new Intent(Main.this, ViewPagerActivity.class));
+			}
 		}
-
-		public void onServiceDisconnected(ComponentName className) {
-			s = null;
-		}
-	};
+    };
     
 }

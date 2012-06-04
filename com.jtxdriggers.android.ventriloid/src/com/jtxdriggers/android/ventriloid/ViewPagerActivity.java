@@ -4,8 +4,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
@@ -20,6 +26,8 @@ import android.widget.TabHost.TabContentFactory;
 import android.widget.TextView;
 
 public class ViewPagerActivity extends FragmentActivity {
+	
+	public static final String RECEIVER = "com.jtxdriggers.android.ventriloid.RECEIVER";
 
 	private TabHost mTabHost;
 	private ViewPager mViewPager;
@@ -27,22 +35,49 @@ public class ViewPagerActivity extends FragmentActivity {
 	private PagerAdapter mPagerAdapter;
 	private int ping = 0;
 
+	private VentriloidService s;
+
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.viewpager);
+		
+		registerReceiver(receiver, new IntentFilter(RECEIVER));
+		bindService(new Intent(VentriloidService.SERVICE_INTENT), mConnection, Context.BIND_AUTO_CREATE);
+		
+		initialiseTabHost(savedInstanceState);
+		if (savedInstanceState != null)
+            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
+		
+		intialiseViewPager();
+		setTitle("Checking latency...");
+	}
+
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("tab", mTabHost.getCurrentTabTag());
+        super.onSaveInstanceState(outState);
+    }
+    
+    protected void onDestroy() {
+    	unregisterReceiver(receiver);
+    	s.stopSelf();
+    	unbindService(mConnection);
+    	super.onDestroy();
+    }
+    
     @SuppressWarnings("unused")
 	private class TabInfo {
 		 private String tag;
-         private Class<?> clss;
+        private Class<?> clss;
 		private Bundle args;
-         private Fragment fragment;
-         TabInfo(String tag, Class<?> clss, Bundle args) {
-        	 this.tag = tag;
-        	 this.clss = clss;
-        	 this.args = args;
-         }
-
+        private Fragment fragment;
+        TabInfo(String tag, Class<?> clss, Bundle args) {
+       	 this.tag = tag;
+       	 this.clss = clss;
+       	 this.args = args;
+        }
 	}
 
 	class TabFactory implements TabContentFactory {
-
 		private final Context mContext;
 
 	    public TabFactory(Context context) {
@@ -55,29 +90,7 @@ public class ViewPagerActivity extends FragmentActivity {
 	        v.setMinimumHeight(0);
 	        return v;
 	    }
-
 	}
-
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.viewpager);
-		
-		initialiseTabHost(savedInstanceState);
-		if (savedInstanceState != null)
-            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
-		
-		intialiseViewPager();
-
-		if (ping < 65535 && ping > 0)
-			setTitle("Ping: " + ping + "ms");
-		else
-			setTitle("Checking latency...");
-	}
-
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putString("tab", mTabHost.getCurrentTabTag());
-        super.onSaveInstanceState(outState);
-    }
 
     private void intialiseViewPager() {
 		List<Fragment> fragments = new Vector<Fragment>();
@@ -155,5 +168,35 @@ public class ViewPagerActivity extends FragmentActivity {
 				tabHost.setCurrentTabByTag(tabInfo.tag);
 			}
         });
+	}
+    
+	private ServiceConnection mConnection = new ServiceConnection() {
+		public void onServiceConnected(ComponentName className, IBinder binder) {
+			s = ((VentriloidService.MyBinder) binder).getService();
+		}
+
+		public void onServiceDisconnected(ComponentName className) {
+			s = null;
+		}
+	};
+	
+	private BroadcastReceiver receiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			int type = intent.getExtras().getInt("type");
+			switch (type) {
+			case VentriloEvents.V3_EVENT_PING:
+				ping = intent.getExtras().getInt("ping");
+				setPing();
+				break;
+			}
+		}
+	};
+	
+	private void setPing() {
+		if (ping < 65535 && ping > 0)
+			setTitle("Ping: " + ping + "ms");
+		else
+			setTitle("Checking latency...");
 	}
 }
