@@ -62,21 +62,20 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 		 int len = to.length - 1;
 
 		 for (int i = 0; i < len; i++) {
-	    	 if (i != 1) {
-	    		 TextView v = (TextView) view.findViewById(to[i]);
-	    		 if (v != null) {
-	    			 v.setText(data.get(from[i]).toString());
-	    		 }
-	    	 } else {
+	    	 if (i == 1) {
 	    	     ImageView imgV = (ImageView) view.findViewById(to[1]);
 	    	     if (imgV != null) {
 	    	    	 int indicator = R.drawable.user_status_inactive;
-	    	    	 if (data.get(from[1]).equals(Integer.toString(VentriloidListItem.PLAYER_ON)))
+	    	    	 if (data.get(from[i]).equals(Integer.toString(Item.User.XMIT_ON)))
 	    	    		 indicator = R.drawable.user_status_active;
-	    	    	 else if (data.get(from[1]).equals(Integer.toString(VentriloidListItem.PLAYER_INIT)))
+	    	    	 else if (data.get(from[i]).equals(Integer.toString(Item.User.XMIT_OFF)))
 	    	    		 indicator = R.drawable.user_status_other;
 	    	    	 imgV.setImageResource(indicator);
-	    	     } 
+	    	     }
+	    	 } else {
+	    		 TextView v = (TextView) view.findViewById(to[i]);
+	    		 if (v != null)
+	    			 v.setText(data.get(from[i]).toString());
 	    	 }
 	     }
 	 }

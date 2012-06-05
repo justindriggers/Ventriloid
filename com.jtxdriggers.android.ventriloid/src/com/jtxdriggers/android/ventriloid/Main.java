@@ -43,7 +43,6 @@ public class Main extends Activity {
         
         connect.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
-        		Log.d("ventriloid", "Setting up dialog");
         		dialog = new ProgressDialog(Main.this);
 				dialog.setMessage("Connecting. Please wait...");
 				dialog.setCancelable(true);
@@ -52,11 +51,9 @@ public class Main extends Activity {
 						stopService(serviceIntent);
 					}
 				});
-				Log.d("ventriloid", "Showing dialog");
 				dialog.show();
 				
         		serviceIntent = new Intent(VentriloidService.SERVICE_INTENT).putExtra("id", getCurrentItemID(spinner));
-				Log.d("ventriloid", "Starting service");
 				startService(serviceIntent);
         	}
         });
@@ -126,7 +123,6 @@ public class Main extends Activity {
 			int type = intent.getExtras().getInt("type");
 			switch (type) {
 			case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
-				Log.d("ventriloid", "Dismissing dialog");
 				dialog.dismiss();
 				startActivity(new Intent(Main.this, ViewPagerActivity.class));
 			}

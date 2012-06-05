@@ -1,5 +1,6 @@
 package com.jtxdriggers.android.ventriloid;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import android.app.Service;
@@ -19,6 +20,7 @@ public class VentriloidService extends Service {
 	
 	private final IBinder mBinder = new MyBinder();
 	private boolean running = false;
+	private ItemData items = new ItemData();
 	private int start;
 	
 	@Override
@@ -27,7 +29,6 @@ public class VentriloidService extends Service {
 		ServerAdapter db = new ServerAdapter(this);
 		final Server server = db.getServer(id);
 		
-		Log.d("ventriloid", "Starting login");
 		new Thread(new Runnable() {
 			public void run() {
 				if (VentriloInterface.login(server.getHostname() + ":" + server.getPort(),
@@ -39,7 +40,6 @@ public class VentriloidService extends Service {
 						}
 					}).start();
 				
-					Log.d("ventriloid", "Login success");
 					start = Service.START_STICKY;
 				} else
 					start = Service.START_NOT_STICKY;
@@ -82,7 +82,9 @@ public class VentriloidService extends Service {
 	private Runnable eventHandler = new Runnable() {
 
 		public void run() {
+			Item item;
 			Bundle extras;
+			
 			final int INIT = 0;
 			final int ON = 1;
 			final int OFF = 2;
@@ -91,7 +93,10 @@ public class VentriloidService extends Service {
 			while (running) {
 				VentriloEventData data = new VentriloEventData();
 				VentriloInterface.getevent(data);
-				Log.d("ventriloid", "Processing event type " + data.type);
+				//Log.d("ventriloid", "Processing event type " + data.type);
+				
+				item = new Item();
+				
 				extras = new Bundle();
 				extras.putInt("type", data.type);
 
@@ -99,6 +104,30 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_PING:
 					extras.putInt("ping", data.ping);
 					broadcast(extras);
+					break;
+					
+				case VentriloEvents.V3_EVENT_USER_LOGIN:
+					VentriloInterface.getuser(data, data.user.id);
+					if (data.user.id != 0) {
+						Item.User u = item.new User(data.user.id,
+										VentriloInterface.getuserchannel(data.user.id),
+										bytesToString(data.text.name),
+										bytesToString(data.text.phonetic),
+										bytesToString(data.data.rank.name),
+										bytesToString(data.text.comment),
+										bytesToString(data.text.url),
+										bytesToString(data.text.integration_text));
+						items.addUser(u);
+						//int flags = data.flags;
+
+						//if ((flags & (1 << 0)) == 0)
+							//sv.createNotification(sv.NOTIF_ONGOING, "Ventriloid", item.name + " has logged in.");
+					} else {
+						Item.Channel c = item.new Channel(bytesToString(data.text.name), 
+										bytesToString(data.text.phonetic), 
+										bytesToString(data.text.comment));
+						items.setLobby(c);
+					}
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
@@ -111,6 +140,28 @@ public class VentriloidService extends Service {
 					sendBroadcast(new Intent(Main.RECEIVER).putExtras(extras));
 					break;
 
+				case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
+					if (data.user.id == VentriloInterface.getuserid()) {
+						Player.clear();
+						Recorder.rate(VentriloInterface.getchannelrate(data.channel.id));
+						talkState.put(data.user.id, OFF);
+					} else {
+						Player.close(data.user.id);
+						talkState.put(data.user.id, OFF);
+					}
+					break;
+
+				case VentriloEvents.V3_EVENT_CHAN_ADD:
+					VentriloInterface.getchannel(data, data.channel.id);
+					Item.Channel c = item.new Channel(data.channel.id,
+									data.data.channel.parent,
+									bytesToString(data.text.name),
+									bytesToString(data.text.phonetic),
+									bytesToString(data.text.comment),
+									data.data.channel.password_protected);
+					items.addChannel(c);
+					break;
+					
 				case VentriloEvents.V3_EVENT_USER_TALK_START:
 					talkState.put(data.user.id, INIT);
 					break;
@@ -128,17 +179,6 @@ public class VentriloidService extends Service {
 					Player.close(data.user.id);
 					talkState.put(data.user.id, OFF);
 					break;
-
-				case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
-					if (data.user.id == VentriloInterface.getuserid()) {
-						Player.clear();
-						Recorder.rate(VentriloInterface.getchannelrate(data.channel.id));
-						talkState.put(data.user.id, OFF);
-					} else {
-						Player.close(data.user.id);
-						talkState.put(data.user.id, OFF);
-					}
-					break;
 				}
 			}
 			Player.clear();
@@ -148,6 +188,14 @@ public class VentriloidService extends Service {
 	
 	public void broadcast(Bundle extras) {
 		sendBroadcast(new Intent(ViewPagerActivity.RECEIVER).putExtras(extras));
+	}
+	
+	public ArrayList<HashMap<String, Object>> getChannels() {
+		return items.getChannels();
+	}
+	
+	public ArrayList<ArrayList<HashMap<String, Object>>> getUsers() {
+		return items.getUsers();
 	}
 
 }

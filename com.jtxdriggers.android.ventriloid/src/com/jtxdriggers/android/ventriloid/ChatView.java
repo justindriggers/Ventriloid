@@ -17,7 +17,7 @@ public class ChatView extends Fragment {
             return null;
 		list = (ExpandableListView) inflater.inflate(R.layout.serverview, container, false);
 		
-		ExpandableListAdapter adapter = new VentriloidListAdapter(
+		/*ExpandableListAdapter adapter = new VentriloidListAdapter(
 				getActivity(),
 				DataList.channeldata,
 				R.layout.channel_row,
@@ -29,7 +29,7 @@ public class ChatView extends Fragment {
 				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
 		
 		list.setGroupIndicator(null);
-		list.setAdapter(adapter);
+		list.setAdapter(adapter);*/
 		
 		return list;
 	}

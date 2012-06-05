@@ -16,9 +16,8 @@ public class ChannelView extends Fragment {
 		if (container == null)
             return null;
 		list = (ExpandableListView) inflater.inflate(R.layout.serverview, container, false);
-		DataList.addLobby("Test Channel View");
 		
-		ExpandableListAdapter adapter = new VentriloidListAdapter(
+		/*ExpandableListAdapter adapter = new VentriloidListAdapter(
 				getActivity(),
 				DataList.channeldata,
 				R.layout.channel_row,
@@ -30,7 +29,7 @@ public class ChannelView extends Fragment {
 				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
 		
 		list.setGroupIndicator(null);
-		list.setAdapter(adapter);
+		list.setAdapter(adapter);*/
 		
 		return list;
 	}

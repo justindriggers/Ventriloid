@@ -44,7 +44,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	}
 	
 	public void addServer(Server server) {
-	    SQLiteDatabase db = this.getWritableDatabase();
+	    SQLiteDatabase db = getWritableDatabase();
 	 
 	    ContentValues values = new ContentValues();
 	    values.put(KEY_USERNAME, server.getUsername());
@@ -77,7 +77,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	    ArrayList<Server> serverList = new ArrayList<Server>();
 	    String selectQuery = "SELECT * FROM " + TABLE_SERVERS;
 	 
-	    SQLiteDatabase db = this.getWritableDatabase();
+	    SQLiteDatabase db = getWritableDatabase();
 	    Cursor cursor = db.rawQuery(selectQuery, null);
 	 
 	    if (cursor.moveToFirst()) {
@@ -103,7 +103,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	    ArrayList<String> serverList = new ArrayList<String>();
 	    String selectQuery = "SELECT * FROM " + TABLE_SERVERS;
 	 
-	    SQLiteDatabase db = this.getWritableDatabase();
+	    SQLiteDatabase db = getWritableDatabase();
 	    Cursor cursor = db.rawQuery(selectQuery, null);
 	 
 	    if (cursor.moveToFirst()) {
@@ -124,7 +124,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	
 	public int getServersCount() {
         String countQuery = "SELECT  * FROM " + TABLE_SERVERS;
-        SQLiteDatabase db = this.getReadableDatabase();
+        SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(countQuery, null);
         cursor.close();
  
@@ -135,7 +135,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
     }
 	
 	public void updateServer(Server server) {
-	    SQLiteDatabase db = this.getWritableDatabase();
+	    SQLiteDatabase db = getWritableDatabase();
 	 
 	    ContentValues values = new ContentValues();
 	    values.put(KEY_USERNAME, server.getUsername());
@@ -152,14 +152,14 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	}
 	
 	public void deleteServer(Server server) {
-	    SQLiteDatabase db = this.getWritableDatabase();
+	    SQLiteDatabase db = getWritableDatabase();
 	    db.delete(TABLE_SERVERS, KEY_ID + " = ?",
 	            new String[] { String.valueOf(server.getId()) });
 	    db.close();
 	}
 	
 	public void clearServers() {
-		SQLiteDatabase db = this.getWritableDatabase();
+		SQLiteDatabase db = getWritableDatabase();
 		db.delete(TABLE_SERVERS, null, null);
 		db.close();
 	}

@@ -111,6 +111,8 @@ public class VentriloEventData {
 		public class _rank {
 			public short id;
 			public short level;
+			public byte[] name			= new byte[32];
+			public byte[] description	= new byte[128];
 		};
 		_rank rank = new _rank();
 		

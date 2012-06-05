@@ -279,6 +279,10 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 	v3_user *u = v3_get_user(userid);
 	if(u) {
 		jclass  event_class = get_class(env, eventdata);
+		jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
+		jclass data_class = get_class(env, data);
+		jobject rank = get_object(env, data, data_class, "rank", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data$_rank;");
+		jclass rank_class = get_class(env, rank);
 		jobject text = get_object(env, eventdata, event_class, "text", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_text;");
 		jclass  text_class = get_class(env, text);
 		set_byte_array(env, text, text_class, "name", u->name, 32);
@@ -287,6 +291,16 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 		set_byte_array(env, text, text_class, "url", u->url, 128);
 		set_byte_array(env, text, text_class, "integration_text", u->integration_text, 128);
 		set_short(env, text, text_class, "real_user_id", u->real_user_id);
+		set_short(env, rank, rank_class, "id", u->rank_id);
+
+		v3_rank *r = v3_get_rank(u->rank_id);
+		if(r) {
+			set_short(env, rank, rank_class, "level", r->level);
+			set_byte_array(env, rank, rank_class, "name", r->name, 32);
+			set_byte_array(env, rank, rank_class, "description", r->description, 128);
+			v3_free_rank(r);
+		}
+
 		v3_free_user(u);
 	}
 }
