@@ -11,7 +11,6 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -62,6 +61,12 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				startActivity(new Intent(Main.this, Manage.class));
 			}
+        });
+        
+        settings.setOnClickListener(new OnClickListener() {
+        	public void onClick(View v) {
+        		return;
+        	}
         });
         
         db = new ServerAdapter(this);

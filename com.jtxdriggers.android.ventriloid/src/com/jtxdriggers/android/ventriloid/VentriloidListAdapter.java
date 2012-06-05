@@ -19,6 +19,8 @@
 
 package com.jtxdriggers.android.ventriloid;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,54 +32,72 @@ import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
 public class VentriloidListAdapter extends SimpleExpandableListAdapter {
-	 private List<? extends List<? extends Map<String, ?>>> mChildData;
-	 private String[] mChildFrom;
-	 private int[] mChildTo;
+	private List<? extends List<? extends Item.User>> mChildData;
+	private String[] mChildFrom;
+	private int[] mChildTo;
 
-	 public VentriloidListAdapter(Context context, List<? extends Map<String, ?>> groupData,
-			int groupLayout, String[] groupFrom, int[] groupTo,
-			List<? extends List<? extends Map<String, ?>>> childData,
-			int childLayout, String[] childFrom, int[] childTo) {
-		 super(context, groupData, groupLayout, groupFrom, groupTo, childData, childLayout, childFrom, childTo);
+	public VentriloidListAdapter(Context context, List<? extends Item.Channel> groupData,
+		int groupLayout, String[] groupFrom, int[] groupTo,
+		List<? extends List<? extends Item.User>> childData,
+		int childLayout, String[] childFrom, int[] childTo) {
+		super(context, getChannelHashMaps(groupData), groupLayout, groupFrom, groupTo, getUserHashMaps(childData), childLayout, childFrom, childTo);
 
-	     mChildData = childData;
-	     mChildFrom = childFrom;
-	     mChildTo = childTo;
-	 }
+		mChildData = childData;
+		mChildFrom = childFrom;
+		mChildTo = childTo;
+	}
+	 
+	private static List<? extends Map<String, ?>> getChannelHashMaps(List<? extends Item.Channel> channels) {
+		ArrayList<HashMap<String, Object>> channelList = new ArrayList<HashMap<String, Object>>();
+		for (int i = 0; i < channels.size(); i++) {
+			HashMap<String, Object> c = channels.get(i).toHashMap();
+			channelList.add(c);
+		}
+		return channelList;
+	}
+	 
+	private static List<? extends List<? extends Map<String, ?>>> getUserHashMaps(List<? extends List<? extends Item.User>> users) {
+		ArrayList<ArrayList<HashMap<String, Object>>> userList = new ArrayList<ArrayList<HashMap<String, Object>>>();
+		for (int i = 0; i < users.size(); i++) {
+			userList.add(new ArrayList<HashMap<String, Object>>());
+			for (int j = 0; j < users.get(i).size(); j++) {
+				HashMap<String, Object> u = users.get(i).get(j).toHashMap();
+				userList.get(i).add(u);
+			}
+		}
+		return userList;
+	}
 
-	 public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-		 View v;
+	public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+		View v;
 		 
-	     if (convertView == null) {
-	    	 v = newChildView(isLastChild, parent);
-	     } else {
-	         v = convertView;
-	     }
+		if (convertView == null)
+			v = newChildView(isLastChild, parent);
+		else
+			v = convertView;
 	     
-	     bindView(v, mChildData.get(groupPosition).get(childPosition), mChildFrom, mChildTo, groupPosition, childPosition);
-	     return v;
-	 }
-
-	 private void bindView(View view, Map<String, ?> data, String[] from, int[] to, int groupPosition, int childPosition) {
-		 int len = to.length - 1;
-
-		 for (int i = 0; i < len; i++) {
-	    	 if (i == 1) {
-	    	     ImageView imgV = (ImageView) view.findViewById(to[1]);
-	    	     if (imgV != null) {
-	    	    	 int indicator = R.drawable.user_status_inactive;
-	    	    	 if (data.get(from[i]).equals(Integer.toString(Item.User.XMIT_ON)))
-	    	    		 indicator = R.drawable.user_status_active;
-	    	    	 else if (data.get(from[i]).equals(Integer.toString(Item.User.XMIT_OFF)))
-	    	    		 indicator = R.drawable.user_status_other;
-	    	    	 imgV.setImageResource(indicator);
-	    	     }
-	    	 } else {
-	    		 TextView v = (TextView) view.findViewById(to[i]);
-	    		 if (v != null)
-	    			 v.setText(data.get(from[i]).toString());
-	    	 }
-	     }
-	 }
+		bindView(v, mChildData.get(groupPosition).get(childPosition), mChildFrom, mChildTo);
+		return v;
+	}
+	 
+	private void bindView(View view, Item.User data, String[] from, int[] to) {
+		for (int i = 0; i < to.length; i++) {
+			if (i == 1) {
+				ImageView imgV = (ImageView) view.findViewById(to[i]);
+				if (imgV != null) {
+					int indicator = R.drawable.user_status_inactive;
+					if (data.xmit == Item.User.XMIT_ON)
+						indicator = R.drawable.user_status_active;
+					else if (data.xmit == Item.User.XMIT_INIT)
+						indicator = R.drawable.user_status_other;
+					imgV.setImageResource(indicator);
+				}
+			} else {
+				TextView v = (TextView) view.findViewById(to[i]);
+				if (v != null)
+					v.setText(data.toHashMap().get(from[i]).toString());
+			}
+		}
+	}
 
 }

@@ -17,11 +17,12 @@ public class PagerAdapter extends FragmentPagerAdapter {
 
 	@Override
 	public Fragment getItem(int position) {
-		return this.fragments.get(position);
+		return fragments.get(position);
 	}
 
 	@Override
 	public int getCount() {
-		return this.fragments.size();
+		return fragments.size();
 	}
+	
 }

@@ -1,12 +1,11 @@
 package com.jtxdriggers.android.ventriloid;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class ItemData {
 
-	public ArrayList<Item.Channel> channels = new ArrayList<Item.Channel>();
-	public ArrayList<ArrayList<Item.User>> users = new ArrayList<ArrayList<Item.User>>();
+	private ArrayList<Item.Channel> channels = new ArrayList<Item.Channel>();
+	private ArrayList<ArrayList<Item.User>> users = new ArrayList<ArrayList<Item.User>>();
 	
 	public ItemData() {
 		Item i = new Item();
@@ -19,8 +18,7 @@ public class ItemData {
 	}
 	
 	public void addChannel(Item.Channel channel) {
-		int i;
-		for (i = 0; i < channels.size(); i++) {
+		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == channel.parent) {
 				channel.indent = channels.get(i).indent + "     ";
 				i++;
@@ -36,8 +34,7 @@ public class ItemData {
 	}
 	
 	public void addUser(Item.User user) {
-		int i;
-		for (i = 0; i < channels.size(); i++) {
+		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == user.parent) {
 				user.indent = channels.get(i).indent + "     ";
 
@@ -47,27 +44,41 @@ public class ItemData {
 		}
 	}
 	
-	public ArrayList<HashMap<String, Object>> getChannels() {
-		ArrayList<HashMap<String, Object>> channelList = new ArrayList<HashMap<String, Object>>();
+	public void removeUser(short id) {
 		for (int i = 0; i < channels.size(); i++) {
-			HashMap<String, Object> c = channels.get(i).toHashMap();
-			channelList.add(c);
-		}
-		
-		return channelList;
-	}
-	
-	public ArrayList<ArrayList<HashMap<String, Object>>> getUsers() {
-		ArrayList<ArrayList<HashMap<String, Object>>> userList = new ArrayList<ArrayList<HashMap<String, Object>>>();
-		for (int i = 0; i < channels.size(); i++) {
-			userList.add(new ArrayList<HashMap<String, Object>>());
 			for (int j = 0; j < users.get(i).size(); j++) {
-				HashMap<String, Object> u = users.get(i).get(j).toHashMap();
-				userList.get(i).add(u);
+				if (users.get(i).get(j).id == id) {
+					users.get(i).remove(j);
+					return;
+				}
 			}
 		}
-		
-		return userList;
+	}
+	
+	public ArrayList<Item.Channel> getChannels() {
+		return channels;
+	}
+	
+	public Item.Channel getChannelById(short id) {
+		for (int i = 0; i < channels.size(); i++) {
+			if (channels.get(i).id == id)
+				return channels.get(i);
+		}
+		return null;
+	}
+	
+	public ArrayList<ArrayList<Item.User>> getUsers() {
+		return users;
+	}
+	
+	public Item.User getUserById(short id) {
+		for (int i = 0; i < channels.size(); i++) {
+			for (int j = 0; j < users.get(i).size(); j++) {
+				if (users.get(i).get(j).id == id)
+					return users.get(i).get(j);
+			}
+		}
+		return null;
 	}
 	
 }

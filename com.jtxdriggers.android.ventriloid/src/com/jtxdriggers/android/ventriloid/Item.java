@@ -42,26 +42,11 @@ public class Item {
 		
 		public HashMap<String, Object> toHashMap() {
 			HashMap<String, Object> channel = new HashMap<String, Object>();
-			channel.put("id", id);
-			channel.put("parent", parent);
 			channel.put("name", name);
-			channel.put("phonetic", phonetic);
 			channel.put("comment", comment);
-			channel.put("reqPassword", reqPassword);
 			channel.put("indent", indent);
-			channel.put("status", status);
 			
 			return channel;
-		}
-		
-		public String toString() {
-			return "Channel ID: " + id + "\n"
-				+ "Parent: " + parent + "\n"
-				+ "Name: " + name + "\n"
-				+ "Phonetic: " + phonetic + "\n"
-				+ "Comment: " + comment + "\n"
-				+ "Requires Password: " + reqPassword + "\n"
-				+ "Indent: |" + indent + "|";
 		}
 	}
 	
@@ -85,10 +70,6 @@ public class Item {
 			this.integration = integration;
 		}
 		
-		public void setXmit(int xmit) {
-			this.xmit = xmit;
-		}
-		
 		private String formatRank(String rank) {
 			if (rank.length() > 0)
 				return "[" + rank + "] ";
@@ -107,17 +88,6 @@ public class Item {
 			user.put("xmit", xmit);
 			
 			return user;
-		}
-		
-		public String toString() {
-			return "User ID: " + id + "\n"
-				+ "Parent: " + parent + "\n"
-				+ "Name: " + name + "\n"
-				+ "Phonetic: " + phonetic + "\n"
-				+ "Rank: " + rank + "\n"
-				+ "Comment: " + comment + "\n"
-				+ "URL: " + url + "\n"
-				+ "Integration: " + integration;
 		}
 	}
 	

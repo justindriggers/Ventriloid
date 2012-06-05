@@ -4,12 +4,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.DialogInterface.OnCancelListener;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
@@ -29,26 +32,39 @@ public class ViewPagerActivity extends FragmentActivity {
 	
 	public static final String RECEIVER = "com.jtxdriggers.android.ventriloid.RECEIVER";
 
+	private ProgressDialog dialog;
+	private Bundle instance;
 	private TabHost mTabHost;
 	private ViewPager mViewPager;
 	private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, ViewPagerActivity.TabInfo>();
 	private PagerAdapter mPagerAdapter;
 	private int ping = 0;
+	
+	private ServerView sv = new ServerView();
+	private ChannelView cv = new ChannelView();
+	private ChatView chat = new ChatView();
 
-	private VentriloidService s;
+	public VentriloidService s;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.viewpager);
 		
+		// Save args for after the service is bound. There has to be a better way to do this...
+		instance = savedInstanceState;
+		
+		dialog = new ProgressDialog(this);
+		dialog.setMessage("Loading data...");
+		dialog.setCancelable(true);
+		dialog.setOnCancelListener(new OnCancelListener() {
+			public void onCancel(DialogInterface dialog) {
+				finish();
+			}
+		});
+		dialog.show();
+		
 		registerReceiver(receiver, new IntentFilter(RECEIVER));
 		bindService(new Intent(VentriloidService.SERVICE_INTENT), mConnection, Context.BIND_AUTO_CREATE);
-		
-		initialiseTabHost(savedInstanceState);
-		if (savedInstanceState != null)
-            mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab"));
-		
-		intialiseViewPager();
 		setTitle("Checking latency...");
 	}
 
@@ -94,9 +110,9 @@ public class ViewPagerActivity extends FragmentActivity {
 
     private void intialiseViewPager() {
 		List<Fragment> fragments = new Vector<Fragment>();
-		fragments.add(Fragment.instantiate(this, ServerView.class.getName()));
-		fragments.add(Fragment.instantiate(this, ChannelView.class.getName()));
-		fragments.add(Fragment.instantiate(this, ChatView.class.getName()));
+		fragments.add(sv);
+		fragments.add(cv);
+		fragments.add(chat);
 		mPagerAdapter  = new PagerAdapter(super.getSupportFragmentManager(), fragments);
 		
 		mViewPager = (ViewPager)super.findViewById(R.id.viewpager);
@@ -173,6 +189,14 @@ public class ViewPagerActivity extends FragmentActivity {
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
+
+			initialiseTabHost(instance);
+			if (instance != null)
+	            mTabHost.setCurrentTabByTag(instance.getString("tab"));
+			
+			intialiseViewPager();
+			
+			dialog.dismiss();
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
@@ -190,6 +214,7 @@ public class ViewPagerActivity extends FragmentActivity {
 				setPing();
 				break;
 			}
+			sv.process(intent);
 		}
 	};
 	

@@ -1,14 +1,10 @@
 package com.jtxdriggers.android.ventriloid;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 public class VentriloidService extends Service {
 	
@@ -85,11 +81,6 @@ public class VentriloidService extends Service {
 			Item item;
 			Bundle extras;
 			
-			final int INIT = 0;
-			final int ON = 1;
-			final int OFF = 2;
-			HashMap<Short, Integer> talkState = new HashMap<Short, Integer>();
-			
 			while (running) {
 				VentriloEventData data = new VentriloEventData();
 				VentriloInterface.getevent(data);
@@ -103,7 +94,6 @@ public class VentriloidService extends Service {
 				switch (data.type) {
 				case VentriloEvents.V3_EVENT_PING:
 					extras.putInt("ping", data.ping);
-					broadcast(extras);
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_LOGIN:
@@ -132,7 +122,7 @@ public class VentriloidService extends Service {
 					
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					Player.close(data.user.id);
-					talkState.put(data.user.id, OFF);
+					items.removeUser(data.user.id);
 					break;
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
@@ -144,11 +134,13 @@ public class VentriloidService extends Service {
 					if (data.user.id == VentriloInterface.getuserid()) {
 						Player.clear();
 						Recorder.rate(VentriloInterface.getchannelrate(data.channel.id));
-						talkState.put(data.user.id, OFF);
 					} else {
 						Player.close(data.user.id);
-						talkState.put(data.user.id, OFF);
 					}
+					Item.User u = items.getUserById(data.user.id);
+					u.parent = data.channel.id;
+					items.removeUser(data.user.id);
+					items.addUser(u);
 					break;
 
 				case VentriloEvents.V3_EVENT_CHAN_ADD:
@@ -163,13 +155,13 @@ public class VentriloidService extends Service {
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_TALK_START:
-					talkState.put(data.user.id, INIT);
+					items.getUserById(data.user.id).xmit = Item.User.XMIT_INIT;
 					break;
 
 				case VentriloEvents.V3_EVENT_PLAY_AUDIO:
 					Player.write(data.user.id, data.pcm.rate, data.pcm.channels, data.data.sample, data.pcm.length);
-					if (talkState.get(data.user.id) != ON)
-						talkState.put(data.user.id, ON);
+					if (items.getUserById(data.user.id).xmit != Item.User.XMIT_ON)
+						items.getUserById(data.user.id).xmit = Item.User.XMIT_ON;
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_TALK_END:
@@ -177,25 +169,18 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
 				case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
 					Player.close(data.user.id);
-					talkState.put(data.user.id, OFF);
+					items.getUserById(data.user.id).xmit = Item.User.XMIT_OFF;
 					break;
 				}
+				sendBroadcast(new Intent(ViewPagerActivity.RECEIVER).putExtras(extras));
 			}
 			Player.clear();
 			Recorder.stop();
 		}
 	};
 	
-	public void broadcast(Bundle extras) {
-		sendBroadcast(new Intent(ViewPagerActivity.RECEIVER).putExtras(extras));
-	}
-	
-	public ArrayList<HashMap<String, Object>> getChannels() {
-		return items.getChannels();
-	}
-	
-	public ArrayList<ArrayList<HashMap<String, Object>>> getUsers() {
-		return items.getUsers();
+	public ItemData getItemData() {
+		return items;
 	}
 
 }
