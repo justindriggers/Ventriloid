@@ -97,25 +97,16 @@ public class VentriloidService extends Service {
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_LOGIN:
-					VentriloInterface.getuser(data, data.user.id);
-					if (data.user.id != 0) {
-						Item.User u = item.new User(data.user.id,
-										VentriloInterface.getuserchannel(data.user.id),
-										bytesToString(data.text.name),
-										bytesToString(data.text.phonetic),
-										bytesToString(data.data.rank.name),
-										bytesToString(data.text.comment),
-										bytesToString(data.text.url),
-										bytesToString(data.text.integration_text));
-						items.addUser(u);
+					item = getUserFromData(data);
+					if (item.id != 0) {
+						items.addUser((Item.User) item);
+						items.addCurrentUser((Item.User) item);
 						//int flags = data.flags;
 
 						//if ((flags & (1 << 0)) == 0)
 							//sv.createNotification(sv.NOTIF_ONGOING, "Ventriloid", item.name + " has logged in.");
 					} else {
-						Item.Channel c = item.new Channel(bytesToString(data.text.name), 
-										bytesToString(data.text.phonetic), 
-										bytesToString(data.text.comment));
+						Item.Channel c = item.new Channel(item.name, item.phonetic, item.comment);
 						items.setLobby(c);
 					}
 					break;
@@ -123,6 +114,7 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					Player.close(data.user.id);
 					items.removeUser(data.user.id);
+					items.removeCurrentUser(data.user.id);
 					break;
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
@@ -131,37 +123,38 @@ public class VentriloidService extends Service {
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
-					if (data.user.id == VentriloInterface.getuserid()) {
+					item = getUserFromData(data);
+					if (item.id == VentriloInterface.getuserid()) {
 						Player.clear();
 						Recorder.rate(VentriloInterface.getchannelrate(data.channel.id));
+						items.setCurrentChannel(data.channel.id);
+						items.addCurrentUser((Item.User) item);
 					} else {
+						if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+							items.addCurrentUser((Item.User) item);
+						else if (items.getUserById(data.user.id).parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+							items.removeCurrentUser(item.id);
 						Player.close(data.user.id);
 					}
-					Item.User u = items.getUserById(data.user.id);
-					u.parent = data.channel.id;
+					item = items.getUserById(data.user.id);
+					item.parent = data.channel.id;
 					items.removeUser(data.user.id);
-					items.addUser(u);
+					items.addUser((Item.User) item);
 					break;
 
 				case VentriloEvents.V3_EVENT_CHAN_ADD:
-					VentriloInterface.getchannel(data, data.channel.id);
-					Item.Channel c = item.new Channel(data.channel.id,
-									data.data.channel.parent,
-									bytesToString(data.text.name),
-									bytesToString(data.text.phonetic),
-									bytesToString(data.text.comment),
-									data.data.channel.password_protected);
-					items.addChannel(c);
+					item = getChannelFromData(data);
+					items.addChannel((Item.Channel) item);
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_TALK_START:
-					items.getUserById(data.user.id).xmit = Item.User.XMIT_INIT;
+					items.setXmit(data.user.id, Item.User.XMIT_INIT);
 					break;
 
 				case VentriloEvents.V3_EVENT_PLAY_AUDIO:
 					Player.write(data.user.id, data.pcm.rate, data.pcm.channels, data.data.sample, data.pcm.length);
 					if (items.getUserById(data.user.id).xmit != Item.User.XMIT_ON)
-						items.getUserById(data.user.id).xmit = Item.User.XMIT_ON;
+						items.setXmit(data.user.id, Item.User.XMIT_ON);
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_TALK_END:
@@ -169,7 +162,15 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
 				case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
 					Player.close(data.user.id);
-					items.getUserById(data.user.id).xmit = Item.User.XMIT_OFF;
+					items.setXmit(data.user.id, Item.User.XMIT_OFF);
+					break;
+					
+				case VentriloEvents.V3_EVENT_USER_MODIFY:
+					item = getUserFromData(data);
+					items.removeUser(item.id);
+					items.addUser((Item.User) item);
+					items.removeCurrentUser(item.id);
+					items.addCurrentUser((Item.User) item);
 					break;
 				}
 				sendBroadcast(new Intent(ViewPagerActivity.RECEIVER).putExtras(extras));
@@ -181,6 +182,32 @@ public class VentriloidService extends Service {
 	
 	public ItemData getItemData() {
 		return items;
+	}
+	
+	private Item.User getUserFromData(VentriloEventData data) {
+		VentriloInterface.getuser(data, data.user.id);
+		Item item = new Item();
+		Item.User u = item.new User(data.user.id,
+						VentriloInterface.getuserchannel(data.user.id),
+						bytesToString(data.text.name),
+						bytesToString(data.text.phonetic),
+						bytesToString(data.data.rank.name),
+						bytesToString(data.text.comment),
+						bytesToString(data.text.url),
+						bytesToString(data.text.integration_text));
+		return u;
+	}
+	
+	private Item.Channel getChannelFromData(VentriloEventData data) {
+		VentriloInterface.getchannel(data, data.channel.id);
+		Item item = new Item();
+		Item.Channel c = item.new Channel(data.channel.id,
+						data.data.channel.parent,
+						bytesToString(data.text.name),
+						bytesToString(data.text.phonetic),
+						bytesToString(data.text.comment),
+						data.data.channel.password_protected);
+		return c;
 	}
 
 }

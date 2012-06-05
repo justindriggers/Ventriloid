@@ -215,6 +215,7 @@ public class ViewPagerActivity extends FragmentActivity {
 				break;
 			}
 			sv.process(intent);
+			cv.process(intent);
 		}
 	};
 	

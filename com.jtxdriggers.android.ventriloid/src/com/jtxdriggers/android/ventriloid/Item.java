@@ -52,9 +52,9 @@ public class Item {
 	
 	public class User extends Item {
 		
-		public static final int XMIT_OFF = 0;
-		public static final int XMIT_INIT = 1;
-		public static final int XMIT_ON = 2;
+		public static final int XMIT_OFF = R.drawable.user_status_inactive;
+		public static final int XMIT_INIT = R.drawable.user_status_other;
+		public static final int XMIT_ON = R.drawable.user_status_active;
 		
 		public String rank, url, integration;
 		public int xmit = XMIT_OFF;

@@ -68,9 +68,6 @@ public class ServerView extends Fragment {
 			adapter.notifyDataSetChanged();
 		}
 	}
-	 
-	public void updateList() {
-	}
 	
 	private OnGroupClickListener onChannelClick = new OnGroupClickListener() {
 		public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {

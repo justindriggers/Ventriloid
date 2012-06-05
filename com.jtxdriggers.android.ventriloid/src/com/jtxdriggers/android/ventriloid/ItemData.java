@@ -5,16 +5,20 @@ import java.util.ArrayList;
 public class ItemData {
 
 	private ArrayList<Item.Channel> channels = new ArrayList<Item.Channel>();
+	private Item.Channel currentChannel; 
 	private ArrayList<ArrayList<Item.User>> users = new ArrayList<ArrayList<Item.User>>();
+	private ArrayList<Item.User> currentUsers = new ArrayList<Item.User>(); 
 	
 	public ItemData() {
 		Item i = new Item();
 		channels.add(i.new Channel());
+		currentChannel = i.new Channel();
 		users.add(new ArrayList<Item.User>());
 	}
 	
 	public void setLobby(Item.Channel lobby) {
 		channels.set(0, lobby);
+		currentChannel = lobby;
 	}
 	
 	public void addChannel(Item.Channel channel) {
@@ -37,10 +41,16 @@ public class ItemData {
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == user.parent) {
 				user.indent = channels.get(i).indent + "     ";
-
 				users.get(i).add(user);
 				return;
 			}
+		}
+	}
+	
+	public void addCurrentUser(Item.User user) {
+		if (user.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
+			user.indent = "     ";
+			currentUsers.add(user);
 		}
 	}
 	
@@ -55,8 +65,21 @@ public class ItemData {
 		}
 	}
 	
+	public void removeCurrentUser(short id) {
+		for (int i = 0; i < currentUsers.size(); i++) {
+			if (currentUsers.get(i).id == id) {
+				currentUsers.remove(i);
+				return;
+			}
+		}
+	}
+	
 	public ArrayList<Item.Channel> getChannels() {
 		return channels;
+	}
+	
+	public Item.Channel getCurrentChannel() {
+		return currentChannel;
 	}
 	
 	public Item.Channel getChannelById(short id) {
@@ -71,6 +94,10 @@ public class ItemData {
 		return users;
 	}
 	
+	public ArrayList<Item.User> getCurrentUsers() {
+		return currentUsers;
+	}
+	
 	public Item.User getUserById(short id) {
 		for (int i = 0; i < channels.size(); i++) {
 			for (int j = 0; j < users.get(i).size(); j++) {
@@ -79,6 +106,34 @@ public class ItemData {
 			}
 		}
 		return null;
+	}
+	
+	public Item.User getCurrentUserById(short id) {
+		for (int i = 0; i < currentUsers.size(); i++) {
+			if (currentUsers.get(i).id == id)
+				return currentUsers.get(i);
+		}
+		return null;
+	}
+	
+	public void setXmit(short id, int xmit) {
+		Item.User u = getUserById(id);
+		u.xmit = xmit;
+		if (u.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+			getCurrentUserById(id).xmit = xmit;
+	}
+	
+	public void setCurrentChannel(short id) {
+		currentChannel = getChannelById(id);
+		currentUsers.clear();
+		for (int i = 0; i < channels.size(); i++) {
+			if (channels.get(i).id == id) {
+				for (int j = 0; j < users.get(i).size(); j++) {
+					currentUsers.add(users.get(i).get(j));
+				}
+				return;
+			}
+		}
 	}
 	
 }
