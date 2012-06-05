@@ -66,10 +66,12 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	            null, null, null, null, null);
 	    if (cursor != null)
 	        cursor.moveToFirst();
-	    db.close();
 	 
 	    Server server = new Server(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3),
 	    		cursor.getString(4), Integer.parseInt(cursor.getString(5)), cursor.getString(6));
+	    cursor.close();
+	    db.close();
+	    
 	    return server;
 	}
 	
@@ -94,6 +96,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	            serverList.add(server);
 	        } while (cursor.moveToNext());
 	    }
+	    cursor.close();
 	    db.close();
 	 
 	    return serverList;
@@ -117,6 +120,7 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	            serverList.add(server.getUsername() + "@" + server.getServername() + ": " + server.getHostname() + ":" + server.getPort());
 	        } while (cursor.moveToNext());
 	    }
+	    cursor.close();
 	    db.close();
 	 
 	    return serverList;
@@ -126,10 +130,10 @@ public class ServerAdapter extends SQLiteOpenHelper {
         String countQuery = "SELECT  * FROM " + TABLE_SERVERS;
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(countQuery, null);
-        cursor.close();
  
         int count = cursor.getCount();
 
+        cursor.close();
 	    db.close();
 	    return count;
     }
