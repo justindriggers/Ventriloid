@@ -32,33 +32,41 @@ import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
 public class VentriloidListAdapter extends SimpleExpandableListAdapter {
+	
+	public static final int SERVER_VIEW = 0;
+	public static final int CHANNEL_VIEW = 1;
+	
+	private VentriloidService s;
+	private int type;
 	private List<? extends Item.Channel> mGroupData;
 	private List<? extends List<? extends Item.User>> mChildData;
-	private String[] mChildFrom;
-	private int[] mChildTo;
+	private String[] mGroupFrom, mChildFrom;
+	private int[] mGroupTo, mChildTo;
 
-	public VentriloidListAdapter(Context context, List<? extends Item.Channel> groupData,
-		int groupLayout, String[] groupFrom, int[] groupTo,
-		List<? extends List<? extends Item.User>> childData,
-		int childLayout, String[] childFrom, int[] childTo) {
+	public VentriloidListAdapter(Context context, VentriloidService service, int type,
+			List<? extends Item.Channel> groupData, int groupLayout, String[] groupFrom, int[] groupTo,
+			List<? extends List<? extends Item.User>> childData, int childLayout, String[] childFrom, int[] childTo) {
+		
 		super(context, getChannelHashMaps(groupData), groupLayout, groupFrom, groupTo, getUserHashMaps(childData), childLayout, childFrom, childTo);
 
+		s = service;
+		this.type = type;
 		mGroupData = groupData;
+		mGroupFrom = groupFrom;
+		mGroupTo = groupTo;
 		mChildData = childData;
 		mChildFrom = childFrom;
 		mChildTo = childTo;
 	}
 	
-	public VentriloidListAdapter(Context context, Item.Channel groupData,
-			int groupLayout, String[] groupFrom, int[] groupTo,
-			List<? extends Item.User> childData,
-			int childLayout, String[] childFrom, int[] childTo) {
-		super(context, getChannelHashMaps(getCurrentChannel(groupData)), groupLayout, groupFrom, groupTo, getUserHashMaps(getCurrentUsers(childData)), childLayout, childFrom, childTo);
-		
-		mGroupData = getCurrentChannel(groupData);
-		mChildData = getCurrentUsers(childData);
-		mChildFrom = childFrom;
-		mChildTo = childTo;
+	public void update() {
+		if (type == SERVER_VIEW) {
+			mGroupData = s.getItemData().getChannels();
+			mChildData = s.getItemData().getUsers();
+		} else if (type == CHANNEL_VIEW) {
+			mGroupData = s.getItemData().getCurrentChannel();
+			mChildData = s.getItemData().getCurrentUsers();
+		}
 	}
 	 
 	private static List<? extends Map<String, ?>> getChannelHashMaps(List<? extends Item.Channel> channels) {
@@ -68,12 +76,6 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 			channelList.add(c);
 		}
 		return channelList;
-	}
-	
-	public static ArrayList<Item.Channel> getCurrentChannel(Item.Channel currentChannel) {
-		ArrayList<Item.Channel> c = new ArrayList<Item.Channel>();
-		c.add(currentChannel);
-		return c;
 	}
 	 
 	private static List<? extends List<? extends Map<String, ?>>> getUserHashMaps(List<? extends List<? extends Item.User>> users) {
@@ -88,15 +90,17 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 		return userList;
 	}
 	
+	public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+        View v;
+        
+        if (convertView == null)
+            v = newGroupView(isExpanded, parent);
+        else
+            v = convertView;
 
-	public static ArrayList<ArrayList<Item.User>> getCurrentUsers(List<? extends Item.User> currentUsers) {
-		ArrayList<ArrayList<Item.User>> u = new ArrayList<ArrayList<Item.User>>();
-		u.add(new ArrayList<Item.User>());
-		for (int i = 0; i < currentUsers.size(); i++) {
-			u.get(0).add(currentUsers.get(i));
-		}
-		return u;
-	}
+        bindView(v, mGroupData.get(groupPosition), mGroupFrom, mGroupTo);
+        return v;
+    }
 
 	public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
 		View v;
@@ -130,6 +134,15 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 				if (v != null)
 					v.setText(map.get(from[i]).toString());
 			}
+		}
+	}
+	
+	private void bindView(View view, Item.Channel data, String[] from, int[] to) {
+		HashMap<String, Object> map = data.toHashMap();
+		for (int i = 0; i < to.length; i++) {
+			TextView v = (TextView) view.findViewById(to[i]);
+			if (v != null)
+				v.setText(map.get(from[i]).toString());
 		}
 	}
 

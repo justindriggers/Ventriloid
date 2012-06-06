@@ -34,6 +34,8 @@ public class ServerView extends Fragment {
 
 		adapter = new VentriloidListAdapter(
 			getActivity(),
+			s,
+			VentriloidListAdapter.SERVER_VIEW,
 			s.getItemData().getChannels(),
 			R.layout.channel_row,
 			new String[] { "indent", "status", "name", "comment" },
@@ -65,6 +67,7 @@ public class ServerView extends Fragment {
 		if (processEvents) {
 		//Bundle e = intent.getExtras();
 		//int type = e.getInt("type");
+			adapter.update();
 			adapter.notifyDataSetChanged();
 		}
 	}

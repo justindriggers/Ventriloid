@@ -18,7 +18,7 @@ public class ItemData {
 	
 	public void setLobby(Item.Channel lobby) {
 		channels.set(0, lobby);
-		currentChannel = lobby;
+		currentChannel = lobby.copy();
 	}
 	
 	public void addChannel(Item.Channel channel) {
@@ -78,10 +78,6 @@ public class ItemData {
 		return channels;
 	}
 	
-	public Item.Channel getCurrentChannel() {
-		return currentChannel;
-	}
-	
 	public Item.Channel getChannelById(short id) {
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == id)
@@ -92,10 +88,6 @@ public class ItemData {
 	
 	public ArrayList<ArrayList<Item.User>> getUsers() {
 		return users;
-	}
-	
-	public ArrayList<Item.User> getCurrentUsers() {
-		return currentUsers;
 	}
 	
 	public Item.User getUserById(short id) {
@@ -124,16 +116,40 @@ public class ItemData {
 	}
 	
 	public void setCurrentChannel(short id) {
-		currentChannel = getChannelById(id);
 		currentUsers.clear();
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == id) {
+				currentChannel.id = channels.get(i).id;
+				currentChannel.parent = channels.get(i).parent;
+				currentChannel.name = channels.get(i).name;
+				currentChannel.phonetic = channels.get(i).phonetic;
+				currentChannel.comment = channels.get(i).comment;
+				currentChannel.status = channels.get(i).status;
+				currentChannel.reqPassword = channels.get(i).reqPassword;
+				
 				for (int j = 0; j < users.get(i).size(); j++) {
-					currentUsers.add(users.get(i).get(j));
+					Item.User u = users.get(i).get(j).copy();
+					u.indent = "     ";
+					currentUsers.add(u);
 				}
 				return;
 			}
 		}
+	}
+	
+	public ArrayList<Item.Channel> getCurrentChannel() {
+		ArrayList<Item.Channel> c = new ArrayList<Item.Channel>();
+		c.add(currentChannel);
+		return c;
+	}
+	
+	public ArrayList<ArrayList<Item.User>> getCurrentUsers() {
+		ArrayList<ArrayList<Item.User>> u = new ArrayList<ArrayList<Item.User>>();
+		u.add(new ArrayList<Item.User>());
+		for (int i = 0; i < currentUsers.size(); i++) {
+			u.get(0).add(currentUsers.get(i));
+		}
+		return u;
 	}
 	
 }

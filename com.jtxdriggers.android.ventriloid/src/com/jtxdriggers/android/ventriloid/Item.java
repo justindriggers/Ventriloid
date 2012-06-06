@@ -10,7 +10,6 @@ public class Item {
 	public String indent = "";
 	
 	public class Channel extends Item {
-		public short parent;
 		public boolean reqPassword;
 		
 		public Channel() {
@@ -43,10 +42,25 @@ public class Item {
 		public HashMap<String, Object> toHashMap() {
 			HashMap<String, Object> channel = new HashMap<String, Object>();
 			channel.put("name", name);
+			channel.put("status", status);
 			channel.put("comment", comment);
 			channel.put("indent", indent);
 			
 			return channel;
+		}
+		
+		public Item.Channel copy() {
+			Channel copy = new Channel();
+			copy.id = id;
+			copy.parent = parent;
+			copy.name = name;
+			copy.phonetic = phonetic;
+			copy.comment = comment;
+			copy.status = status;
+			copy.indent = indent;
+			copy.reqPassword = reqPassword;
+			
+			return copy;
 		}
 	}
 	
@@ -58,6 +72,8 @@ public class Item {
 		
 		public String rank, url, integration;
 		public int xmit = XMIT_OFF;
+		
+		public User() { }
 		
 		public User(short id, short parent, String name, String phonetic, String rank, String comment, String url, String integration) {
 			this.id = id;
@@ -77,32 +93,56 @@ public class Item {
 				return "";
 		}
 		
+		private String formatComment(String url, String comment) {
+			boolean hasUrl = url.length() > 0;
+			boolean hasComment = comment.length() > 0;
+			
+			if (hasUrl && hasComment)
+				return " (U: " + comment + ")";
+			else if (hasUrl)
+				return " (U:)";
+			else if (hasComment)
+				return " (" + comment + ")";
+			
+			return "";
+		}
+		
+		private String formatIntegration(String integration) {
+			if (integration.length() > 0)
+				return " \"" + integration + "\"";
+			else
+				return "";
+		}
+		
 		public HashMap<String, Object> toHashMap() {
 			HashMap<String, Object> user = new HashMap<String, Object>();
 			user.put("name", name);
 			user.put("rank", formatRank(rank));
 			user.put("comment", formatComment(url, comment));
-			user.put("integration", integration);
+			user.put("integration", formatIntegration(integration));
 			user.put("indent", indent);
 			user.put("status", status);
 			user.put("xmit", xmit);
 			
 			return user;
 		}
-	}
-	
-	private String formatComment(String url, String comment) {
-		boolean hasUrl = url.length() > 0;
-		boolean hasComment = comment.length() > 0;
-		
-		if (hasUrl && hasComment)
-			return " (U: " + comment + ")";
-		else if (hasUrl)
-			return " (U:)";
-		else if (hasComment)
-			return " (" + comment + ")";
-		
-		return "";
+
+		public User copy() {
+			Item i = new Item();
+			User copy = i.new User();
+			copy.id = id;
+			copy.parent = parent;
+			copy.name = name;
+			copy.phonetic = phonetic;
+			copy.rank = rank;
+			copy.comment = comment;
+			copy.url = url;
+			copy.integration = integration;
+			copy.status = status;
+			copy.indent = indent;
+			
+			return copy;
+		}
 	}
 
 }

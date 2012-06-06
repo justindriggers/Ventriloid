@@ -127,7 +127,7 @@ public class VentriloidService extends Service {
 					if (item.id == VentriloInterface.getuserid()) {
 						Player.clear();
 						Recorder.rate(VentriloInterface.getchannelrate(data.channel.id));
-						items.setCurrentChannel(data.channel.id);
+						items.setCurrentChannel(item.parent);
 						items.addCurrentUser((Item.User) item);
 					} else {
 						if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))

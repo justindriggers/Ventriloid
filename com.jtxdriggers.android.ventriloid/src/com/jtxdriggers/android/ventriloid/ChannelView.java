@@ -31,6 +31,8 @@ public class ChannelView extends Fragment {
 
 		adapter = new VentriloidListAdapter(
 			getActivity(),
+			s,
+			VentriloidListAdapter.CHANNEL_VIEW,
 			s.getItemData().getCurrentChannel(),
 			R.layout.channel_row,
 			new String[] { "indent", "status", "name", "comment" },
@@ -62,6 +64,7 @@ public class ChannelView extends Fragment {
 		if (processEvents) {
 		//Bundle e = intent.getExtras();
 		//int type = e.getInt("type");
+			adapter.update();
 			adapter.notifyDataSetChanged();
 		}
 	}
