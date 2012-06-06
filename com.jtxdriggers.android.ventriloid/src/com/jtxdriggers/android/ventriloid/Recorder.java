@@ -50,8 +50,6 @@ public class Recorder {
 			}
 			Log.e("recorder", "buflen is " + buflen);
 			
-			// argument not needed; send method is hardcoded
-			VentriloInterface.startaudio((short)0);
 			// Find out if the minimum buffer length is smaller
 			// than the amount of data we need to send.  If so,
 			// adjust buflen (set from buffer()) accordingly
@@ -74,7 +72,7 @@ public class Recorder {
 				return;
 			}
 			buf = new byte[buflen];
-			for (;;) {
+			while (true) {
 		        for (int offset = 0, read = 0; offset < buflen; offset += read) {
 	        		// if stop flag is set, exit now
 		        	if (stop) {
@@ -89,9 +87,13 @@ public class Recorder {
 		        		throw new RuntimeException("AudioRecord read failed: " + Integer.toString(read));
 		        	}
 		        }
-		        if (!stop) {
+		        if (!stop && calcDb(buf, 0, buf.length/2) > -60) {
+					// argument not needed; send method is hardcoded
+					VentriloInterface.startaudio((short)0);
+		        	Log.d("ventriloid", "Sending audio data");
 		        	VentriloInterface.sendaudio(buf, buflen, rate);
-		        }
+		        } else
+		        	VentriloInterface.stopaudio();
 			}
 		}
 	}
@@ -198,6 +200,21 @@ public class Recorder {
 
 	public static boolean isForce_8khz() {
 		return force_8khz;
+	}
+	
+	public static double calcDb(byte[] data, int off, int samples) {
+        double sum = 0;
+        double sqsum = 0;
+        for (int i = 0; i < samples; i++) {
+            final long v = data[off + i];
+            sum += v;
+            sqsum += v * v;
+        }
+        
+        double power = (sqsum - sum * sum / samples) / samples;
+        power /= 32768 * 32768;
+
+        return Math.log10(power) * 10f + 0.6f;
 	}
 
 }

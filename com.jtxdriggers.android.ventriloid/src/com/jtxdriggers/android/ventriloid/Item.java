@@ -48,20 +48,6 @@ public class Item {
 			
 			return channel;
 		}
-		
-		public Item.Channel copy() {
-			Channel copy = new Channel();
-			copy.id = id;
-			copy.parent = parent;
-			copy.name = name;
-			copy.phonetic = phonetic;
-			copy.comment = comment;
-			copy.status = status;
-			copy.indent = indent;
-			copy.reqPassword = reqPassword;
-			
-			return copy;
-		}
 	}
 	
 	public class User extends Item {
@@ -125,23 +111,6 @@ public class Item {
 			user.put("xmit", xmit);
 			
 			return user;
-		}
-
-		public User copy() {
-			Item i = new Item();
-			User copy = i.new User();
-			copy.id = id;
-			copy.parent = parent;
-			copy.name = name;
-			copy.phonetic = phonetic;
-			copy.rank = rank;
-			copy.comment = comment;
-			copy.url = url;
-			copy.integration = integration;
-			copy.status = status;
-			copy.indent = indent;
-			
-			return copy;
 		}
 	}
 

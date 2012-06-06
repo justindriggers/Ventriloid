@@ -67,6 +67,7 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 			mGroupData = s.getItemData().getCurrentChannel();
 			mChildData = s.getItemData().getCurrentUsers();
 		}
+		notifyDataSetChanged();
 	}
 	 
 	private static List<? extends Map<String, ?>> getChannelHashMaps(List<? extends Item.Channel> channels) {
@@ -125,14 +126,20 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 	private void bindView(View view, Item.User data, String[] from, int[] to) {
 		HashMap<String, Object> map = data.toHashMap();
 		for (int i = 0; i < to.length; i++) {
+			Object item = map.get(from[i]);
+			
+			if (i == 0 && type == CHANNEL_VIEW) {
+				item = "     ";
+			}
+			
 			if (i == 1) {
 				ImageView imgV = (ImageView) view.findViewById(to[i]);
 				if (imgV != null)
-					imgV.setImageResource((Integer) map.get(from[i]));
+					imgV.setImageResource((Integer) item);
 			} else {
 				TextView v = (TextView) view.findViewById(to[i]);
 				if (v != null)
-					v.setText(map.get(from[i]).toString());
+					v.setText(item.toString());
 			}
 		}
 	}
@@ -140,9 +147,15 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 	private void bindView(View view, Item.Channel data, String[] from, int[] to) {
 		HashMap<String, Object> map = data.toHashMap();
 		for (int i = 0; i < to.length; i++) {
+			Object item = map.get(from[i]);
+			
+			if (i == 0 && type == CHANNEL_VIEW) {
+				item = "";
+			}
+			
 			TextView v = (TextView) view.findViewById(to[i]);
 			if (v != null)
-				v.setText(map.get(from[i]).toString());
+				v.setText(item.toString());
 		}
 	}
 

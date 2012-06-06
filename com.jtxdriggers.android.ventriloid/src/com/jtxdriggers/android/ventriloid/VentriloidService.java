@@ -119,6 +119,7 @@ public class VentriloidService extends Service {
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 					Recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
+					Recorder.start();
 					sendBroadcast(new Intent(Main.RECEIVER).putExtras(extras));
 					break;
 
@@ -127,6 +128,7 @@ public class VentriloidService extends Service {
 					if (item.id == VentriloInterface.getuserid()) {
 						Player.clear();
 						Recorder.rate(VentriloInterface.getchannelrate(data.channel.id));
+						Recorder.start();
 						items.setCurrentChannel(item.parent);
 						items.addCurrentUser((Item.User) item);
 					} else {

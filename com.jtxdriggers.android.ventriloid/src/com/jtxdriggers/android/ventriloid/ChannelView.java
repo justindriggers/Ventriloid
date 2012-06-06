@@ -65,7 +65,6 @@ public class ChannelView extends Fragment {
 		//Bundle e = intent.getExtras();
 		//int type = e.getInt("type");
 			adapter.update();
-			adapter.notifyDataSetChanged();
 		}
 	}
 }
