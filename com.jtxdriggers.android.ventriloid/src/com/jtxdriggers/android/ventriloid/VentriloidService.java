@@ -48,7 +48,7 @@ public class VentriloidService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();		
-		VentriloInterface.debuglevel(1 << 11);
+		//VentriloInterface.debuglevel(1 << 11);
 		running = true;
 		new Thread(eventHandler).start();
 	}
@@ -56,6 +56,8 @@ public class VentriloidService extends Service {
 	@Override
 	public void onDestroy() {
 		VentriloInterface.logout();
+		Player.clear();
+		Recorder.stop();
 		running = false;
 		super.onDestroy();
 	}
@@ -119,7 +121,7 @@ public class VentriloidService extends Service {
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 					Recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
-					Recorder.start();
+					Recorder.start(VentriloidService.this, 55.085);
 					sendBroadcast(new Intent(Main.RECEIVER).putExtras(extras));
 					break;
 
@@ -128,7 +130,7 @@ public class VentriloidService extends Service {
 					if (item.id == VentriloInterface.getuserid()) {
 						Player.clear();
 						Recorder.rate(VentriloInterface.getchannelrate(data.channel.id));
-						Recorder.start();
+						Recorder.start(VentriloidService.this, 55);
 						items.setCurrentChannel(item.parent);
 						items.addCurrentUser((Item.User) item);
 					} else {
@@ -181,6 +183,18 @@ public class VentriloidService extends Service {
 			Recorder.stop();
 		}
 	};
+	
+	public void setXmit(boolean on) {
+		Bundle extras = new Bundle();
+		if (running && on) {
+			items.setXmit(VentriloInterface.getuserid(), Item.User.XMIT_ON);
+			extras.putInt("type", VentriloEvents.V3_EVENT_USER_TALK_START);
+		} else if (running && !on) {
+			items.setXmit(VentriloInterface.getuserid(), Item.User.XMIT_OFF);
+			extras.putInt("type", VentriloEvents.V3_EVENT_USER_TALK_END);
+		}
+		sendBroadcast(new Intent(ViewPagerActivity.RECEIVER).putExtras(extras));
+	}
 	
 	public ItemData getItemData() {
 		return items;

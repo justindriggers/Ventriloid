@@ -77,6 +77,7 @@ public class ViewPagerActivity extends FragmentActivity {
     	unregisterReceiver(receiver);
     	s.stopSelf();
     	unbindService(mConnection);
+    	stopService(new Intent(VentriloidService.SERVICE_INTENT));
     	super.onDestroy();
     }
     

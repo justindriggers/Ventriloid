@@ -32,10 +32,12 @@ import android.util.Log;
 
 public class Recorder {
 
+	private static VentriloidService s;
 	private static Thread thread = null; // limited to only one recording thread
 	private static boolean stop = false; // stop flag
 	private static int rate = 0; // current or overridden rate for current channel
 	private static int buflen;
+	private static double thresh;
 	private static boolean force_8khz;
 
 	private static class RecordThread implements Runnable {
@@ -61,7 +63,6 @@ public class Recorder {
 					AudioFormat.CHANNEL_CONFIGURATION_MONO,
 					AudioFormat.ENCODING_PCM_16BIT,
 					buflen);
-			Log.e("mangler", "audio record initialized");
 			try {
 				audiorecord.startRecording();
 			}
@@ -72,14 +73,13 @@ public class Recorder {
 				return;
 			}
 			buf = new byte[buflen];
+			int bitsProcessed = -1;
 			while (true) {
 		        for (int offset = 0, read = 0; offset < buflen; offset += read) {
-	        		// if stop flag is set, exit now
 		        	if (stop) {
 		        		VentriloInterface.stopaudio();
 		        		audiorecord.stop();
 		        		audiorecord.release();
-		        		// a new recording thread can now be instantiated
 		        		thread = null;
 		        		return;
 		        	}
@@ -87,13 +87,32 @@ public class Recorder {
 		        		throw new RuntimeException("AudioRecord read failed: " + Integer.toString(read));
 		        	}
 		        }
-		        if (!stop && calcDb(buf, 0, buf.length/2) > -60) {
-					// argument not needed; send method is hardcoded
-					VentriloInterface.startaudio((short)0);
-		        	Log.d("ventriloid", "Sending audio data");
-		        	VentriloInterface.sendaudio(buf, buflen, rate);
-		        } else
-		        	VentriloInterface.stopaudio();
+		        if (!stop) {
+		        	if (bitsProcessed < 0) {
+		        		if (calcDb(buf, 0, buf.length) > -thresh) {
+							VentriloInterface.startaudio((short)0);
+							s.setXmit(true);
+							VentriloInterface.sendaudio(buf, buflen, rate);
+							bitsProcessed += buflen;
+		        		}
+			        } else if (bitsProcessed == 0) {
+			        	if (calcDb(buf, 0, buf.length) > -thresh) {
+			        		VentriloInterface.sendaudio(buf, buflen, rate);
+			        		bitsProcessed += buflen;
+			        	} else {
+			        		VentriloInterface.stopaudio();
+			        		s.setXmit(false);
+			        		bitsProcessed = -1;
+			        	}
+			        	// Figure out this equation instead of using a number!
+			        } else if (bitsProcessed < buflen * 8) {
+			        	VentriloInterface.sendaudio(buf, buflen, rate);
+			        	bitsProcessed += buflen;
+			        } else {
+			        	VentriloInterface.sendaudio(buf, buflen, rate);
+			        	bitsProcessed = 0;
+			        }
+		        }
 			}
 		}
 	}
@@ -176,7 +195,9 @@ public class Recorder {
 		return thread != null;
 	}
 
-	public static boolean start() {
+	public static boolean start(VentriloidService service, double threshold) {
+		s = service;
+		thresh = threshold;
 		if (recording() || rate <= 0) {
 			return true;
 		}
