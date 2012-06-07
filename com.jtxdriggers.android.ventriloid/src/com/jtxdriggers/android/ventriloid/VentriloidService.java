@@ -47,7 +47,7 @@ public class VentriloidService extends Service {
 	
 	@Override
 	public void onCreate() {
-		super.onCreate();		
+		super.onCreate();
 		//VentriloInterface.debuglevel(1 << 11);
 		running = true;
 		new Thread(eventHandler).start();
@@ -56,8 +56,6 @@ public class VentriloidService extends Service {
 	@Override
 	public void onDestroy() {
 		VentriloInterface.logout();
-		Player.clear();
-		Recorder.stop();
 		running = false;
 		super.onDestroy();
 	}
@@ -121,7 +119,7 @@ public class VentriloidService extends Service {
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 					Recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
-					Recorder.start(VentriloidService.this, 55.085);
+					Recorder.start(VentriloidService.this, 55.03125);
 					sendBroadcast(new Intent(Main.RECEIVER).putExtras(extras));
 					break;
 
@@ -129,8 +127,8 @@ public class VentriloidService extends Service {
 					item = getUserFromData(data);
 					if (item.id == VentriloInterface.getuserid()) {
 						Player.clear();
-						Recorder.rate(VentriloInterface.getchannelrate(data.channel.id));
-						Recorder.start(VentriloidService.this, 55);
+						Recorder.rate(VentriloInterface.getchannelrate(item.parent));
+						Recorder.start(VentriloidService.this, 55.03125);
 						items.setCurrentChannel(item.parent);
 						items.addCurrentUser((Item.User) item);
 					} else {

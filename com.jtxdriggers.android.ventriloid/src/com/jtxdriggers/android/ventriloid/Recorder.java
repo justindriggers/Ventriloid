@@ -73,8 +73,9 @@ public class Recorder {
 				return;
 			}
 			buf = new byte[buflen];
-			int bitsProcessed = -1;
+			long timePassed = -1;
 			while (true) {
+				long start = System.currentTimeMillis();
 		        for (int offset = 0, read = 0; offset < buflen; offset += read) {
 		        	if (stop) {
 		        		VentriloInterface.stopaudio();
@@ -88,30 +89,36 @@ public class Recorder {
 		        	}
 		        }
 		        if (!stop) {
-		        	if (bitsProcessed < 0) {
+		        	if (timePassed < 0) {
 		        		if (calcDb(buf, 0, buf.length) > -thresh) {
 							VentriloInterface.startaudio((short)0);
 							s.setXmit(true);
 							VentriloInterface.sendaudio(buf, buflen, rate);
-							bitsProcessed += buflen;
+							timePassed += (System.currentTimeMillis() - start + 1);
+							//bitsProcessed += buflen;
 		        		}
-			        } else if (bitsProcessed == 0) {
-			        	if (calcDb(buf, 0, buf.length) > -thresh) {
+			        } else if (timePassed == 0) {
+			        	if (calcDb(buf, 0, buf.length) > -thresh - .1) {
 			        		VentriloInterface.sendaudio(buf, buflen, rate);
-			        		bitsProcessed += buflen;
+			        		timePassed += (System.currentTimeMillis() - start);
+			        		//bitsProcessed += buflen;
 			        	} else {
 			        		VentriloInterface.stopaudio();
 			        		s.setXmit(false);
-			        		bitsProcessed = -1;
+			        		timePassed = -1;
+			        		//bitsProcessed = -1;
 			        	}
-			        	// Figure out this equation instead of using a number!
-			        } else if (bitsProcessed < buflen * 8) {
+			        // If recording, check to see if the user is done talking every second or so.
+			        } else if (timePassed < 1000) {
 			        	VentriloInterface.sendaudio(buf, buflen, rate);
-			        	bitsProcessed += buflen;
+		        		timePassed += (System.currentTimeMillis() - start);
+			        	//bitsProcessed += buflen;
 			        } else {
 			        	VentriloInterface.sendaudio(buf, buflen, rate);
-			        	bitsProcessed = 0;
+			        	timePassed = 0;
+			        	//bitsProcessed = 0;
 			        }
+		        	Log.d("ventriloid", "Time passed = " + timePassed);
 		        }
 			}
 		}
@@ -182,20 +189,13 @@ public class Recorder {
 		rate = Build.PRODUCT.equals("sdk") ? 8000 : _rate;
 	}
 
-	public static int rate() {
-		return rate;
-	}
-	
-	public static int buflen() {
-		return buflen;
-	}
-
 	public static boolean recording() {
 		// if a recording thread is running, we can't instantiate another one
 		return thread != null;
 	}
 
 	public static boolean start(VentriloidService service, double threshold) {
+		thread = null;
 		s = service;
 		thresh = threshold;
 		if (recording() || rate <= 0) {
