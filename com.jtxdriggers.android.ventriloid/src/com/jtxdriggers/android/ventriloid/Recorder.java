@@ -1,25 +1,20 @@
 /*
- * Copyright 2010 Daniel Sloof <daniel@danslo.org>
+ * Copyright 2012 Justin Driggers <jtxdriggers@gmail.com>
  *
- * This file is part of Mangler.
+ * This file is part of Ventriloid.
  *
- * $LastChangedDate$
- * $Revision$
- * $LastChangedBy$
- * $URL$
- *
- * Mangler is free software: you can redistribute it and/or modify
+ * Ventriloid is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Mangler is distributed in the hope that it will be useful,
+ * Ventriloid is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mangler.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Ventriloid.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package com.jtxdriggers.android.ventriloid;
@@ -27,113 +22,90 @@ package com.jtxdriggers.android.ventriloid;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
-import android.os.Build;
 import android.util.Log;
 
 public class Recorder {
 
-	private static VentriloidService s;
-	private static Thread thread = null; // limited to only one recording thread
-	private static boolean stop = false; // stop flag
-	private static int rate = 0; // current or overridden rate for current channel
-	private static int buflen;
-	private static double thresh;
-	private static boolean force_8khz;
+	private VentriloidService s;
+	private boolean stop = false;
+	private double thresh;
+	private int rate;
+	private int bufferSize;
+	
+	public Recorder(VentriloidService s) {
+		this.s = s;
+	}
 
-	private static class RecordThread implements Runnable {
+	private Runnable r = new Runnable() {
 		public void run() {
 			AudioRecord audiorecord = null;
-			byte[] buf = null; // send buffer
+			byte[] buffer = null;
 			
-			Log.e("recorder", "lv3 says " + VentriloInterface.pcmlengthforrate(rate) + " for rate " + rate);
-			if (rate != 48000 && buflen < VentriloInterface.pcmlengthforrate(rate)) {
+			if (rate != 48000 && bufferSize < VentriloInterface.pcmlengthforrate(rate)) {
 				Log.e("debug", "setting buffer length to " + VentriloInterface.pcmlengthforrate(rate));
-				buflen = VentriloInterface.pcmlengthforrate(rate);
+				bufferSize = VentriloInterface.pcmlengthforrate(rate);
 			}
-			Log.e("recorder", "buflen is " + buflen);
-			
-			// Find out if the minimum buffer length is smaller
-			// than the amount of data we need to send.  If so,
-			// adjust buflen (set from buffer()) accordingly
 
-			Log.e("mangler", "starting audio record");
 			audiorecord = new AudioRecord(
 					MediaRecorder.AudioSource.MIC,
 					rate,
 					AudioFormat.CHANNEL_CONFIGURATION_MONO,
 					AudioFormat.ENCODING_PCM_16BIT,
-					buflen);
+					bufferSize);
+			
 			try {
 				audiorecord.startRecording();
-			}
-			catch (IllegalStateException e) {
+			} catch (IllegalStateException e) {
 				VentriloInterface.stopaudio();
 				audiorecord.release();
-				thread = null;
 				return;
 			}
-			buf = new byte[buflen];
+			buffer = new byte[bufferSize];
 			long timePassed = -1;
 			while (true) {
-				long start = System.currentTimeMillis();
-		        for (int offset = 0, read = 0; offset < buflen; offset += read) {
+		        for (int offset = 0, read = 0; offset < bufferSize; offset += read) {
 		        	if (stop) {
 		        		VentriloInterface.stopaudio();
 		        		audiorecord.stop();
 		        		audiorecord.release();
-		        		thread = null;
 		        		return;
 		        	}
-		        	if (!stop && (read = audiorecord.read(buf, offset, buflen - offset)) < 0) {
+		        	if (!stop && (read = audiorecord.read(buffer, offset, bufferSize - offset)) < 0) {
 		        		throw new RuntimeException("AudioRecord read failed: " + Integer.toString(read));
 		        	}
 		        }
+				long start = System.currentTimeMillis();
 		        if (!stop) {
 		        	if (timePassed < 0) {
-		        		if (calcDb(buf, 0, buf.length) > -thresh) {
+		        		if (calcDb(buffer, 0, bufferSize) > -thresh) {
 							VentriloInterface.startaudio((short)0);
 							s.setXmit(true);
-							VentriloInterface.sendaudio(buf, buflen, rate);
+							VentriloInterface.sendaudio(buffer, bufferSize, rate);
 							timePassed += (System.currentTimeMillis() - start + 1);
-							//bitsProcessed += buflen;
 		        		}
 			        } else if (timePassed == 0) {
-			        	if (calcDb(buf, 0, buf.length) > -thresh - .1) {
-			        		VentriloInterface.sendaudio(buf, buflen, rate);
+			        	if (calcDb(buffer, 0, bufferSize) > -thresh - .1) {
+			        		VentriloInterface.sendaudio(buffer, bufferSize, rate);
 			        		timePassed += (System.currentTimeMillis() - start);
-			        		//bitsProcessed += buflen;
 			        	} else {
 			        		VentriloInterface.stopaudio();
 			        		s.setXmit(false);
 			        		timePassed = -1;
-			        		//bitsProcessed = -1;
 			        	}
-			        // If recording, check to see if the user is done talking every second or so.
-			        } else if (timePassed < 1000) {
-			        	VentriloInterface.sendaudio(buf, buflen, rate);
+			        // If recording, check to see if the user is done talking every .75 seconds or so.
+			        } else if (timePassed < 750) {
+			        	VentriloInterface.sendaudio(buffer, bufferSize, rate);
 		        		timePassed += (System.currentTimeMillis() - start);
-			        	//bitsProcessed += buflen;
 			        } else {
-			        	VentriloInterface.sendaudio(buf, buflen, rate);
+			        	VentriloInterface.sendaudio(buffer, bufferSize, rate);
 			        	timePassed = 0;
-			        	//bitsProcessed = 0;
 			        }
-		        	Log.d("ventriloid", "Time passed = " + timePassed);
 		        }
 			}
 		}
-	}
+	};
 
-	private static int buffer() {
-		// all rates used by the protocol
-		Log.e("mangler", "checking available buffer sizes");
-		if (isForce_8khz()) {
-			rate(8000);
-			return AudioRecord.getMinBufferSize(
-					8000,
-					AudioFormat.CHANNEL_CONFIGURATION_MONO,
-					AudioFormat.ENCODING_PCM_16BIT);
-		}
+	private int getBufferSize() {
 		if (rate == 48000) {
 			return AudioRecord.getMinBufferSize(
 					48000,
@@ -141,89 +113,58 @@ public class Recorder {
 					AudioFormat.ENCODING_PCM_16BIT);
 		}
 		final int[] rates = { 8000, 11025, 16000, 22050, 32000, 44100 };
-		for (int cur = 0; cur < rates.length; cur++) {
-			// find the current rate in the rates array
-			if (rates[cur] != rate) {
+		for (int i = 0; i < rates.length; i++) {
+			if (rates[i] != rate) {
 				int buffer = 0;
-				// try current and higher rates
-				for (int ctr = cur; ctr < rates.length; ctr++) {
-					Log.d("mangler", "checking rate: " + rates[ctr]);
+				for (int j = i; j < rates.length; j++) {
 					buffer = AudioRecord.getMinBufferSize(
-							rates[ctr],
+							rates[j],
 							AudioFormat.CHANNEL_CONFIGURATION_MONO,
 							AudioFormat.ENCODING_PCM_16BIT);
-					Log.d("mangler", "getMinBufferSize returned: " + buffer);
-					if (buffer > 0 && buffer <= VentriloInterface.pcmlengthforrate(rates[ctr])) {
-						// found a supported rate
-						// override if it is not the channel rate and use the resampler
-						if (rates[ctr] != rate) {
-							Log.e("mangler", "" + rates[ctr] + " -- buffer: " + buffer + " - pcmlen: " + VentriloInterface.pcmlengthforrate(rates[ctr]));
-							rate(rates[ctr]);
+					if (buffer > 0 && buffer <= VentriloInterface.pcmlengthforrate(rates[j])) {
+						if (rates[j] != rate)
+							rate = rates[j];
+						return buffer;
+					}
+				}
+				for (int j = i - 1; j >= 0; j--) {
+					buffer = AudioRecord.getMinBufferSize(
+							rates[j],
+							AudioFormat.CHANNEL_CONFIGURATION_MONO,
+							AudioFormat.ENCODING_PCM_16BIT);
+					if (buffer > 0 && buffer <= VentriloInterface.pcmlengthforrate(rates[j])) {
+						if (rates[j] != rate) {
+							rate = rates[j];
 						}
 						return buffer;
 					}
 				}
-				// else try lower rates than current
-				for (int ctr = cur - 1; ctr >= 0; ctr--) {
-					Log.d("mangler", "checking rate: " + rates[ctr]);
-					buffer = AudioRecord.getMinBufferSize(
-							rates[ctr],
-							AudioFormat.CHANNEL_CONFIGURATION_MONO,
-							AudioFormat.ENCODING_PCM_16BIT);
-					if (buffer > 0 && buffer <= VentriloInterface.pcmlengthforrate(rates[ctr])) {
-						if (rates[ctr] != rate) {
-							Log.e("mangler", "" + rates[ctr] + " -- buffer: " + buffer + " - pcmlen: " + VentriloInterface.pcmlengthforrate(rates[ctr]));
-							rate(rates[ctr]);
-						}
-						return buffer;
-					}
-				}
-				// else break and return 0
 				break;
 			}
 		}
 		return 0;
 	}
 
-	public static void rate(final int _rate) {
-		rate = Build.PRODUCT.equals("sdk") ? 8000 : _rate;
-	}
-
-	public static boolean recording() {
-		// if a recording thread is running, we can't instantiate another one
-		return thread != null;
-	}
-
-	public static boolean start(VentriloidService service, double threshold) {
-		thread = null;
-		s = service;
+	public boolean start(double threshold, int rate) {	
+		this.rate = rate;
 		thresh = threshold;
-		if (recording() || rate <= 0) {
+		
+		if (rate <= 0)
 			return true;
-		}
-		// find a supported rate
-		if ((buflen = buffer()) <= 0) {
+		
+		if ((bufferSize = getBufferSize()) <= 0)
 			return false;
-		}
+		
 		stop = false;
-		(thread = new Thread(new RecordThread())).start();
+		new Thread(r).start();
 		return true;
 	}
 
-	public static void stop() {
+	public void stop() {
 		stop = true;
 	}
-
-	public static void setForce_8khz(boolean force_8khz) {
-		Log.e("recorder", "forcing 8khz: " + force_8khz);
-		Recorder.force_8khz = force_8khz;
-	}
-
-	public static boolean isForce_8khz() {
-		return force_8khz;
-	}
 	
-	public static double calcDb(byte[] data, int off, int samples) {
+	public double calcDb(byte[] data, int off, int samples) {
         double sum = 0;
         double sqsum = 0;
         for (int i = 0; i < samples; i++) {

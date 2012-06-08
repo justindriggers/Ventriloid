@@ -1,3 +1,22 @@
+/*
+ * Copyright 2012 Justin Driggers <jtxdriggers@gmail.com>
+ *
+ * This file is part of Ventriloid.
+ *
+ * Ventriloid is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ventriloid is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ventriloid.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.jtxdriggers.android.ventriloid;
 
 import java.util.ArrayList;
@@ -8,6 +27,7 @@ public class ItemData {
 	private Item.Channel currentChannel; 
 	private ArrayList<ArrayList<Item.User>> users = new ArrayList<ArrayList<Item.User>>();
 	private ArrayList<Item.User> currentUsers = new ArrayList<Item.User>(); 
+	private int ping = 0;
 	
 	public ItemData() {
 		Item i = new Item();
@@ -134,6 +154,14 @@ public class ItemData {
 		u.xmit = xmit;
 		if (u.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 			getCurrentUserById(id).xmit = xmit;
+	}
+	
+	public int getPing() {
+		return ping;
+	}
+	
+	public void setPing(int ping) {
+		this.ping = ping;
 	}
 	
 }

@@ -1,3 +1,22 @@
+/*
+ * Copyright 2012 Justin Driggers <jtxdriggers@gmail.com>
+ *
+ * This file is part of Ventriloid.
+ *
+ * Ventriloid is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ventriloid is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ventriloid.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.jtxdriggers.android.ventriloid;
 
 import java.util.HashMap;
@@ -38,7 +57,6 @@ public class ViewPagerActivity extends FragmentActivity {
 	private ViewPager mViewPager;
 	private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, ViewPagerActivity.TabInfo>();
 	private PagerAdapter mPagerAdapter;
-	private int ping = 0;
 	
 	private ServerView sv = new ServerView();
 	private ChannelView cv = new ChannelView();
@@ -190,7 +208,7 @@ public class ViewPagerActivity extends FragmentActivity {
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
-
+			
 			initialiseTabHost(instance);
 			if (instance != null)
 	            mTabHost.setCurrentTabByTag(instance.getString("tab"));
@@ -208,19 +226,14 @@ public class ViewPagerActivity extends FragmentActivity {
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			int type = intent.getExtras().getInt("type");
-			switch (type) {
-			case VentriloEvents.V3_EVENT_PING:
-				ping = intent.getExtras().getInt("ping");
-				setPing();
-				break;
-			}
-			sv.process(intent);
-			cv.process(intent);
+			setPing();
+			sv.process();
+			cv.process();
 		}
 	};
 	
 	private void setPing() {
+		int ping = s.getItemData().getPing();
 		if (ping < 65535 && ping > 0)
 			setTitle("Ping: " + ping + "ms");
 		else

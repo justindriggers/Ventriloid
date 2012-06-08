@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.jtxdriggers.android.ventriloid.Item.Channel;
+
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,7 +61,7 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 		mChildTo = childTo;
 	}
 	
-	public void update() {
+	public void update() {		
 		if (type == SERVER_VIEW) {
 			mGroupData = s.getItemData().getChannels();
 			mChildData = s.getItemData().getUsers();
