@@ -24,8 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.jtxdriggers.android.ventriloid.Item.Channel;
-
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,24 +33,21 @@ import android.widget.TextView;
 
 public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 	
-	public static final int SERVER_VIEW = 0;
-	public static final int CHANNEL_VIEW = 1;
-	
 	private VentriloidService s;
-	private int type;
-	private List<? extends Item.Channel> mGroupData;
-	private List<? extends List<? extends Item.User>> mChildData;
+	private List<Item.Channel> mGroupData;
+	private List<? extends List<Item.User>> mChildData; 
 	private String[] mGroupFrom, mChildFrom;
 	private int[] mGroupTo, mChildTo;
+	private boolean isChannelView;
 
-	public VentriloidListAdapter(Context context, VentriloidService service, int type,
-			List<? extends Item.Channel> groupData, int groupLayout, String[] groupFrom, int[] groupTo,
-			List<? extends List<? extends Item.User>> childData, int childLayout, String[] childFrom, int[] childTo) {
+	public VentriloidListAdapter(Context context, VentriloidService service, boolean channelView,
+			List<Item.Channel> groupData, int groupLayout, String[] groupFrom, int[] groupTo,
+			List<? extends List<Item.User>> childData, int childLayout, String[] childFrom, int[] childTo) {
 		
 		super(context, getChannelHashMaps(groupData), groupLayout, groupFrom, groupTo, getUserHashMaps(childData), childLayout, childFrom, childTo);
 
 		s = service;
-		this.type = type;
+		isChannelView = channelView;
 		mGroupData = groupData;
 		mGroupFrom = groupFrom;
 		mGroupTo = groupTo;
@@ -61,13 +56,14 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 		mChildTo = childTo;
 	}
 	
-	public void update() {		
-		if (type == SERVER_VIEW) {
-			mGroupData = s.getItemData().getChannels();
-			mChildData = s.getItemData().getUsers();
-		} else if (type == CHANNEL_VIEW) {
-			mGroupData = s.getItemData().getCurrentChannel();
-			mChildData = s.getItemData().getCurrentUsers();
+	public void update() {
+		ItemData items = s.getItemData();
+		if (isChannelView) {
+			mGroupData = items.getCurrentChannel();
+			mChildData = items.getCurrentUsers();
+		} else {
+			mGroupData = items.getChannels();
+			mChildData = items.getUsers();
 		}
 		notifyDataSetChanged();
 	}
@@ -93,6 +89,10 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 		return userList;
 	}
 	
+	public int getGroupCount() {
+		return mGroupData.size();
+	}
+	
 	public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
         View v;
         
@@ -104,6 +104,10 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
         bindView(v, mGroupData.get(groupPosition), mGroupFrom, mGroupTo);
         return v;
     }
+	
+	public int getChildrenCount(int groupPosition) {
+		return mChildData.get(groupPosition).size();
+	}
 
 	public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
 		View v;
@@ -112,17 +116,9 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 			v = newChildView(isLastChild, parent);
 		else
 			v = convertView;
-	     
+	    
 		bindView(v, mChildData.get(groupPosition).get(childPosition), mChildFrom, mChildTo);
 		return v;
-	}
-	
-	public int getGroupCount() {
-		return mGroupData.size();
-	}
-	
-	public int getChildrenCount(int groupPosition) {
-		return mChildData.get(groupPosition).size();
 	}
 	 
 	private void bindView(View view, Item.User data, String[] from, int[] to) {
@@ -130,7 +126,7 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 		for (int i = 0; i < to.length; i++) {
 			Object item = map.get(from[i]);
 			
-			if (i == 0 && type == CHANNEL_VIEW) {
+			if (i == 0 && isChannelView) {
 				item = "     ";
 			}
 			
@@ -151,7 +147,7 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 		for (int i = 0; i < to.length; i++) {
 			Object item = map.get(from[i]);
 			
-			if (i == 0 && type == CHANNEL_VIEW) {
+			if (i == 0 && isChannelView) {
 				item = "";
 			}
 			

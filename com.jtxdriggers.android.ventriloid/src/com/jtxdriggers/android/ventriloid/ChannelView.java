@@ -33,7 +33,6 @@ public class ChannelView extends Fragment {
 	private ExpandableListView list;
 	private VentriloidListAdapter adapter;
 	private VentriloidService s;
-	private boolean adapterReady = false;
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		if (container == null)
@@ -50,7 +49,7 @@ public class ChannelView extends Fragment {
 		adapter = new VentriloidListAdapter(
 			getActivity(),
 			s,
-			VentriloidListAdapter.CHANNEL_VIEW,
+			true,
 			s.getItemData().getCurrentChannel(),
 			R.layout.channel_row,
 			new String[] { "indent", "status", "name", "comment" },
@@ -61,13 +60,7 @@ public class ChannelView extends Fragment {
 			new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
 	
 		list.setAdapter(adapter);
-		adapter.notifyDataSetChanged();
-
-		for (int i = 0; i < adapter.getGroupCount(); i++) {
-			list.expandGroup(i);
-		}
-		
-		adapterReady = true;
+		process();
 		
 		return list;
 	}
@@ -78,8 +71,11 @@ public class ChannelView extends Fragment {
 		s = ((ViewPagerActivity) activity).s;
 	}
 	
-	public void process() {		
-		if (adapterReady)
-			adapter.update();
+	public void process() {
+		adapter.update();
+
+		for (int i = 0; i < adapter.getGroupCount(); i++) {
+			list.expandGroup(i);
+		}
 	}
 }

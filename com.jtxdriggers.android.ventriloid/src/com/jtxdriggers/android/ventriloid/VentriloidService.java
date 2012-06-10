@@ -19,6 +19,8 @@
 
 package com.jtxdriggers.android.ventriloid;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -41,9 +43,10 @@ public class VentriloidService extends Service {
 	private NotificationManager nm;
 	private Notification notif;
 	private Server server;
-	private boolean running = false;
+	private boolean running = false, uiReady = false;
 	private ItemData items = new ItemData();
 	private Recorder recorder = new Recorder(this);
+	private ConcurrentLinkedQueue<VentriloEventData> queue;
 	private int start;
 	
 	@Override
@@ -76,6 +79,7 @@ public class VentriloidService extends Service {
 	public void onCreate() {
 		super.onCreate();
 		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		queue = new ConcurrentLinkedQueue<VentriloEventData>();
 		//VentriloInterface.debuglevel(1 << 11);
 		running = true;
 		new Thread(eventHandler).start();
@@ -107,37 +111,14 @@ public class VentriloidService extends Service {
 	private Runnable eventHandler = new Runnable() {
 
 		public void run() {
-			Item item;
-			
 			while (running) {
 				VentriloEventData data = new VentriloEventData();
 				VentriloInterface.getevent(data);
 				//Log.d("ventriloid", "Processing event type " + data.type);
-
-				switch (data.type) {
-				case VentriloEvents.V3_EVENT_PING:
-					items.setPing(data.ping);
-					break;
-					
-				case VentriloEvents.V3_EVENT_USER_LOGIN:
-					item = getUserFromData(data);
-					if (item.id != 0) {
-						items.addUser((Item.User) item);
-						items.addCurrentUser((Item.User) item);
-						if ((data.flags & (1 << 0)) == 0)
-							createNotification(item.name + " has logged in.", true);
-					} else {
-						Item.Channel c = item.new Channel(item.name, item.phonetic, item.comment);
-						items.setLobby(c);
-					}
-					break;
-					
+				
+				switch (data.type) {				
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					Player.close(data.user.id);
-					item = items.getUserById(data.user.id);
-					items.removeUser(data.user.id);
-					items.removeCurrentUser(data.user.id);
-					createNotification(item.name + " has logged out.", true);
 					break;
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
@@ -156,41 +137,17 @@ public class VentriloidService extends Service {
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
-					item = items.getUserById(data.user.id);
-					short from = item.parent;
-					item.parent = data.channel.id;
-					if (item.id == VentriloInterface.getuserid()) {
+					if (data.user.id == VentriloInterface.getuserid()) {
 						Player.clear();
 						recorder.stop();
-						recorder.start(55.03125, VentriloInterface.getchannelrate(item.parent));
-						items.setCurrentChannel(item.parent);
-						items.addCurrentUser((Item.User) item);
+						recorder.start(55.03125, VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(data.user.id)));
 					} else {
-						if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
-							createNotification(item.name + " joined the channel.", true);
-							items.addCurrentUser((Item.User) item);
-						} else if (from == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
-							createNotification(item.name + " left the channel.", true);
-							items.removeCurrentUser(item.id);
-						}
 						Player.close(data.user.id);
 					}
-					items.removeUser(data.user.id);
-					items.addUser((Item.User) item);
-					break;
-					
-				case VentriloEvents.V3_EVENT_CHAN_ADD:
-					item = getChannelFromData(data);
-					items.addChannel((Item.Channel) item);
 					break;
 
 				case VentriloEvents.V3_EVENT_PLAY_AUDIO:
 					Player.write(data.user.id, data.pcm.rate, data.pcm.channels, data.data.sample, data.pcm.length);
-					items.setXmit(data.user.id, Item.User.XMIT_ON);
-					break;
-					
-				case VentriloEvents.V3_EVENT_USER_TALK_START:
-					items.setXmit(data.user.id, Item.User.XMIT_INIT);
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_TALK_END:
@@ -198,17 +155,9 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
 				case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
 					Player.close(data.user.id);
-					items.setXmit(data.user.id, Item.User.XMIT_OFF);
-					break;
-					
-				case VentriloEvents.V3_EVENT_USER_MODIFY:
-					item = getUserFromData(data);
-					items.removeUser(item.id);
-					items.removeCurrentUser(item.id);
-					items.addUser((Item.User) item);
-					items.addCurrentUser((Item.User) item);
 					break;
 				}
+				queue.add(data);
 				sendBroadcast(new Intent(ViewPagerActivity.RECEIVER));
 			}
 			Player.clear();
@@ -216,11 +165,117 @@ public class VentriloidService extends Service {
 		}
 	};
 	
+	public boolean processNext(OnProcessedListener listener) {
+		VentriloEventData data = queue.poll();
+		if (data != null) {
+			process(data, listener);
+			return true;
+		}
+		return false;
+	}
+	
+	public void processAll(OnProcessedListener listener) {
+		VentriloEventData data;
+		while ((data = queue.poll()) != null)
+			process(data, listener);
+		listener.onProcessed();
+		uiReady = true;
+	}
+	
+	public void process(VentriloEventData data, OnProcessedListener listener) {
+		Item item;
+		switch (data.type) {
+		case VentriloEvents.V3_EVENT_PING:
+			items.setPing(data.ping);
+			break;
+			
+		case VentriloEvents.V3_EVENT_USER_LOGIN:
+			item = getUserFromData(data);
+			if (item.id != 0) {
+				items.addUser((Item.User) item);
+				items.addCurrentUser((Item.User) item);
+				if ((data.flags & (1 << 0)) == 0)
+					createNotification(item.name + " has logged in.", true);
+			} else {
+				Item.Channel c = item.new Channel(item.name, item.phonetic, item.comment);
+				items.setLobby(c);
+			}
+			break;
+			
+		case VentriloEvents.V3_EVENT_USER_LOGOUT:
+			item = items.getUserById(data.user.id);
+			items.removeUser(data.user.id);
+			items.removeCurrentUser(data.user.id);
+			createNotification(item.name + " has logged out.", true);
+			break;
+
+		case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
+			item = items.getUserById(data.user.id);
+			short from = item.parent;
+			item.parent = data.channel.id;
+			if (item.id == VentriloInterface.getuserid()) {
+				items.setCurrentChannel(item.parent);
+				items.addCurrentUser((Item.User) item);
+			} else {
+				if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
+					items.addCurrentUser((Item.User) item);
+					createNotification(item.name + " joined the channel.", true);
+				} else if (from == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
+					items.removeCurrentUser(item.id);
+					createNotification(item.name + " left the channel.", true);
+				}
+			}
+			items.removeUser(data.user.id);
+			items.addUser((Item.User) item);
+			break;
+			
+		case VentriloEvents.V3_EVENT_CHAN_ADD:
+			item = getChannelFromData(data);
+			items.addChannel((Item.Channel) item);
+			break;
+
+		case VentriloEvents.V3_EVENT_PLAY_AUDIO:
+			Item.User u = items.getUserById(data.user.id);
+			if (u.xmit != Item.User.XMIT_ON && uiReady)
+				items.setXmit(data.user.id, Item.User.XMIT_ON);
+			break;
+			
+		case VentriloEvents.V3_EVENT_USER_TALK_START:
+			if (uiReady)
+				items.setXmit(data.user.id, Item.User.XMIT_INIT);
+			break;
+
+		case VentriloEvents.V3_EVENT_USER_TALK_END:
+		case VentriloEvents.V3_EVENT_USER_TALK_MUTE:
+		case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
+		case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
+			if (uiReady)
+				items.setXmit(data.user.id, Item.User.XMIT_OFF);
+			break;
+			
+		case VentriloEvents.V3_EVENT_USER_MODIFY:
+			item = getUserFromData(data);
+			items.removeUser(item.id);
+			items.removeCurrentUser(item.id);
+			items.addUser((Item.User) item);
+			items.addCurrentUser((Item.User) item);
+			break;
+		}
+		listener.onProcessed();
+	}
+	
+	public class OnProcessedListener {
+		public void onProcessed() { }
+	}
+	
 	public void setXmit(boolean on) {
-		if (running && on)
-			items.setXmit(VentriloInterface.getuserid(), Item.User.XMIT_ON);
-		else if (running && !on)
-			items.setXmit(VentriloInterface.getuserid(), Item.User.XMIT_OFF);
+		VentriloEventData data = new VentriloEventData();
+		data.user.id = VentriloInterface.getuserid();
+		if (on)
+			data.type = VentriloEvents.V3_EVENT_PLAY_AUDIO;
+		else
+			data.type = VentriloEvents.V3_EVENT_USER_TALK_END;
+		queue.add(data);
 		sendBroadcast(new Intent(ViewPagerActivity.RECEIVER));
 	}
 	

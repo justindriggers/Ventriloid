@@ -22,7 +22,6 @@ package com.jtxdriggers.android.ventriloid;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
-import android.util.Log;
 
 public class Recorder {
 
@@ -42,7 +41,6 @@ public class Recorder {
 			byte[] buffer = null;
 			
 			if (rate != 48000 && bufferSize < VentriloInterface.pcmlengthforrate(rate)) {
-				Log.e("debug", "setting buffer length to " + VentriloInterface.pcmlengthforrate(rate));
 				bufferSize = VentriloInterface.pcmlengthforrate(rate);
 			}
 

@@ -152,8 +152,8 @@ public class ItemData {
 	public void setXmit(short id, int xmit) {
 		Item.User u = getUserById(id);
 		u.xmit = xmit;
-		if (u.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-			getCurrentUserById(id).xmit = xmit;
+		//if (u.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+		//	getCurrentUserById(id).xmit = xmit;
 	}
 	
 	public int getPing() {

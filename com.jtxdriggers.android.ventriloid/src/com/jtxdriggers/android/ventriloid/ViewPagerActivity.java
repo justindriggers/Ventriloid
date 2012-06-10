@@ -57,6 +57,7 @@ public class ViewPagerActivity extends FragmentActivity {
 	private ViewPager mViewPager;
 	private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, ViewPagerActivity.TabInfo>();
 	private PagerAdapter mPagerAdapter;
+	private VentriloidService.OnProcessedListener listener;
 	
 	private ServerView sv = new ServerView();
 	private ChannelView cv = new ChannelView();
@@ -81,7 +82,6 @@ public class ViewPagerActivity extends FragmentActivity {
 		});
 		dialog.show();
 		
-		registerReceiver(receiver, new IntentFilter(RECEIVER));
 		bindService(new Intent(VentriloidService.SERVICE_INTENT), mConnection, Context.BIND_AUTO_CREATE);
 		setTitle("Checking latency...");
 	}
@@ -209,13 +209,26 @@ public class ViewPagerActivity extends FragmentActivity {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
 			
+			listener = s.new OnProcessedListener() {
+				@Override
+				public void onProcessed() {
+					setPing();
+					sv.process();
+					cv.process();
+				}
+			};
+			
 			initialiseTabHost(instance);
 			if (instance != null)
 	            mTabHost.setCurrentTabByTag(instance.getString("tab"));
 			
 			intialiseViewPager();
 			
+			s.processAll(listener);
+			
+			registerReceiver(receiver, new IntentFilter(RECEIVER));
 			dialog.dismiss();
+			
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
@@ -226,9 +239,7 @@ public class ViewPagerActivity extends FragmentActivity {
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			setPing();
-			sv.process();
-			cv.process();
+			s.processNext(listener);
 		}
 	};
 	

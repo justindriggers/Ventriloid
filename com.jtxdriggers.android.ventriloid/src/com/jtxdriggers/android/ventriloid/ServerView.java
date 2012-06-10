@@ -40,7 +40,6 @@ public class ServerView extends Fragment {
 	private ExpandableListView list;
 	private VentriloidListAdapter adapter;
 	private VentriloidService s;
-	private boolean adapterReady = false;
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		if (container == null)
@@ -53,7 +52,7 @@ public class ServerView extends Fragment {
 		adapter = new VentriloidListAdapter(
 			getActivity(),
 			s,
-			VentriloidListAdapter.SERVER_VIEW,
+			false,
 			s.getItemData().getChannels(),
 			R.layout.channel_row,
 			new String[] { "indent", "status", "name", "comment" },
@@ -64,13 +63,7 @@ public class ServerView extends Fragment {
 			new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
 	
 		list.setAdapter(adapter);
-		adapter.notifyDataSetChanged();
-
-		for (int i = 0; i < adapter.getGroupCount(); i++) {
-			list.expandGroup(i);
-		}
-		
-		adapterReady = true;
+		process();
 		
 		return list;
 	}
@@ -82,8 +75,11 @@ public class ServerView extends Fragment {
 	}
 	
 	public void process() {
-		if (adapterReady)
-			adapter.update();
+		adapter.update();
+
+		for (int i = 0; i < adapter.getGroupCount(); i++) {
+			list.expandGroup(i);
+		}
 	}
 	
 	private OnGroupClickListener onChannelClick = new OnGroupClickListener() {
