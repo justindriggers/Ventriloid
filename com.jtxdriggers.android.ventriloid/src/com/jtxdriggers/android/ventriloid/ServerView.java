@@ -46,7 +46,6 @@ public class ServerView extends Fragment {
 		if (container == null)
             return null;
 		
-		//list = (ExpandableListView) inflater.inflate(R.layout.serverview, container, false);
 		list = new ExpandableListView(getActivity());
 		list.setGroupIndicator(null);
 		list.setBackgroundColor(Color.WHITE);
