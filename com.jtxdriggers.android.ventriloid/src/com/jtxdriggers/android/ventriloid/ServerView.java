@@ -23,6 +23,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.InputType;
@@ -45,8 +46,10 @@ public class ServerView extends Fragment {
 		if (container == null)
             return null;
 		
-		list = (ExpandableListView) inflater.inflate(R.layout.serverview, container, false);
+		//list = (ExpandableListView) inflater.inflate(R.layout.serverview, container, false);
+		list = new ExpandableListView(getActivity());
 		list.setGroupIndicator(null);
+		list.setBackgroundColor(Color.WHITE);
 		list.setOnGroupClickListener(onChannelClick);
 
 		adapter = new VentriloidListAdapter(

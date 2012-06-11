@@ -20,6 +20,7 @@
 package com.jtxdriggers.android.ventriloid;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -38,8 +39,9 @@ public class ChannelView extends Fragment {
 		if (container == null)
             return null;
 		
-		list = (ExpandableListView) inflater.inflate(R.layout.serverview, container, false);
+		list = new ExpandableListView(getActivity());
 		list.setGroupIndicator(null);
+		list.setBackgroundColor(Color.WHITE);
 		list.setOnGroupClickListener(new OnGroupClickListener() {
 			public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
 				return true;
