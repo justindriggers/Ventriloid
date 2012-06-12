@@ -19,12 +19,18 @@
 
 package com.jtxdriggers.android.ventriloid;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.text.InputType;
 import android.text.method.PasswordTransformationMethod;
@@ -50,38 +56,31 @@ public class ServerView extends Fragment {
 		list.setGroupIndicator(null);
 		list.setBackgroundColor(Color.WHITE);
 		list.setOnGroupClickListener(onChannelClick);
-
-		adapter = new VentriloidListAdapter(
-			getActivity(),
-			s,
-			false,
-			s.getItemData().getChannels(),
-			R.layout.channel_row,
-			new String[] { "indent", "status", "name", "comment" },
-			new int[] { R.id.crowindent, R.id.crowstatus, R.id.crowtext, R.id.crowcomment },
-			s.getItemData().getUsers(),
-			R.layout.user_row,
-			new String[] { "indent", "xmit", "status", "rank", "name", "comment", "integration" },
-			new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
-	
-		list.setAdapter(adapter);
-		process();
 		
 		return list;
 	}
 	
 	@Override
-	public void onAttach(Activity activity) {
-		super.onAttach(activity);
-		s = ((ViewPagerActivity) activity).s;
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setRetainInstance(true);
 	}
 	
-	public void process() {
+	@Override
+	public void onStart() {
+		super.onStart();
+		getActivity().bindService(new Intent(VentriloidService.SERVICE_INTENT), mConnection, Context.BIND_AUTO_CREATE);
+	}
+	
+	@Override
+	public void onStop() {
+		getActivity().unregisterReceiver(receiver);
+		getActivity().unbindService(mConnection);
+		super.onStop();
+	}
+	
+	public void update() {
 		adapter.update();
-
-		for (int i = 0; i < adapter.getGroupCount(); i++) {
-			list.expandGroup(i);
-		}
 	}
 	
 	private OnGroupClickListener onChannelClick = new OnGroupClickListener() {
@@ -109,6 +108,45 @@ public class ServerView extends Fragment {
 			} else
 				VentriloInterface.changechannel(c.id, "");
 			return true;
+		}
+	};
+	
+	private ServiceConnection mConnection = new ServiceConnection() {
+		public void onServiceConnected(ComponentName className, IBinder binder) {
+			s = ((VentriloidService.MyBinder) binder).getService();
+			
+			getActivity().registerReceiver(receiver, new IntentFilter(ViewPagerActivity.FRAGMENT_RECEIVER));
+
+			adapter = new VentriloidListAdapter(
+				getActivity(),
+				s,
+				false,
+				s.getItemData().getChannels(),
+				R.layout.channel_row,
+				new String[] { "indent", "status", "name", "comment" },
+				new int[] { R.id.crowindent, R.id.crowstatus, R.id.crowtext, R.id.crowcomment },
+				s.getItemData().getUsers(),
+				R.layout.user_row,
+				new String[] { "indent", "xmit", "status", "rank", "name", "comment", "integration" },
+				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
+		
+			list.setAdapter(adapter);
+			update();
+
+			for (int i = 0; i < adapter.getGroupCount(); i++) {
+				list.expandGroup(i);
+			}
+		}
+
+		public void onServiceDisconnected(ComponentName className) {
+			s = null;
+		}
+	};
+	
+	private BroadcastReceiver receiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			update();
 		}
 	};
 }

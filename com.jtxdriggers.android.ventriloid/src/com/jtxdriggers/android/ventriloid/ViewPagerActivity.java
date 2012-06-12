@@ -33,6 +33,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.View;
@@ -42,18 +43,20 @@ import android.widget.ImageView;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TabHost.TabContentFactory;
+import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
 
 public class ViewPagerActivity extends FragmentActivity {
 	
-	public static final String RECEIVER = "com.jtxdriggers.android.ventriloid.RECEIVER";
+	public static final String ACTIVITY_RECEIVER = "com.jtxdriggers.android.ventriloid.ACTIVITY_RECEIVER";
+	public static final String FRAGMENT_RECEIVER = "com.jtxdriggers.android.ventriloid.FRAGMENT_RECEIVER";
 
-	private Bundle instance;
 	private TabHost mTabHost;
 	private ViewPager mViewPager;
 	private HashMap<String, TabInfo> mapTabInfo = new HashMap<String, ViewPagerActivity.TabInfo>();
-	private PagerAdapter mPagerAdapter;
-	private VentriloidService.OnProcessedListener listener;
+	private FragmentPagerAdapter mPagerAdapter;
+	private List<Fragment> fragments;
+	private int position = 0;
 	
 	private ServerView sv = new ServerView();
 	private ChannelView cv = new ChannelView();
@@ -61,28 +64,40 @@ public class ViewPagerActivity extends FragmentActivity {
 
 	public VentriloidService s;
 
-	protected void onCreate(Bundle savedInstanceState) {
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.viewpager);
 		
-		// Save args for after the service is bound. There has to be a better way to do this...
-		instance = savedInstanceState;
+		if (savedInstanceState != null)
+			position = savedInstanceState.getInt("tab");
 		
-		bindService(new Intent(VentriloidService.SERVICE_INTENT), mConnection, Context.BIND_AUTO_CREATE);
+		initialiseTabHost(savedInstanceState);
+		intialiseViewPager();
+		
 		setTitle("Checking latency...");
 	}
 
-    protected void onSaveInstanceState(Bundle savedInstanceState) {
-    	savedInstanceState.putString("tab", mTabHost.getCurrentTabTag());
+	@Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+    	savedInstanceState.putInt("tab", mViewPager.getCurrentItem());
         super.onSaveInstanceState(savedInstanceState);
     }
+	
+	@Override
+	public void onStart() {
+		super.onStart();
+		registerReceiver(receiver, new IntentFilter(ACTIVITY_RECEIVER));
+		bindService(new Intent(VentriloidService.SERVICE_INTENT), mConnection, Context.BIND_AUTO_CREATE);
+	}
     
-    protected void onDestroy() {
+	@Override
+    public void onStop() {
     	unregisterReceiver(receiver);
-    	s.stopSelf();
+    	if (isFinishing())
+    		s.stopSelf();
     	unbindService(mConnection);
-    	stopService(new Intent(VentriloidService.SERVICE_INTENT));
-    	super.onDestroy();
+    	super.onStop();
     }
     
     @SuppressWarnings("unused")
@@ -99,7 +114,7 @@ public class ViewPagerActivity extends FragmentActivity {
         }
 	}
 
-	class TabFactory implements TabContentFactory {
+	private class TabFactory implements TabContentFactory {
 		private final Context mContext;
 
 	    public TabFactory(Context context) {
@@ -115,11 +130,21 @@ public class ViewPagerActivity extends FragmentActivity {
 	}
 
     private void intialiseViewPager() {
-		List<Fragment> fragments = new Vector<Fragment>();
+		fragments = new Vector<Fragment>();
 		fragments.add(sv);
 		fragments.add(cv);
 		fragments.add(chat);
-		mPagerAdapter  = new PagerAdapter(getSupportFragmentManager(), fragments);
+		mPagerAdapter = new FragmentPagerAdapter(getSupportFragmentManager()) {
+			@Override
+			public Fragment getItem(int position) {
+				return fragments.get(position);
+			}
+
+			@Override
+			public int getCount() {
+				return fragments.size();
+			}
+		};
 
 		mViewPager = (ViewPager) findViewById(R.id.viewpager);
 		mViewPager.setAdapter(mPagerAdapter);
@@ -128,9 +153,11 @@ public class ViewPagerActivity extends FragmentActivity {
 			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) { }
 			public void onPageSelected(int position) {
 				mTabHost.setCurrentTabByTag("Tab" + position);
+				ViewPagerActivity.this.position = position;
 			}
 		});
 		mViewPager.setOffscreenPageLimit(3);
+		mViewPager.setCurrentItem(position);
     }
     
 	private void initialiseTabHost(Bundle args) {
@@ -151,21 +178,23 @@ public class ViewPagerActivity extends FragmentActivity {
         int pixels = (int) (scale + 0.5f);
         
         ((TextView)tabs[0].findViewById(android.R.id.text1)).setText("Server");
-        ViewPagerActivity.AddTab(this, mTabHost, mTabHost.newTabSpec("Tab0").setIndicator(tabs[0]), ( tabInfo = new TabInfo("Tab0", ServerView.class, args)));
+        addTab(mTabHost.newTabSpec("Tab0").setIndicator(tabs[0]), (tabInfo = new TabInfo("Tab0", ServerView.class, args)));
         mapTabInfo.put(tabInfo.tag, tabInfo);
         mTabHost.getTabWidget().addView(divider1, pixels, LayoutParams.FILL_PARENT);
         ((TextView)tabs[1].findViewById(android.R.id.text1)).setText("Channel");
-        ViewPagerActivity.AddTab(this, mTabHost, mTabHost.newTabSpec("Tab1").setIndicator(tabs[1]), ( tabInfo = new TabInfo("Tab1", ChannelView.class, args)));
+        addTab(mTabHost.newTabSpec("Tab1").setIndicator(tabs[1]), (tabInfo = new TabInfo("Tab1", ChannelView.class, args)));
         mapTabInfo.put(tabInfo.tag, tabInfo);
         mTabHost.getTabWidget().addView(divider2, pixels, LayoutParams.FILL_PARENT);
         ((TextView)tabs[2].findViewById(android.R.id.text1)).setText("Chat");
-        ViewPagerActivity.AddTab(this, mTabHost, mTabHost.newTabSpec("Tab2").setIndicator(tabs[2]), ( tabInfo = new TabInfo("Tab2", ChatView.class, args)));
+        addTab(mTabHost.newTabSpec("Tab2").setIndicator(tabs[2]), (tabInfo = new TabInfo("Tab2", ChatView.class, args)));
         mapTabInfo.put(tabInfo.tag, tabInfo);
 
         mTabHost.setOnTabChangedListener(new OnTabChangeListener() {
 			public void onTabChanged(String tabId) {
 				for (int i = 0; i < 3; i++) {
 					if (tabId.equals("Tab" + i)) {
+						position = i;
+						mViewPager.setCurrentItem(i);
 						tabs[i].findViewById(R.id.selected).setBackgroundColor(getResources().getColor(R.color.blue));
 						((TextView) tabs[i].findViewById(android.R.id.text1)).setTextColor(getResources().getColor(R.color.white));
 					} else {
@@ -173,8 +202,6 @@ public class ViewPagerActivity extends FragmentActivity {
 						((TextView) tabs[i].findViewById(android.R.id.text1)).setTextColor(getResources().getColor(R.color.gray));
 					}
 				}
-				int pos = mTabHost.getCurrentTab();
-				mViewPager.setCurrentItem(pos);
 			}
         });
         
@@ -182,38 +209,20 @@ public class ViewPagerActivity extends FragmentActivity {
 		((TextView) mTabHost.getCurrentTabView().findViewById(android.R.id.text1)).setTextColor(getResources().getColor(R.color.white));
 	}
 
-	private static void AddTab(ViewPagerActivity activity, final TabHost tabHost, TabHost.TabSpec tabSpec, final TabInfo tabInfo) {
-		tabSpec.setContent(activity.new TabFactory(activity));
-        tabHost.addTab(tabSpec);
-        tabHost.getTabWidget().getChildTabViewAt(tabHost.getTabWidget().getTabCount() - 1).setOnClickListener(new OnClickListener() {
+	private void addTab(TabSpec tabSpec, final TabInfo tabInfo) {
+		tabSpec.setContent(new TabFactory(this));
+        mTabHost.addTab(tabSpec);
+        mTabHost.getTabWidget().getChildTabViewAt(mTabHost.getTabWidget().getTabCount() - 1).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				tabHost.setCurrentTabByTag(tabInfo.tag);
+				mTabHost.setCurrentTabByTag(tabInfo.tag);
 			}
         });
 	}
-    
+	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
-			
-			listener = s.new OnProcessedListener() {
-				@Override
-				public void onProcessed() {
-					setPing();
-					sv.process();
-					cv.process();
-				}
-			};
-			
-			initialiseTabHost(instance);
-			if (instance != null)
-	            mTabHost.setCurrentTabByTag(instance.getString("tab"));
-			
-			intialiseViewPager();
-			
-			s.processAll(listener);
-			
-			registerReceiver(receiver, new IntentFilter(RECEIVER));
+			s.processAll();
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
@@ -224,12 +233,15 @@ public class ViewPagerActivity extends FragmentActivity {
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			s.processNext(listener);
+			int ping;
+			if ((ping = intent.getIntExtra("ping", -1)) < 0)
+				s.processNext();
+			else
+				setPing(ping);
 		}
 	};
 	
-	private void setPing() {
-		int ping = s.getItemData().getPing();
+	private void setPing(int ping) {
 		if (ping < 65535 && ping > 0)
 			setTitle("Ping: " + ping + "ms");
 		else

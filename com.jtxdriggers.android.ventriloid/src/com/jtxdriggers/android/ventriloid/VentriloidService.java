@@ -29,7 +29,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.widget.RemoteViews;
 
 public class VentriloidService extends Service {
 	
@@ -43,7 +42,7 @@ public class VentriloidService extends Service {
 	private NotificationManager nm;
 	private Notification notif;
 	private Server server;
-	private boolean running = false, uiReady = false;
+	private boolean running = false;
 	private ItemData items = new ItemData();
 	private Recorder recorder = new Recorder(this);
 	private ConcurrentLinkedQueue<VentriloEventData> queue;
@@ -94,7 +93,7 @@ public class VentriloidService extends Service {
 	}
 
 	@Override
-	public IBinder onBind(Intent i) {
+	public IBinder onBind(Intent intent) {
 		return mBinder;
 	}
 
@@ -109,21 +108,29 @@ public class VentriloidService extends Service {
 	}
 
 	private Runnable eventHandler = new Runnable() {
-
 		public void run() {
+			
+			Item item;
 			while (running) {
 				VentriloEventData data = new VentriloEventData();
 				VentriloInterface.getevent(data);
-				//Log.d("ventriloid", "Processing event type " + data.type);
 				
-				switch (data.type) {				
+				switch (data.type) {
+				case VentriloEvents.V3_EVENT_USER_LOGIN:
+					item = getUserFromData(data);
+					if ((data.flags & (1 << 0)) == 0)
+						createNotification(item.name + " has logged in.", true);
+					break;
+					
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					Player.close(data.user.id);
+					item = items.getUserById(data.user.id);
+					createNotification(item.name + " has logged out.", true);
 					break;
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 					notif = new Notification(R.drawable.icon, "Now Connected", 0);
-					Intent notifIntent = new Intent(VentriloidService.this, ViewPagerActivity.class).addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+					Intent notifIntent = new Intent(VentriloidService.this, ViewPagerActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 					notif.setLatestEventInfo(getApplicationContext(), "Ventriloid", "Connected to " + server.getServername(), PendingIntent.getActivity(VentriloidService.this, 0, notifIntent, 0));
 					notif.flags |= Notification.FLAG_ONGOING_EVENT;
 					/*RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.noti);
@@ -142,6 +149,11 @@ public class VentriloidService extends Service {
 						recorder.stop();
 						recorder.start(55.03125, VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(data.user.id)));
 					} else {
+						item = items.getUserById(data.user.id);
+						if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+							createNotification(item.name + " joined the channel.", true);
+						else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+							createNotification(item.name + " left the channel.", true);
 						Player.close(data.user.id);
 					}
 					break;
@@ -156,37 +168,43 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
 					Player.close(data.user.id);
 					break;
+					
+				case VentriloEvents.V3_EVENT_USER_PAGE:
+					item = getUserFromData(data);
+					createNotification("Page from " + item.name, false);
+					break;
 				}
 				queue.add(data);
-				sendBroadcast(new Intent(ViewPagerActivity.RECEIVER));
+				sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER));
 			}
 			Player.clear();
 			recorder.stop();
 		}
 	};
 	
-	public boolean processNext(OnProcessedListener listener) {
+	public boolean processNext() {
 		VentriloEventData data = queue.poll();
 		if (data != null) {
-			process(data, listener);
+			process(data);
 			return true;
 		}
 		return false;
 	}
 	
-	public void processAll(OnProcessedListener listener) {
+	public void processAll() {
 		VentriloEventData data;
 		while ((data = queue.poll()) != null)
-			process(data, listener);
-		listener.onProcessed();
-		uiReady = true;
+			process(data);
 	}
 	
-	public void process(VentriloEventData data, OnProcessedListener listener) {
+	public void process(VentriloEventData data) {
 		Item item;
+		boolean sendBroadcast = false;
+		
 		switch (data.type) {
 		case VentriloEvents.V3_EVENT_PING:
 			items.setPing(data.ping);
+			sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER).putExtra("ping", data.ping));
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_LOGIN:
@@ -194,19 +212,17 @@ public class VentriloidService extends Service {
 			if (item.id != 0) {
 				items.addUser((Item.User) item);
 				items.addCurrentUser((Item.User) item);
-				if ((data.flags & (1 << 0)) == 0)
-					createNotification(item.name + " has logged in.", true);
 			} else {
 				Item.Channel c = item.new Channel(item.name, item.phonetic, item.comment);
 				items.setLobby(c);
 			}
+			sendBroadcast = true;
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_LOGOUT:
-			item = items.getUserById(data.user.id);
 			items.removeUser(data.user.id);
 			items.removeCurrentUser(data.user.id);
-			createNotification(item.name + " has logged out.", true);
+			sendBroadcast = true;
 			break;
 
 		case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
@@ -217,40 +233,41 @@ public class VentriloidService extends Service {
 				items.setCurrentChannel(item.parent);
 				items.addCurrentUser((Item.User) item);
 			} else {
-				if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
+				if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 					items.addCurrentUser((Item.User) item);
-					createNotification(item.name + " joined the channel.", true);
-				} else if (from == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
+				else if (from == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 					items.removeCurrentUser(item.id);
-					createNotification(item.name + " left the channel.", true);
-				}
 			}
 			items.removeUser(data.user.id);
 			items.addUser((Item.User) item);
+			sendBroadcast = true;
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAN_ADD:
 			item = getChannelFromData(data);
 			items.addChannel((Item.Channel) item);
+			sendBroadcast = true;
 			break;
 
 		case VentriloEvents.V3_EVENT_PLAY_AUDIO:
 			Item.User u = items.getUserById(data.user.id);
-			if (u.xmit != Item.User.XMIT_ON && uiReady)
+			if (u.xmit != Item.User.XMIT_ON) {
 				items.setXmit(data.user.id, Item.User.XMIT_ON);
+				sendBroadcast = true;
+			}
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_TALK_START:
-			if (uiReady)
-				items.setXmit(data.user.id, Item.User.XMIT_INIT);
+			items.setXmit(data.user.id, Item.User.XMIT_INIT);
+			sendBroadcast = true;
 			break;
 
 		case VentriloEvents.V3_EVENT_USER_TALK_END:
 		case VentriloEvents.V3_EVENT_USER_TALK_MUTE:
 		case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
 		case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
-			if (uiReady)
-				items.setXmit(data.user.id, Item.User.XMIT_OFF);
+			items.setXmit(data.user.id, Item.User.XMIT_OFF);
+			sendBroadcast = true;
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_MODIFY:
@@ -259,13 +276,11 @@ public class VentriloidService extends Service {
 			items.removeCurrentUser(item.id);
 			items.addUser((Item.User) item);
 			items.addCurrentUser((Item.User) item);
+			sendBroadcast = true;
 			break;
 		}
-		listener.onProcessed();
-	}
-	
-	public class OnProcessedListener {
-		public void onProcessed() { }
+		if (sendBroadcast)
+			sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
 	}
 	
 	public void setXmit(boolean on) {
@@ -276,7 +291,7 @@ public class VentriloidService extends Service {
 		else
 			data.type = VentriloEvents.V3_EVENT_USER_TALK_END;
 		queue.add(data);
-		sendBroadcast(new Intent(ViewPagerActivity.RECEIVER));
+		sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER));
 	}
 	
 	public ItemData getItemData() {
@@ -310,17 +325,22 @@ public class VentriloidService extends Service {
 	}
 	
 	private void createNotification(String text, boolean autoCancel) {
-		notif = new Notification(R.drawable.icon, text, 0);
-		RemoteViews notifView = new RemoteViews(getPackageName(), R.layout.notif_layout);
+		//RemoteViews notifView = new RemoteViews(getPackageName(), R.layout.notif_layout);
 		//notifView.setOnClickPendingIntent(R.id.status_icon, PendingIntent.getBroadcast(context, requestCode, intent, flags));
-		notif.contentView = notifView;
-		Intent notifIntent = new Intent(VentriloidService.this, ViewPagerActivity.class).addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-		notif.setLatestEventInfo(getApplicationContext(), "Ventriloid", "Connected to " + server.getServername(), PendingIntent.getActivity(VentriloidService.this, 0, notifIntent, 0));
+		//notif.contentView = notifView;
+		Intent notifIntent = new Intent(this, ViewPagerActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		if (autoCancel) {
+			notif = new Notification(R.drawable.icon, text, 0);
+			notif.setLatestEventInfo(this, "Ventriloid", "Connected to " + server.getServername(), PendingIntent.getActivity(this, 0, notifIntent, 0));
 			nm.notify(1, notif);
 			nm.cancel(1);
-		} else
+		} else {
+			notif = new Notification(R.drawable.icon, text, System.currentTimeMillis());
+			notif.setLatestEventInfo(this, "Ventriloid", text, PendingIntent.getActivity(this, 0, notifIntent, 0));
+			notif.flags = Notification.FLAG_AUTO_CANCEL;
+			notif.defaults = Notification.DEFAULT_VIBRATE;
 			nm.notify(2, notif);
+		}
 	}
 
 }
