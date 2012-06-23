@@ -34,15 +34,58 @@ public class Recorder {
 	public Recorder(VentriloidService s) {
 		this.s = s;
 	}
-
-	private Runnable r = new Runnable() {
+	
+	private Runnable toggle = new Runnable() {
 		public void run() {
 			AudioRecord audiorecord = null;
 			byte[] buffer = null;
 			
-			if (rate != 48000 && bufferSize < VentriloInterface.pcmlengthforrate(rate)) {
+			if (rate != 48000 && bufferSize < VentriloInterface.pcmlengthforrate(rate))
 				bufferSize = VentriloInterface.pcmlengthforrate(rate);
+			
+			VentriloInterface.startaudio((short)0);
+
+			audiorecord = new AudioRecord(
+					MediaRecorder.AudioSource.MIC,
+					rate,
+					AudioFormat.CHANNEL_CONFIGURATION_MONO,
+					AudioFormat.ENCODING_PCM_16BIT,
+					bufferSize);
+			
+			try {
+				audiorecord.startRecording();
+			} catch (IllegalStateException e) {
+				VentriloInterface.stopaudio();
+				audiorecord.release();
+				return;
 			}
+			buffer = new byte[bufferSize];
+			
+			while(true) {
+		        for (int offset = 0, read = 0; offset < bufferSize; offset += read) {
+		        	if (stop) {
+		        		VentriloInterface.stopaudio();
+		        		audiorecord.stop();
+		        		audiorecord.release();
+		        		return;
+		        	}
+		        	if (!stop && (read = audiorecord.read(buffer, offset, bufferSize - offset)) < 0) {
+		        		throw new RuntimeException("AudioRecord read failed: " + Integer.toString(read));
+		        	}
+		        }
+		        if (!stop)
+		        	VentriloInterface.sendaudio(buffer, bufferSize, rate);
+			}
+		}
+	};
+
+	private Runnable voiceActivated = new Runnable() {
+		public void run() {
+			AudioRecord audiorecord = null;
+			byte[] buffer = null;
+			
+			if (rate != 48000 && bufferSize < VentriloInterface.pcmlengthforrate(rate))
+				bufferSize = VentriloInterface.pcmlengthforrate(rate);
 
 			audiorecord = new AudioRecord(
 					MediaRecorder.AudioSource.MIC,
@@ -142,10 +185,13 @@ public class Recorder {
 		}
 		return 0;
 	}
-
-	public boolean start(double threshold, int rate) {	
+	
+	public void rate(int rate) {
 		this.rate = rate;
-		thresh = threshold;
+	}
+	
+	public boolean prepare() {
+		stop = false;
 		
 		if (rate <= 0)
 			return true;
@@ -153,8 +199,26 @@ public class Recorder {
 		if ((bufferSize = getBufferSize()) <= 0)
 			return false;
 		
-		stop = false;
-		new Thread(r).start();
+		return true;
+	}
+	
+	public boolean start() {
+		if (!prepare())
+			return false;
+		
+		new Thread(toggle).start();
+		
+		return true;
+	}
+
+	public boolean start(double threshold) {
+		thresh = threshold;
+		
+		if (!prepare())
+			return false;
+		
+		new Thread(voiceActivated).start();
+		
 		return true;
 	}
 

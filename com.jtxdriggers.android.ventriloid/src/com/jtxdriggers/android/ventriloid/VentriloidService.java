@@ -27,8 +27,18 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.PixelFormat;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.Vibrator;
+import android.preference.PreferenceManager;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
+import android.view.WindowManager;
+import android.widget.Button;
 
 public class VentriloidService extends Service {
 	
@@ -39,14 +49,21 @@ public class VentriloidService extends Service {
 	public static String SERVICE_INTENT = "com.jtxdriggers.android.ventriloid.SERVICE";
 	
 	private final IBinder mBinder = new MyBinder();
+	private WindowManager wm;
 	private NotificationManager nm;
+	private Vibrator vibrator;
 	private Notification notif;
+	private SharedPreferences prefs;
 	private Server server;
 	private boolean running = false;
+	private boolean voiceActivation = false;
+	private boolean vibrate = false;
 	private ItemData items = new ItemData();
 	private Recorder recorder = new Recorder(this);
 	private ConcurrentLinkedQueue<VentriloEventData> queue;
 	private int start;
+	private double threshold = -1;
+	private Button ptt;
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -77,7 +94,14 @@ public class VentriloidService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		voiceActivation = prefs.getBoolean("voice_activation", false);
+		if (voiceActivation)
+			threshold = 55.03125;
 		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+		if (prefs.getBoolean("vibrate", true));
+			vibrate = true;
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
 		//VentriloInterface.debuglevel(1 << 11);
 		running = true;
@@ -86,6 +110,12 @@ public class VentriloidService extends Service {
 
 	@Override
 	public void onDestroy() {
+        if(ptt != null) {
+        	try {
+        		wm.removeView(ptt);
+        	} catch (IllegalArgumentException e) { }
+            ptt = null;
+        }
 		VentriloInterface.logout();
 		nm.cancelAll();
 		running = false;
@@ -94,7 +124,68 @@ public class VentriloidService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
+		createPTT();
 		return mBinder;
+	}
+	
+	private void createPTT() {		
+		final boolean show = prefs.getBoolean("show_ptt", false);
+		final boolean toggle = prefs.getBoolean("toggle_mode", false);
+		ptt = new Button(this);
+		ptt.setOnTouchListener(new OnTouchListener() {
+			boolean toggleOn = false;
+			public boolean onTouch(View v, MotionEvent event) {
+				if (show) {
+					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						if (vibrate)
+							vibrator.vibrate(25);
+						if (toggle) {
+							if (toggleOn) {
+								recorder.stop();
+								setXmit(false);
+								ptt.setPressed(false);
+								toggleOn = false;
+							} else {
+								recorder.start();
+								setXmit(true);
+								ptt.setPressed(true);
+								toggleOn = true;
+							}
+						} else {
+							recorder.start();
+							setXmit(true);
+							ptt.setPressed(true);
+						}
+					} else if (!toggle && event.getAction() == MotionEvent.ACTION_UP) {
+						recorder.stop();
+						setXmit(false);
+						if (vibrate)
+							vibrator.vibrate(25);
+						ptt.setPressed(false);
+					}
+					return true;
+				}
+				return false;
+			}
+		});
+		ptt.setText("Push to Talk");
+		
+		wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+		
+		int wrap = 0,
+			overlayType = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+			flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+		
+		if (show && !voiceActivation)
+			wrap = WindowManager.LayoutParams.WRAP_CONTENT;
+		
+		if (prefs.getBoolean("screen_on", false))
+			flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+        		wrap, wrap, overlayType, flags, PixelFormat.TRANSLUCENT);
+        params.gravity = Gravity.CENTER_VERTICAL | Gravity.BOTTOM;
+		wm.addView(ptt, params);
 	}
 
 	public class MyBinder extends Binder {
@@ -139,15 +230,18 @@ public class VentriloidService extends Service {
 					notif.contentView = contentView;
 					notif.contentIntent = pIntent;*/
 					nm.notify(0, notif);
-					recorder.start(55.03125, VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
+					recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
+					if (voiceActivation)
+						recorder.start(threshold);
 					sendBroadcast(new Intent(Main.RECEIVER).putExtra("type", VentriloEvents.V3_EVENT_LOGIN_COMPLETE));
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
 					if (data.user.id == VentriloInterface.getuserid()) {
 						Player.clear();
-						recorder.stop();
-						recorder.start(55.03125, VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(data.user.id)));
+						recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(data.user.id)));
+						if (voiceActivation)
+							recorder.start(threshold);
 					} else {
 						item = items.getUserById(data.user.id);
 						if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))

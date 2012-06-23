@@ -84,7 +84,7 @@ public class Main extends Activity {
         
         settings.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
-        		return;
+        		startActivity(new Intent(Main.this, Settings.class));
         	}
         });
         

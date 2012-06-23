@@ -48,6 +48,7 @@ public class ChannelView extends Fragment {
 		list = new ExpandableListView(getActivity());
 		list.setGroupIndicator(null);
 		list.setBackgroundColor(Color.WHITE);
+		list.setCacheColorHint(0);
 		list.setOnGroupClickListener(new OnGroupClickListener() {
 			public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
 				return true;

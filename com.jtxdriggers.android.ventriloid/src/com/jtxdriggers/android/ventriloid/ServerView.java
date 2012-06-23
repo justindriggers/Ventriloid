@@ -55,6 +55,7 @@ public class ServerView extends Fragment {
 		list = new ExpandableListView(getActivity());
 		list.setGroupIndicator(null);
 		list.setBackgroundColor(Color.WHITE);
+		list.setCacheColorHint(0);
 		list.setOnGroupClickListener(onChannelClick);
 		
 		return list;
