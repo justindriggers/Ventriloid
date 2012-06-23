@@ -29,8 +29,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class ServerAdapter extends SQLiteOpenHelper {
 
-	public static final String DATABASE_NAME = "VentriloidData";
-	public static final int DATABASE_VERSION = 2;
+	public static final String DATABASE_NAME = "ventriloiddata";
+	public static final int DATABASE_VERSION = 3;
 	
 	public static final String TABLE_SERVERS = "Servers";
 	
@@ -42,24 +42,36 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	public static final String KEY_PORT = "Port";
 	public static final String KEY_PASSWORD = "Password";
 	
+    public static final String CREATE_SERVERS_TABLE = "CREATE TABLE " + TABLE_SERVERS + "("
+	+ KEY_ID + " INTEGER PRIMARY KEY, " + KEY_USERNAME + " TEXT NOT NULL, "
+	+ KEY_PHONETIC + " TEXT NOT NULL, " + KEY_SERVERNAME + " TEXT NOT NULL, "
+	+ KEY_HOSTNAME + " TEXT NOT NULL, " + KEY_PORT + " INTEGER NOT NULL, "
+	+ KEY_PASSWORD + " TEXT NOT NULL);";
+	
 	public ServerAdapter(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-        String CREATE_SERVERS_TABLE = "CREATE TABLE " + TABLE_SERVERS + "("
-        		+ KEY_ID + " INTEGER PRIMARY KEY, " + KEY_USERNAME + " TEXT NOT NULL, "
-        		+ KEY_PHONETIC + " TEXT NOT NULL, " + KEY_SERVERNAME + " TEXT NOT NULL, "
-        		+ KEY_HOSTNAME + " TEXT NOT NULL, " + KEY_PORT + " INTEGER NOT NULL, "
-        		+ KEY_PASSWORD + " TEXT NOT NULL);";
         db.execSQL(CREATE_SERVERS_TABLE);
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_SERVERS);
-        onCreate(db);
+		if (oldVersion < 3) {
+			db.execSQL("ALTER TABLE " + TABLE_SERVERS + " RENAME TO ServersTemp;");
+			db.execSQL(CREATE_SERVERS_TABLE);
+			db.execSQL("INSERT INTO " + TABLE_SERVERS + "("
+					+ KEY_ID + ", " + KEY_USERNAME + ", "
+					+ KEY_PHONETIC + ", " + KEY_SERVERNAME + ", "
+					+ KEY_HOSTNAME + ", " + KEY_PORT + ", "
+					+ KEY_PASSWORD + ") "
+					+ "SELECT _id, username, phonetic, "
+					+ "servername, hostname, portnumber, password "
+					+ "FROM ServersTemp;");
+			db.execSQL("DROP TABLE IF EXISTS ServersTemp;");
+		}
 	}
 	
 	public void addServer(Server server) {
