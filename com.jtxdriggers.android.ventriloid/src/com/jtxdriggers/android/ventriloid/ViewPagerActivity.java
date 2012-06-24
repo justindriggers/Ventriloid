@@ -29,13 +29,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager.LayoutParams;
@@ -57,6 +61,9 @@ public class ViewPagerActivity extends FragmentActivity {
 	private FragmentPagerAdapter mPagerAdapter;
 	private List<Fragment> fragments;
 	private int position = 0;
+	private SharedPreferences prefs;
+	private boolean pttEnabled, toggle, toggleOn = false;
+	private int pttKey;
 	
 	private ServerView sv = new ServerView();
 	private ChannelView cv = new ChannelView();
@@ -71,6 +78,14 @@ public class ViewPagerActivity extends FragmentActivity {
 		
 		if (savedInstanceState != null)
 			position = savedInstanceState.getInt("tab");
+		
+		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		if (pttEnabled = prefs.getBoolean("custom_ptt", false)) {
+			toggle = prefs.getBoolean("toggle_mode", false);
+			pttKey = prefs.getInt("ptt_key", KeyEvent.KEYCODE_CAMERA);
+		}
+		
+		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		
 		initialiseTabHost(savedInstanceState);
 		intialiseViewPager();
@@ -99,6 +114,34 @@ public class ViewPagerActivity extends FragmentActivity {
     	unbindService(mConnection);
     	super.onStop();
     }
+	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (!pttEnabled || s == null || keyCode != pttKey)
+			return super.onKeyDown(keyCode, event);
+		
+		if (toggle) {
+			if (toggleOn) {
+				toggleOn = false;
+				s.setPTTOn(false);
+			} else {
+				toggleOn = true;
+				s.setPTTOn(true);
+			}
+		} else
+			s.setPTTOn(true);
+		return true;
+	}
+	
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		if (!pttEnabled || s == null || keyCode != pttKey)
+			return super.onKeyUp(keyCode, event);
+		
+		if (!toggle)
+			s.setPTTOn(false);
+		return true;
+	}
     
     @SuppressWarnings("unused")
 	private class TabInfo {

@@ -73,6 +73,15 @@ public class ItemData {
 		return channels;
 	}
 	
+	public Item.Channel getChannelById(short id) {
+		for (int i = 0; i < channels.size(); i++) {
+			if (channels.get(i).id == id) {
+				return channels.get(i);
+			}
+		}
+		return null;
+	}
+	
 	public ArrayList<Item.Channel> getCurrentChannel() {
 		ArrayList<Item.Channel> c = new ArrayList<Item.Channel>();
 		c.add(currentChannel);

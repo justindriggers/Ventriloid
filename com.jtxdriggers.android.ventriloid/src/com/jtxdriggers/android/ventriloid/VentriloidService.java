@@ -128,6 +128,21 @@ public class VentriloidService extends Service {
 		return mBinder;
 	}
 	
+	public void setPTTOn(boolean on) {
+		if (on) {
+			if (recorder.start()) {
+				setXmit(true);
+				if (vibrate)
+					vibrator.vibrate(25);
+			}
+		} else {
+			recorder.stop();
+			setXmit(false);
+			if (vibrate)
+				vibrator.vibrate(25);
+		}
+	}
+	
 	private void createPTT() {		
 		final boolean show = prefs.getBoolean("show_ptt", false);
 		final boolean toggle = prefs.getBoolean("toggle_mode", false);
@@ -137,30 +152,22 @@ public class VentriloidService extends Service {
 			public boolean onTouch(View v, MotionEvent event) {
 				if (show) {
 					if (event.getAction() == MotionEvent.ACTION_DOWN) {
-						if (vibrate)
-							vibrator.vibrate(25);
 						if (toggle) {
 							if (toggleOn) {
-								recorder.stop();
-								setXmit(false);
+								setPTTOn(false);
 								ptt.setPressed(false);
 								toggleOn = false;
 							} else {
-								recorder.start();
-								setXmit(true);
+								setPTTOn(true);
 								ptt.setPressed(true);
 								toggleOn = true;
 							}
 						} else {
-							recorder.start();
-							setXmit(true);
+							setPTTOn(true);
 							ptt.setPressed(true);
 						}
 					} else if (!toggle && event.getAction() == MotionEvent.ACTION_UP) {
-						recorder.stop();
-						setXmit(false);
-						if (vibrate)
-							vibrator.vibrate(25);
+						setPTTOn(false);
 						ptt.setPressed(false);
 					}
 					return true;
@@ -293,12 +300,14 @@ public class VentriloidService extends Service {
 	
 	public void process(VentriloEventData data) {
 		Item item;
-		boolean sendBroadcast = false;
+		boolean sendBroadcast = true;
+		Intent i = new Intent(ViewPagerActivity.FRAGMENT_RECEIVER).putExtra("type", data.type);
 		
 		switch (data.type) {
 		case VentriloEvents.V3_EVENT_PING:
 			items.setPing(data.ping);
 			sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER).putExtra("ping", data.ping));
+			sendBroadcast = false;
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_LOGIN:
@@ -310,13 +319,11 @@ public class VentriloidService extends Service {
 				Item.Channel c = item.new Channel(item.name, item.phonetic, item.comment);
 				items.setLobby(c);
 			}
-			sendBroadcast = true;
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_LOGOUT:
 			items.removeUser(data.user.id);
 			items.removeCurrentUser(data.user.id);
-			sendBroadcast = true;
 			break;
 
 		case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
@@ -334,26 +341,27 @@ public class VentriloidService extends Service {
 			}
 			items.removeUser(data.user.id);
 			items.addUser((Item.User) item);
-			sendBroadcast = true;
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAN_ADD:
 			item = getChannelFromData(data);
 			items.addChannel((Item.Channel) item);
-			sendBroadcast = true;
+			break;
+			
+		case VentriloEvents.V3_EVENT_CHAN_BADPASS:
+			i.putExtra("id", data.channel.id);
 			break;
 
 		case VentriloEvents.V3_EVENT_PLAY_AUDIO:
 			Item.User u = items.getUserById(data.user.id);
-			if (u.xmit != Item.User.XMIT_ON) {
+			if (u.xmit != Item.User.XMIT_ON)
 				items.setXmit(data.user.id, Item.User.XMIT_ON);
-				sendBroadcast = true;
-			}
+			else
+				sendBroadcast = false;
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_TALK_START:
 			items.setXmit(data.user.id, Item.User.XMIT_INIT);
-			sendBroadcast = true;
 			break;
 
 		case VentriloEvents.V3_EVENT_USER_TALK_END:
@@ -361,7 +369,6 @@ public class VentriloidService extends Service {
 		case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
 		case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
 			items.setXmit(data.user.id, Item.User.XMIT_OFF);
-			sendBroadcast = true;
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_MODIFY:
@@ -370,11 +377,10 @@ public class VentriloidService extends Service {
 			items.removeCurrentUser(item.id);
 			items.addUser((Item.User) item);
 			items.addCurrentUser((Item.User) item);
-			sendBroadcast = true;
 			break;
 		}
 		if (sendBroadcast)
-			sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
+			sendBroadcast(i);
 	}
 	
 	public void setXmit(boolean on) {

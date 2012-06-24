@@ -39,6 +39,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
+import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ExpandableListView.OnGroupClickListener;
 
 public class ServerView extends Fragment {
@@ -57,6 +58,7 @@ public class ServerView extends Fragment {
 		list.setBackgroundColor(Color.WHITE);
 		list.setCacheColorHint(0);
 		list.setOnGroupClickListener(onChannelClick);
+		list.setOnChildClickListener(onUserClick);
 		
 		return list;
 	}
@@ -92,7 +94,7 @@ public class ServerView extends Fragment {
 			    input = new EditText(getActivity());
 			    input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
 			    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
-				passwordDialog.setTitle("Enter Channel Password: ")
+				passwordDialog.setTitle("Enter Channel Password:")
 				.setView(input)
 				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
@@ -110,6 +112,35 @@ public class ServerView extends Fragment {
 				VentriloInterface.changechannel(c.id, "");
 			return true;
 		}
+	};
+	
+	private OnChildClickListener onUserClick = new OnChildClickListener() {
+		public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+			final Item.Channel c = s.getItemData().getChannels().get(groupPosition);
+			if (c.reqPassword) {
+				Builder passwordDialog = new AlertDialog.Builder(getActivity());
+			    input = new EditText(getActivity());
+			    input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
+			    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
+				passwordDialog.setTitle("Enter Channel Password:")
+				.setView(input)
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						VentriloInterface.changechannel(c.id, input.getText().toString());
+						return;
+					}
+				})
+				.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						return;
+					}
+				});
+				passwordDialog.show();
+			} else
+				VentriloInterface.changechannel(c.id, "");
+			return true;
+		}
+		
 	};
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -147,7 +178,36 @@ public class ServerView extends Fragment {
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			update();
+			short type = intent.getShortExtra("type", (short)0);
+			switch (type) {
+			case VentriloEvents.V3_EVENT_CHAN_BADPASS:
+				final Item.Channel c = s.getItemData().getChannelById(intent.getShortExtra("id", (short)0));
+				if (c.reqPassword) {
+					Builder passwordDialog = new AlertDialog.Builder(getActivity());
+				    input = new EditText(getActivity());
+				    input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
+				    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
+					passwordDialog.setTitle("Error!")
+					.setMessage("Incorrect password. Please try again:")
+					.setView(input)
+					.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							VentriloInterface.changechannel(c.id, input.getText().toString());
+							return;
+						}
+					})
+					.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							return;
+						}
+					});
+					passwordDialog.show();
+				} else
+					VentriloInterface.changechannel(c.id, "");
+				break;
+			default:
+				update();
+			}
 		}
 	};
 }

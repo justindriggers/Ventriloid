@@ -30,12 +30,13 @@ public class Recorder {
 	private double thresh;
 	private int rate;
 	private int bufferSize;
+	private Thread toggle, voiceActivated;
 	
 	public Recorder(VentriloidService s) {
 		this.s = s;
 	}
 	
-	private Runnable toggle = new Runnable() {
+	private Runnable t = new Runnable() {
 		public void run() {
 			AudioRecord audiorecord = null;
 			byte[] buffer = null;
@@ -57,6 +58,7 @@ public class Recorder {
 			} catch (IllegalStateException e) {
 				VentriloInterface.stopaudio();
 				audiorecord.release();
+				toggle = null;
 				return;
 			}
 			buffer = new byte[bufferSize];
@@ -65,8 +67,8 @@ public class Recorder {
 		        for (int offset = 0, read = 0; offset < bufferSize; offset += read) {
 		        	if (stop) {
 		        		VentriloInterface.stopaudio();
-		        		audiorecord.stop();
 		        		audiorecord.release();
+		        		toggle = null;
 		        		return;
 		        	}
 		        	if (!stop && (read = audiorecord.read(buffer, offset, bufferSize - offset)) < 0) {
@@ -79,7 +81,7 @@ public class Recorder {
 		}
 	};
 
-	private Runnable voiceActivated = new Runnable() {
+	private Runnable v = new Runnable() {
 		public void run() {
 			AudioRecord audiorecord = null;
 			byte[] buffer = null;
@@ -99,6 +101,7 @@ public class Recorder {
 			} catch (IllegalStateException e) {
 				VentriloInterface.stopaudio();
 				audiorecord.release();
+				voiceActivated = null;
 				return;
 			}
 			buffer = new byte[bufferSize];
@@ -107,8 +110,8 @@ public class Recorder {
 		        for (int offset = 0, read = 0; offset < bufferSize; offset += read) {
 		        	if (stop) {
 		        		VentriloInterface.stopaudio();
-		        		audiorecord.stop();
 		        		audiorecord.release();
+		        		voiceActivated = null;
 		        		return;
 		        	}
 		        	if (!stop && (read = audiorecord.read(buffer, offset, bufferSize - offset)) < 0) {
@@ -190,7 +193,10 @@ public class Recorder {
 		this.rate = rate;
 	}
 	
-	public boolean prepare() {
+	public boolean prepare(Thread t) {
+		if (t != null)
+			return false;
+		
 		stop = false;
 		
 		if (rate <= 0)
@@ -203,10 +209,11 @@ public class Recorder {
 	}
 	
 	public boolean start() {
-		if (!prepare())
+		if (!prepare(toggle))
 			return false;
 		
-		new Thread(toggle).start();
+		toggle = new Thread(t);
+		toggle.start();
 		
 		return true;
 	}
@@ -214,10 +221,11 @@ public class Recorder {
 	public boolean start(double threshold) {
 		thresh = threshold;
 		
-		if (!prepare())
+		if (!prepare(voiceActivated))
 			return false;
 		
-		new Thread(voiceActivated).start();
+		voiceActivated = new Thread(v);
+		voiceActivated.start();
 		
 		return true;
 	}
