@@ -60,6 +60,7 @@ public class VentriloidService extends Service {
 	private boolean vibrate = false;
 	private ItemData items = new ItemData();
 	private Recorder recorder = new Recorder(this);
+	private Player player = new Player();
 	private ConcurrentLinkedQueue<VentriloEventData> queue;
 	private int start;
 	private double threshold = -1;
@@ -110,6 +111,7 @@ public class VentriloidService extends Service {
 
 	@Override
 	public void onDestroy() {
+		player.stop();
         if(ptt != null) {
         	try {
         		wm.removeView(ptt);
@@ -221,7 +223,7 @@ public class VentriloidService extends Service {
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
-					Player.close(data.user.id);
+					player.close(data.user.id);
 					item = items.getUserById(data.user.id);
 					createNotification(item.name + " has logged out.", true);
 					break;
@@ -245,7 +247,7 @@ public class VentriloidService extends Service {
 
 				case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
 					if (data.user.id == VentriloInterface.getuserid()) {
-						Player.clear();
+						player.clear();
 						recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(data.user.id)));
 						if (voiceActivation)
 							recorder.start(threshold);
@@ -255,19 +257,19 @@ public class VentriloidService extends Service {
 							createNotification(item.name + " joined the channel.", true);
 						else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 							createNotification(item.name + " left the channel.", true);
-						Player.close(data.user.id);
+						player.close(data.user.id);
 					}
 					break;
 
 				case VentriloEvents.V3_EVENT_PLAY_AUDIO:
-					Player.write(data.user.id, data.pcm.rate, data.pcm.channels, data.data.sample, data.pcm.length);
+					player.write(data.user.id, data.pcm.rate, data.pcm.channels, data.data.sample, data.pcm.length);
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_TALK_END:
 				case VentriloEvents.V3_EVENT_USER_TALK_MUTE:
 				case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
 				case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
-					Player.close(data.user.id);
+					player.close(data.user.id);
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_PAGE:
@@ -278,7 +280,7 @@ public class VentriloidService extends Service {
 				queue.add(data);
 				sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER));
 			}
-			Player.clear();
+			player.clear();
 			recorder.stop();
 		}
 	};

@@ -30,7 +30,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -84,8 +83,6 @@ public class ViewPagerActivity extends FragmentActivity {
 			toggle = prefs.getBoolean("toggle_mode", false);
 			pttKey = prefs.getInt("ptt_key", KeyEvent.KEYCODE_CAMERA);
 		}
-		
-		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		
 		initialiseTabHost(savedInstanceState);
 		intialiseViewPager();

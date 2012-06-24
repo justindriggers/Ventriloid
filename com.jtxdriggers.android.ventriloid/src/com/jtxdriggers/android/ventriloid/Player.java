@@ -1,25 +1,20 @@
 /*
- * Copyright 2010 Daniel Sloof <daniel@danslo.org>
+ * Copyright 2012 Justin Driggers <jtxdriggers@gmail.com>
  *
- * This file is part of Mangler.
+ * This file is part of Ventriloid.
  *
- * $LastChangedDate$
- * $Revision$
- * $LastChangedBy$
- * $URL$
- *
- * Mangler is free software: you can redistribute it and/or modify
+ * Ventriloid is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Mangler is distributed in the hope that it will be useful,
+ * Ventriloid is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mangler.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Ventriloid.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package com.jtxdriggers.android.ventriloid;
@@ -35,84 +30,77 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 
 public class Player {
-
-	private static Map<Short, AudioTrack> audiotracks = new HashMap<Short, AudioTrack>();
-
-	private static AudioTrack open(final short id, final int rate, final byte channels, final int buffer) {
-		AudioTrack audiotrack;
-		close(id);
-		try {
-			audiotrack = new AudioTrack(
-					AudioManager.STREAM_MUSIC,
-					rate,
-					(channels == 2)
-						? AudioFormat.CHANNEL_CONFIGURATION_STEREO
-						: AudioFormat.CHANNEL_CONFIGURATION_MONO,
-					AudioFormat.ENCODING_PCM_16BIT,
-					buffer,
-					AudioTrack.MODE_STREAM);
-			audiotracks.put(id, audiotrack);
-			return audiotrack;
-		}
-		catch (IllegalArgumentException e) {
-			throw e;
-		}
+	
+	private Map<Short, AudioTrack> tracks;
+	private AudioTrack blankTrack;
+	private boolean running = false;
+	
+	public Player() {
+		tracks = new HashMap<Short, AudioTrack>();
+		
+		// This thread tricks the system into letting us control volume no matter what activity is in the foreground.
+		running = true;
+		blankTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 8000, 2, AudioFormat.ENCODING_PCM_16BIT,
+				AudioTrack.getMinBufferSize(8000, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT),
+				AudioTrack.MODE_STREAM);
+		blankTrack.play();
+		new Thread(new Runnable() {
+			public void run() {
+				byte[] blank = new byte[16];
+				while (running) {
+					blankTrack.write(blank, 0, 16);
+				}
+			}
+		}).start();
+	}
+	
+	public void stop() {
+		running = false;
+		blankTrack.flush();
+		blankTrack.release();
 	}
 
-	public static void close(final short id) {
-		AudioTrack audiotrack;
-		if ((audiotrack = audiotracks.get(id)) != null) {
-			audiotrack.release();
-			audiotracks.remove(id);
-		}
-	}
+    public void close(short id) {
+        AudioTrack track;
+        if ((track = tracks.get(id)) != null) {
+        	track.release();
+        	tracks.remove(id);
+        }
+    }
 
-	public static void clear() {
-		Set<Entry<Short, AudioTrack>> set = audiotracks.entrySet();
-		for (Iterator<Entry<Short, AudioTrack>> iter = set.iterator(); iter.hasNext();) {
-			Entry<Short, AudioTrack> entry = iter.next();
-			entry.getValue().flush();
-			entry.getValue().release();
-		}
-		audiotracks.clear();
+    public void clear() {
+        Set<Entry<Short, AudioTrack>> set = tracks.entrySet();
+        for (Iterator<Entry<Short, AudioTrack>> iter = set.iterator(); iter.hasNext();) {
+            Entry<Short, AudioTrack> entry = iter.next();
+            entry.getValue().flush();
+            entry.getValue().release();
+        }
+        tracks.clear();
+    }
+	
+	private AudioTrack open(short id, int rate, int channels, int buffer) {
+        AudioTrack track;
+        close(id);
+    	track = new AudioTrack(AudioManager.STREAM_MUSIC, rate, channels,
+    			AudioFormat.ENCODING_PCM_16BIT, buffer, AudioTrack.MODE_STREAM);
+        tracks.put(id, track);
+        return track;
 	}
-
-	public static void rate(final short id, final int rate) {
-		AudioTrack audiotrack;
-		if ((audiotrack = audiotracks.get(id)) != null) {
-			audiotrack.setPlaybackRate(rate);
+	
+	public void write(short id, int rate, byte channels, byte[] sample, int length) {
+		AudioTrack track;
+		if ((track = tracks.get(id)) == null) {
+			int bufferSize = 0;
+			int channelsConfig = (channels == 2) ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO;
+			if (rate == 48000) {
+				bufferSize = AudioTrack.getMinBufferSize(rate, channelsConfig, AudioFormat.ENCODING_PCM_16BIT);
+			} else
+				bufferSize = VentriloInterface.pcmlengthforrate(rate) * channels * 2;
+			
+            track = open(id, rate, channelsConfig, bufferSize);
+            track.play();
 		}
+		track.write(sample, 0, length);
 	}
-
-	public static int rate(final short id) {
-		AudioTrack audiotrack;
-		if ((audiotrack = audiotracks.get(id)) != null) {
-			return audiotrack.getPlaybackRate();
-		}
-		return 0;
-	}
-
-	public static void write(final short id, final int rate, final byte channels, final byte[] sample, final int length) {
-		AudioTrack audiotrack;
-		if ((audiotrack = audiotracks.get(id)) == null) {
-			audiotrack = open(id, rate, channels,
-					(rate == 48000)
-						? AudioTrack.getMinBufferSize(
-								48000,
-								(channels == 2)
-									? AudioFormat.CHANNEL_CONFIGURATION_STEREO
-									: AudioFormat.CHANNEL_CONFIGURATION_MONO,
-								AudioFormat.ENCODING_PCM_16BIT)
-						: VentriloInterface.pcmlengthforrate(rate) * channels * 2);
-			audiotrack.play();
-		}
-		audiotrack.write(sample, 0, length);
-	}
-
-	public static void setVolume(final float volume) {
-		for (AudioTrack audiotrack : audiotracks.values()) {
-			audiotrack.setStereoVolume(volume, volume);
-		}
-	}
-
+	
 }
