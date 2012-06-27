@@ -56,15 +56,16 @@ public class VentriloidService extends Service {
 	private SharedPreferences prefs;
 	private Server server;
 	private boolean running = false;
-	private boolean voiceActivation = false;
-	private boolean vibrate = false;
 	private ItemData items = new ItemData();
 	private Recorder recorder = new Recorder(this);
 	private Player player = new Player();
 	private ConcurrentLinkedQueue<VentriloEventData> queue;
+	private Button ptt;
+	private boolean voiceActivation = false,
+		vibrate = false,
+		admin = false;
 	private int start;
 	private double threshold = -1;
-	private Button ptt;
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -181,19 +182,21 @@ public class VentriloidService extends Service {
 		
 		wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
 		
-		int wrap = 0,
+		int width = 0, height = 0,
 			overlayType = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
 			flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 		
-		if (show && !voiceActivation)
-			wrap = WindowManager.LayoutParams.WRAP_CONTENT;
+		if (show && !voiceActivation) {
+			width = WindowManager.LayoutParams.FILL_PARENT;
+			height = WindowManager.LayoutParams.WRAP_CONTENT;
+		}
 		
 		if (prefs.getBoolean("screen_on", false))
 			flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
 
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-        		wrap, wrap, overlayType, flags, PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.CENTER_VERTICAL | Gravity.BOTTOM;
+        		width, height, overlayType, flags, PixelFormat.TRANSPARENT);
+        params.gravity = Gravity.BOTTOM;
 		wm.addView(ptt, params);
 	}
 
@@ -312,6 +315,14 @@ public class VentriloidService extends Service {
 			sendBroadcast = false;
 			break;
 			
+		case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
+		case VentriloEvents.V3_EVENT_PERMS_UPDATED:
+			if (admin = VentriloInterface.getpermission("serveradmin")) {
+				item = items.getChannelById((short) 0);
+				((Item.Channel) item).changeStatus(admin);
+			}
+			break;
+			
 		case VentriloEvents.V3_EVENT_USER_LOGIN:
 			item = getUserFromData(data);
 			if (item.id != 0) {
@@ -355,8 +366,7 @@ public class VentriloidService extends Service {
 			break;
 
 		case VentriloEvents.V3_EVENT_PLAY_AUDIO:
-			Item.User u = items.getUserById(data.user.id);
-			if (u.xmit != Item.User.XMIT_ON)
+			if (((Item.User) items.getUserById(data.user.id)).xmit != Item.User.XMIT_ON)
 				items.setXmit(data.user.id, Item.User.XMIT_ON);
 			else
 				sendBroadcast = false;
@@ -367,10 +377,25 @@ public class VentriloidService extends Service {
 			break;
 
 		case VentriloEvents.V3_EVENT_USER_TALK_END:
+			items.setXmit(data.user.id, Item.User.XMIT_OFF);
+			break;
+			
 		case VentriloEvents.V3_EVENT_USER_TALK_MUTE:
+			items.setXmit(data.user.id, Item.User.XMIT_OFF);
+			break;
+			
 		case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
+			items.setXmit(data.user.id, Item.User.XMIT_OFF);
+			item = items.getUserById(data.user.id);
+			((Item.User) item).globalMute = !((Item.User) item).globalMute;
+			((Item.User) item).updateStatus();
+			break;
+			
 		case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
 			items.setXmit(data.user.id, Item.User.XMIT_OFF);
+			item = items.getUserById(data.user.id);
+			((Item.User) item).channelMute = !((Item.User) item).channelMute;
+			((Item.User) item).updateStatus();
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_MODIFY:

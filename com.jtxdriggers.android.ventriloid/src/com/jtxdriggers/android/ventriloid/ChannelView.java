@@ -29,10 +29,14 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ExpandableListView;
+import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
 import android.widget.ExpandableListView.OnGroupClickListener;
 
 public class ChannelView extends Fragment {
@@ -77,6 +81,48 @@ public class ChannelView extends Fragment {
 		super.onStop();
 	}
 	
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+		
+		long packedPosition = ((ExpandableListContextMenuInfo) menuInfo).packedPosition;
+		int packedPositionType = ExpandableListView.getPackedPositionType(packedPosition);
+		
+		if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
+			// Do stuff for group long click
+			menu.add(ContextMenu.NONE, ContextMenuItems.ChannelContext.CLEAR_PASSWORD, ContextMenu.NONE, "Clear Saved Password");
+		} else if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+			// Do stuff for child long click
+			Item.User u = s.getItemData().getCurrentUsers().get(0)
+				.get(ExpandableListView.getPackedPositionChild(packedPosition));
+			if (u.id == VentriloInterface.getuserid()) {
+				// Do stuff if you select yourself
+			} else {
+				// Do stuff for other users
+				menu.add(ContextMenu.NONE, ContextMenuItems.ChannelContext.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
+			}
+		}
+	}
+	
+	@Override
+	public boolean onContextItemSelected(MenuItem menuItem) {
+		long packedPosition = ((ExpandableListContextMenuInfo) menuItem.getMenuInfo()).packedPosition;
+		
+		switch (menuItem.getItemId()) {
+		case ContextMenuItems.ChannelContext.CLEAR_PASSWORD:
+			break;
+		case ContextMenuItems.ChannelContext.MUTE:
+			Item.User u = s.getItemData().getCurrentUsers().get(0)
+				.get(ExpandableListView.getPackedPositionChild(packedPosition));
+			u.muted = !u.muted;
+			VentriloInterface.setuservolume(u.id, u.muted ? 0 : u.volume);
+			u.updateStatus();
+			getActivity().sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
+			break;
+		}
+		return super.onContextItemSelected(menuItem);
+	}
+	
 	public void update() {
 		adapter.update();
 
@@ -106,6 +152,8 @@ public class ChannelView extends Fragment {
 		
 			list.setAdapter(adapter);
 			update();
+			
+			registerForContextMenu(list);
 		}
 
 		public void onServiceDisconnected(ComponentName className) {

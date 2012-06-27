@@ -27,6 +27,7 @@ public class Item {
 	public String name, phonetic, comment;
 	public String status = "";
 	public String indent = "";
+	public boolean muted = false;
 	
 	public class Channel extends Item {
 		public boolean reqPassword;
@@ -67,6 +68,11 @@ public class Item {
 			
 			return channel;
 		}
+		
+		public void changeStatus(boolean admin) {
+			if (admin)
+				status = "\"A\" ";
+		}
 	}
 	
 	public class User extends Item {
@@ -75,8 +81,13 @@ public class Item {
 		public static final int XMIT_INIT = R.drawable.user_status_other;
 		public static final int XMIT_ON = R.drawable.user_status_active;
 		
+		public static final int MUTE = 0;
+		public static final int CHANNEL_MUTE = 1;
+		public static final int GLOBAL_MUTE = 2;
+		
 		public String rank, url, integration;
-		public int xmit = XMIT_OFF;
+		public int xmit = XMIT_OFF, volume = 74;
+		public boolean globalMute = false, channelMute = false, inChat = false;
 		
 		public User() { }
 		
@@ -130,6 +141,24 @@ public class Item {
 			user.put("xmit", xmit);
 			
 			return user;
+		}
+		
+		public void updateStatus() {	
+			status = "";
+			if (channelMute)
+				status += "N";
+			if (globalMute)
+				status += "G";
+			if (muted)
+				status += "M";
+			if (inChat)
+				status += "C";
+			if (volume != 74)
+				status += "S";
+			
+			if (status.length() > 0) {
+				status = "\"" + status + "\" ";
+			}
 		}
 	}
 
