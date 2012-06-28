@@ -105,6 +105,9 @@ public class VentriloEventData {
 			public short channel_codec;
 			public short channel_format;
 			public boolean password_protected;
+			public boolean is_admin;
+			public boolean allow_phantoms;
+			public boolean allow_paging;
 		}
 		_channel channel = new _channel();
 		

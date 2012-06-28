@@ -33,6 +33,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -221,14 +222,15 @@ public class VentriloidService extends Service {
 				switch (data.type) {
 				case VentriloEvents.V3_EVENT_USER_LOGIN:
 					item = getUserFromData(data);
-					if ((data.flags & (1 << 0)) == 0)
+					if ((data.flags & (1 << 0)) == 0 && data.text.real_user_id == 0)
 						createNotification(item.name + " has logged in.", true);
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					player.close(data.user.id);
 					item = items.getUserById(data.user.id);
-					createNotification(item.name + " has logged out.", true);
+					if (((Item.User) item).realId == 0)
+						createNotification(item.name + " has logged out.", true);
 					break;
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
@@ -276,7 +278,7 @@ public class VentriloidService extends Service {
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_PAGE:
-					item = getUserFromData(data);
+					item = items.getUserById(data.user.id);
 					createNotification("Page from " + item.name, false);
 					break;
 				}
@@ -317,10 +319,9 @@ public class VentriloidService extends Service {
 			
 		case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 		case VentriloEvents.V3_EVENT_PERMS_UPDATED:
-			if (admin = VentriloInterface.getpermission("serveradmin")) {
-				item = items.getChannelById((short) 0);
-				((Item.Channel) item).changeStatus(admin);
-			}
+			admin = VentriloInterface.getpermission("serveradmin");
+			item = items.getChannelById((short) 0);
+			((Item.Channel) item).changeStatus(admin);
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_LOGIN:
@@ -421,6 +422,10 @@ public class VentriloidService extends Service {
 		sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER));
 	}
 	
+	public boolean isAdmin() {
+		return admin;
+	}
+	
 	public ItemData getItemData() {
 		return items;
 	}
@@ -430,12 +435,14 @@ public class VentriloidService extends Service {
 		Item item = new Item();
 		Item.User u = item.new User(data.user.id,
 						VentriloInterface.getuserchannel(data.user.id),
+						data.text.real_user_id,
 						bytesToString(data.text.name),
 						bytesToString(data.text.phonetic),
 						bytesToString(data.data.rank.name),
 						bytesToString(data.text.comment),
 						bytesToString(data.text.url),
 						bytesToString(data.text.integration_text));
+		u.updateStatus();
 		return u;
 	}
 	
@@ -447,7 +454,10 @@ public class VentriloidService extends Service {
 						bytesToString(data.text.name),
 						bytesToString(data.text.phonetic),
 						bytesToString(data.text.comment),
-						data.data.channel.password_protected);
+						data.data.channel.password_protected,
+						data.data.channel.is_admin,
+						data.data.channel.allow_phantoms,
+						data.data.channel.allow_paging);
 		return c;
 	}
 	

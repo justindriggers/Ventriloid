@@ -246,6 +246,10 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 	release_string(env, password, _password);
 }
 
+JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_adminlogout(JNIEnv* env, jobject obj) {
+	v3_admin_logout();
+}
+
 JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_changechannel(JNIEnv* env, jobject obj, jchar channelid, jstring password) {
 	char* _password = get_string(env, password);
 	v3_change_channel(channelid, _password);
@@ -319,6 +323,9 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 		set_short(env, channel, channel_class, "channel_codec", c->channel_codec);
 		set_short(env, channel, channel_class, "channel_format",c->channel_format);
 		set_bool (env, channel, channel_class, "password_protected", c->password_protected != 0);
+		set_bool (env, channel, channel_class, "is_admin", v3_is_channel_admin(channelid));
+		set_bool (env, channel, channel_class, "allow_phantoms", c->allow_phantoms != 0);
+		set_bool (env, channel, channel_class, "allow_paging", c->allow_paging != 0);
 		set_byte_array(env, text, text_class, "name", c->name, 32);
 		set_byte_array(env, text, text_class, "phonetic", c->phonetic, 32);
 		set_byte_array(env, text, text_class, "comment", c->comment, 128);

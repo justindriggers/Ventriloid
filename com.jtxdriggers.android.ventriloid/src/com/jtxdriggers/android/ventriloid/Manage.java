@@ -23,7 +23,9 @@ import java.util.ArrayList;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -36,12 +38,15 @@ public class Manage extends Activity {
 	private Spinner spinner;
 	private Button delete, edit, add, reset;
 	private ServerAdapter db;
+	private SharedPreferences prefs;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.manage);
+        
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
         spinner = (Spinner) findViewById(R.id.servers);
         delete = (Button) findViewById(R.id.delete);
@@ -53,6 +58,8 @@ public class Manage extends Activity {
         
         delete.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
+				if (spinner.getSelectedItemPosition() == prefs.getInt("server", 0))
+					prefs.edit().remove("server").commit();
 				db.deleteServer(db.getServer(getCurrentItemID(spinner)));
 				loadServers();
 			}
@@ -72,6 +79,7 @@ public class Manage extends Activity {
         
         reset.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
+        		prefs.edit().remove("server").commit();
         		db.clearServers();
         		loadServers();
         	}
@@ -88,9 +96,8 @@ public class Manage extends Activity {
     
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-      if (resultCode == RESULT_OK && requestCode == 1) {
-        finish();
-      }
+    	if (resultCode == RESULT_OK && requestCode == 1)
+    		finish();
     }
     
     private void loadServers() {
@@ -98,6 +105,7 @@ public class Manage extends Activity {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, servers);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner.setAdapter(adapter);
+		spinner.setSelection(prefs.getInt("server", 0));
     	
     	boolean isEnabled = servers.size() > 0;
 		spinner.setEnabled(isEnabled);

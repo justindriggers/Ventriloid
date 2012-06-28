@@ -99,6 +99,7 @@ public class ChannelView extends Fragment {
 				// Do stuff if you select yourself
 			} else {
 				// Do stuff for other users
+				menu.add(ContextMenu.NONE, ContextMenuItems.ChannelContext.SET_VOLUME, ContextMenu.NONE, "Set Volume");
 				menu.add(ContextMenu.NONE, ContextMenuItems.ChannelContext.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
 			}
 		}

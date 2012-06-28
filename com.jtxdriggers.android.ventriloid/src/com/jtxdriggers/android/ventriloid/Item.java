@@ -27,10 +27,10 @@ public class Item {
 	public String name, phonetic, comment;
 	public String status = "";
 	public String indent = "";
-	public boolean muted = false;
+	public boolean hasPhantom = false;
 	
 	public class Channel extends Item {
-		public boolean reqPassword;
+		public boolean reqPassword, isAdmin, allowPhantoms, allowPaging;
 		
 		public Channel() {
 			this.id = 0;
@@ -39,6 +39,7 @@ public class Item {
 			this.phonetic = "Lobby";
 			this.comment = "";
 			this.reqPassword = false;
+			this.isAdmin = false;
 		}
 		
 		public Channel(String name, String phonetic, String comment) {
@@ -50,13 +51,18 @@ public class Item {
 			this.reqPassword = false;
 		}
 		
-		public Channel(short id, short parent, String name, String phonetic, String comment, boolean reqPassword) {
+		public Channel(short id, short parent, String name, String phonetic, String comment, boolean reqPassword, boolean isAdmin, boolean allowPhantoms, boolean allowPaging) {
 			this.id = id;
 			this.parent = parent;
 			this.name = name;
 			this.phonetic = phonetic;
 			this.comment = comment;
 			this.reqPassword = reqPassword;
+			this.isAdmin = isAdmin;
+			this.allowPhantoms = allowPhantoms;
+			this.allowPaging = allowPaging;
+			if (isAdmin)
+				status = "\"A\" ";
 		}
 		
 		public HashMap<String, Object> toHashMap() {
@@ -70,6 +76,7 @@ public class Item {
 		}
 		
 		public void changeStatus(boolean admin) {
+			status = "";
 			if (admin)
 				status = "\"A\" ";
 		}
@@ -87,13 +94,15 @@ public class Item {
 		
 		public String rank, url, integration;
 		public int xmit = XMIT_OFF, volume = 74;
-		public boolean globalMute = false, channelMute = false, inChat = false;
+		public short realId;
+		public boolean muted = false, globalMute = false, channelMute = false, inChat = false;
 		
 		public User() { }
 		
-		public User(short id, short parent, String name, String phonetic, String rank, String comment, String url, String integration) {
+		public User(short id, short parent, short realId, String name, String phonetic, String rank, String comment, String url, String integration) {
 			this.id = id;
 			this.parent = parent;
+			this.realId = realId;
 			this.name = name;
 			this.phonetic = phonetic;
 			this.rank = rank;
@@ -143,12 +152,14 @@ public class Item {
 			return user;
 		}
 		
-		public void updateStatus() {	
+		public void updateStatus() {
 			status = "";
 			if (channelMute)
 				status += "N";
 			if (globalMute)
 				status += "G";
+			if (realId != 0)
+				status += "P";
 			if (muted)
 				status += "M";
 			if (inChat)

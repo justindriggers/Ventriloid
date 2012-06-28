@@ -29,7 +29,9 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -45,14 +47,16 @@ public class Main extends Activity {
 	private Button connect, manage, settings;
 	private ServerAdapter db;
 	private ProgressDialog dialog;
-	
 	private Intent serviceIntent;
+	private SharedPreferences prefs;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
         spinner = (Spinner) findViewById(R.id.servers);
         connect = (Button) findViewById(R.id.connect);
@@ -71,6 +75,8 @@ public class Main extends Activity {
 				});
 				dialog.show();
 				
+				prefs.edit().putInt("server", spinner.getSelectedItemPosition()).commit();
+				
         		serviceIntent = new Intent(VentriloidService.SERVICE_INTENT).putExtra("id", getCurrentItemID(spinner));
 				startService(serviceIntent);
         	}
@@ -78,6 +84,7 @@ public class Main extends Activity {
         
         manage.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
+				prefs.edit().putInt("server", spinner.getSelectedItemPosition()).commit();
 				startActivity(new Intent(Main.this, Manage.class));
 			}
         });
@@ -111,6 +118,7 @@ public class Main extends Activity {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, servers);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner.setAdapter(adapter);
+		spinner.setSelection(prefs.getInt("server", 0));
     	
     	boolean isEnabled = servers.size() > 0;
 		spinner.setEnabled(isEnabled);
