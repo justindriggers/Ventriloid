@@ -33,7 +33,6 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -54,7 +53,7 @@ public class VentriloidService extends Service {
 	private NotificationManager nm;
 	private Vibrator vibrator;
 	private Notification notif;
-	private SharedPreferences prefs;
+	private SharedPreferences prefs, volumePrefs;
 	private Server server;
 	private boolean running = false;
 	private ItemData items = new ItemData();
@@ -73,6 +72,8 @@ public class VentriloidService extends Service {
 		int id = intent.getExtras().getInt("id");
 		ServerAdapter db = new ServerAdapter(this);
 		server = db.getServer(id);
+
+		volumePrefs = getSharedPreferences("VOLUMES" + server.getId(), Context.MODE_PRIVATE);
 
 		new Thread(new Runnable() {
 			public void run() {
@@ -222,6 +223,10 @@ public class VentriloidService extends Service {
 				switch (data.type) {
 				case VentriloEvents.V3_EVENT_USER_LOGIN:
 					item = getUserFromData(data);
+					if (item.id == VentriloInterface.getuserid())
+						VentriloInterface.setxmitvolume(((Item.User) item).volume);
+					else
+						VentriloInterface.setuservolume(data.user.id, ((Item.User) item).muted ? 0 : ((Item.User) item).volume);
 					if ((data.flags & (1 << 0)) == 0 && data.text.real_user_id == 0)
 						createNotification(item.name + " has logged in.", true);
 					break;
@@ -318,9 +323,9 @@ public class VentriloidService extends Service {
 			break;
 			
 		case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
-		case VentriloEvents.V3_EVENT_PERMS_UPDATED:
+		// case VentriloEvents.V3_EVENT_PERMS_UPDATED:
 			admin = VentriloInterface.getpermission("serveradmin");
-			item = items.getChannelById((short) 0);
+			item = items.getChannels().get(0);
 			((Item.Channel) item).changeStatus(admin);
 			break;
 			
@@ -329,6 +334,8 @@ public class VentriloidService extends Service {
 			if (item.id != 0) {
 				items.addUser((Item.User) item);
 				items.addCurrentUser((Item.User) item);
+				if (((Item.User) item).realId == VentriloInterface.getuserid())
+					items.getChannelById(item.parent).hasPhantom = true;
 			} else {
 				Item.Channel c = item.new Channel(item.name, item.phonetic, item.comment);
 				items.setLobby(c);
@@ -336,6 +343,9 @@ public class VentriloidService extends Service {
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_LOGOUT:
+			item = items.getUserById(data.user.id);
+			if (((Item.User) item).realId == VentriloInterface.getuserid())
+				items.getChannelById(item.parent).hasPhantom = false;
 			items.removeUser(data.user.id);
 			items.removeCurrentUser(data.user.id);
 			break;
@@ -426,6 +436,12 @@ public class VentriloidService extends Service {
 		return admin;
 	}
 	
+	public void setAdmin(boolean isAdmin) {
+		admin = isAdmin;
+		Item.Channel c = items.getChannels().get(0);
+		c.changeStatus(admin);
+	}
+	
 	public ItemData getItemData() {
 		return items;
 	}
@@ -441,7 +457,11 @@ public class VentriloidService extends Service {
 						bytesToString(data.data.rank.name),
 						bytesToString(data.text.comment),
 						bytesToString(data.text.url),
-						bytesToString(data.text.integration_text));
+						bytesToString(data.text.integration_text),
+						data.user.id == VentriloInterface.getuserid() ?
+								volumePrefs.getInt("transmit", 74) :
+								volumePrefs.getInt("vol" + data.user.id, 74),
+						volumePrefs.getBoolean("mute" + data.user.id, false));
 		u.updateStatus();
 		return u;
 	}
@@ -459,6 +479,10 @@ public class VentriloidService extends Service {
 						data.data.channel.allow_phantoms,
 						data.data.channel.allow_paging);
 		return c;
+	}
+	
+	public int getServerId() {
+		return server.getId();
 	}
 	
 	private void createNotification(String text, boolean autoCancel) {

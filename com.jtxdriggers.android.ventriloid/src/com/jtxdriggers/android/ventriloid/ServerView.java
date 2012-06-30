@@ -31,23 +31,34 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.text.ClipboardManager;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.method.PasswordTransformationMethod;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ExpandableListView.OnGroupClickListener;
+import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.TextView;
 
 public class ServerView extends Fragment {
 
@@ -55,7 +66,10 @@ public class ServerView extends Fragment {
 	private ExpandableListView list;
 	private VentriloidListAdapter adapter;
 	private VentriloidService s;
-	private SharedPreferences prefs;
+	private SharedPreferences prefs, volumePrefs, passwordPrefs;
+	
+	// Stupid workaround for broken ExpanableListView SubMenus
+	private long packedPosition;
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		if (container == null)
@@ -92,9 +106,8 @@ public class ServerView extends Fragment {
 	
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-		super.onCreateContextMenu(menu, v, menuInfo);
-		
-		long packedPosition = ((ExpandableListContextMenuInfo) menuInfo).packedPosition;
+		// Define this as a class variable to work around the bug with SubMenus
+		packedPosition = ((ExpandableListContextMenuInfo) menuInfo).packedPosition;
 		int packedPositionType = ExpandableListView.getPackedPositionType(packedPosition);
 		
 		if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
@@ -103,13 +116,14 @@ public class ServerView extends Fragment {
 				.get(ExpandableListView.getPackedPositionGroup(packedPosition));
 			if (c.id != VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 				// Do stuff if you don't select your current channel
-				menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
+				menu.add(ContextMenu.NONE, ContextMenuItems.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
 			}
 			if (c.allowPhantoms && !c.hasPhantom)
-				menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.ADD_PHANTOM, ContextMenu.NONE, "Add Phantom");
+				menu.add(ContextMenu.NONE, ContextMenuItems.ADD_PHANTOM, ContextMenu.NONE, "Add Phantom");
 			else if (c.allowPhantoms && c.hasPhantom)
-				menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.REMOVE_PHANTOM, ContextMenu.NONE, "Remove Phantom");
-			menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.CLEAR_PASSWORD, ContextMenu.NONE, "Clear Saved Password");
+				menu.add(ContextMenu.NONE, ContextMenuItems.REMOVE_PHANTOM, ContextMenu.NONE, "Remove Phantom");
+			if (passwordPrefs.getString(c.id + "pw", "").length() > 0)
+				menu.add(ContextMenu.NONE, ContextMenuItems.CLEAR_PASSWORD, ContextMenu.NONE, "Clear Saved Password");
 		} else if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
 			// Do stuff for child long click
 			Item.User u = s.getItemData().getUsers()
@@ -118,107 +132,266 @@ public class ServerView extends Fragment {
 			
 			if (u.parent != VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 				// Do stuff if you select a user not in your current channel
-				menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
+				menu.add(ContextMenu.NONE, ContextMenuItems.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
 			}
 			
 			if (u.id == VentriloInterface.getuserid()) {
 				// Do stuff if you select yourself
 				if (s.isAdmin())
-					menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.ADMIN_LOGOUT, ContextMenu.NONE, "Admin Logout");
+					menu.add(ContextMenu.NONE, ContextMenuItems.ADMIN_LOGOUT, ContextMenu.NONE, "Admin Logout");
 				else
-					menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.ADMIN_LOGIN, ContextMenu.NONE, "Admin Login");
-				menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.SET_VOLUME, ContextMenu.NONE, "Set Transmit Volume");
-				menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.SET_COMMENT, ContextMenu.NONE, "Set Comment");
-				menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.SET_URL, ContextMenu.NONE, "Set URL");
+					menu.add(ContextMenu.NONE, ContextMenuItems.ADMIN_LOGIN, ContextMenu.NONE, "Admin Login");
+				menu.add(ContextMenu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Transmit Volume");
+				menu.add(ContextMenu.NONE, ContextMenuItems.SET_COMMENT, ContextMenu.NONE, "Set Comment");
+				menu.add(ContextMenu.NONE, ContextMenuItems.SET_URL, ContextMenu.NONE, "Set URL");
 			} else {
 				// Do stuff for other users
 				if (u.realId == VentriloInterface.getuserid())
-					menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.REMOVE_PHANTOM, ContextMenu.NONE, "Remove Phantom");
+					menu.add(ContextMenu.NONE, ContextMenuItems.REMOVE_PHANTOM, ContextMenu.NONE, "Remove Phantom");
+				if (u.comment.length() > 0)
+					menu.add(ContextMenu.NONE, ContextMenuItems.VIEW_COMMENT, ContextMenu.NONE, "View Comment");
+				if (u.url.length() > 0)
+					menu.add(ContextMenu.NONE, ContextMenuItems.VIEW_URL, ContextMenu.NONE, "View URL");
 				if (s.isAdmin() || VentriloInterface.getpermission("sendpage"))
-					menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.SEND_PAGE, ContextMenu.NONE, "Send Page");
-				// menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.PRIVATE_CHAT, ContextMenu.NONE, "Private Chat");
-				menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
-				menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.SET_VOLUME, ContextMenu.NONE, "Set Volume");
+					menu.add(ContextMenu.NONE, ContextMenuItems.SEND_PAGE, ContextMenu.NONE, "Send Page");
+				// menu.add(ContextMenu.NONE, ContextMenuItems.PRIVATE_CHAT, ContextMenu.NONE, "Private Chat");
+				menu.add(ContextMenu.NONE, ContextMenuItems.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
+				menu.add(ContextMenu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Volume");
+				
+				SubMenu submenu = menu.addSubMenu("Admin Functions");
 				if (s.isAdmin() || VentriloInterface.getpermission("moveuser"))
-					menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.MOVE_USER, ContextMenu.NONE, "Move User");
+					submenu.add(ContextMenu.NONE, ContextMenuItems.MOVE_USER, ContextMenu.NONE, "Move User");
 				if (s.isAdmin() || VentriloInterface.getpermission("kickuser"))
-					menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.KICK_USER, ContextMenu.NONE, "Kick User");
+					submenu.add(ContextMenu.NONE, ContextMenuItems.KICK_USER, ContextMenu.NONE, "Kick User");
 				if (s.isAdmin() || VentriloInterface.getpermission("banuser"))
-					menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.BAN_USER, ContextMenu.NONE, "Ban User");
-				if (s.isAdmin() && u.realId != 0)
-					menu.add(ContextMenu.NONE, ContextMenuItems.ServerContext.GLOBALLY_MUTE, ContextMenu.NONE, "Globally Mute");
+					submenu.add(ContextMenu.NONE, ContextMenuItems.BAN_USER, ContextMenu.NONE, "Ban User");
+				if (s.isAdmin() && u.realId == 0)
+					submenu.add(ContextMenu.NONE, ContextMenuItems.GLOBALLY_MUTE, ContextMenu.NONE, u.globalMute ? "Globally Unmute" : "Globally Mute");
+				if (submenu.size() == 0)
+					menu.removeItem(submenu.getItem().getItemId());
 			}
 		}
 	}
 	
 	@Override
 	public boolean onContextItemSelected(MenuItem menuItem) {
-		long packedPosition = ((ExpandableListContextMenuInfo) menuItem.getMenuInfo()).packedPosition;
-		int groupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
+		// Instead of declaring this here, just use the class variable.
+		// Attempting to declare this here will cause a NullPointerException from the SubMenu admin functions.
+		// Since the SubMenu items are built from the primary menu, they don't contain the packedPosition variable
+		// that the primary items have (because they were built from the ExpandableListView's registered ContextMenu).
+		// long packedPosition = ((ExpandableListContextMenuInfo) menuItem.getMenuInfo()).packedPosition;
 		AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
-		final EditText input = new EditText(getActivity());
-		Item.Channel c = s.getItemData().getChannels().get(groupPosition);
-		Item.User u;
+		
+		LinearLayout layout = new LinearLayout(getActivity());
+		layout.setOrientation(LinearLayout.VERTICAL);
+		
+		input = new EditText(getActivity());
+	    InputFilter[] FilterArray = new InputFilter[1];
+	    FilterArray[0] = new InputFilter.LengthFilter(127);
+	    input.setFilters(FilterArray);
+		layout.addView(input);
+		
+		final CheckBox silent = new CheckBox(getActivity());
+		silent.setChecked(true);
+		silent.setText(" Send Silently ");
+		
+		LinearLayout frame = new LinearLayout(getActivity());
+		frame.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+		frame.setGravity(Gravity.CENTER);
+		
+		Item.Channel c = s.getItemData().getChannels().get(ExpandableListView.getPackedPositionGroup(packedPosition));
+		final Item.User u = (ExpandableListView.getPackedPositionType(packedPosition) == ExpandableListView.PACKED_POSITION_TYPE_CHILD) ?
+				s.getItemData().getUsers().get(ExpandableListView.getPackedPositionGroup(packedPosition))
+				.get(ExpandableListView.getPackedPositionChild(packedPosition)) : null;
 		
 		switch (menuItem.getItemId()) {
-		case ContextMenuItems.ServerContext.MOVE_TO_CHANNEL:
-			changeChannel(s.getItemData().getChannels().get(groupPosition));
-			break;
-		case ContextMenuItems.ServerContext.CLEAR_PASSWORD:
-			break;
-		case ContextMenuItems.ServerContext.ADD_PHANTOM:
+		case ContextMenuItems.MOVE_TO_CHANNEL:
+			changeChannel(c);
+			return true;
+		case ContextMenuItems.CLEAR_PASSWORD:
+			passwordPrefs.edit().remove(c.id + "pw").commit();
+			return true;
+		case ContextMenuItems.ADD_PHANTOM:
 			VentriloInterface.phantomadd(c.id);
-			c.hasPhantom = true;
-			break;
-		case ContextMenuItems.ServerContext.REMOVE_PHANTOM:
+			return true;
+		case ContextMenuItems.REMOVE_PHANTOM:
 			VentriloInterface.phantomremove(c.id);
-			c.hasPhantom = false;
-			break;
-		case ContextMenuItems.ServerContext.SEND_PAGE:
-			u = s.getItemData().getUsers().get(groupPosition)
-				.get(ExpandableListView.getPackedPositionChild(packedPosition));
+			return true;
+		case ContextMenuItems.SEND_PAGE:
 			VentriloInterface.sendpage(u.id);
-			break;
-		case ContextMenuItems.ServerContext.PRIVATE_CHAT:
-			// TO-DO
-			break;
-		case ContextMenuItems.ServerContext.MUTE:
-			u = s.getItemData().getUsers().get(groupPosition)
-				.get(ExpandableListView.getPackedPositionChild(packedPosition));
-			VentriloInterface.setuservolume(u.id, u.muted ? u.volume : 0);
+			return true;
+		case ContextMenuItems.PRIVATE_CHAT:
+			// TODO
+			return true;
+		case ContextMenuItems.MUTE:
 			u.muted = !u.muted;
+			VentriloInterface.setuservolume(u.id, u.muted ? 0 : u.volume);
+			volumePrefs.edit().putBoolean("mute" + u.id, u.muted).commit();
 			u.updateStatus();
 			getActivity().sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
-			break;
-		case ContextMenuItems.ServerContext.SET_VOLUME:
-			u = s.getItemData().getUsers().get(groupPosition)
-				.get(ExpandableListView.getPackedPositionChild(packedPosition));
+			return true;
+		case ContextMenuItems.SET_VOLUME:
+			final TextView percent = new TextView(getActivity());
+			final SeekBar volume = new SeekBar(getActivity());
+			volume.setMax(148);
+			volume.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (progress >= 67 && progress <= 81) {
+						seekBar.setProgress(74);
+						percent.setText("100%");
+					} else
+						percent.setText((progress * 200) / seekBar.getMax() + "%");
+				}
+				public void onStartTrackingTouch(SeekBar seekBar) { }
+				public void onStopTrackingTouch(SeekBar seekBar) { }
+			});
+			LinearLayout volumeLayout = new LinearLayout(getActivity());
+			volumeLayout.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT, Gravity.CENTER));
+			volumeLayout.setOrientation(LinearLayout.VERTICAL);
+			volumeLayout.addView(volume);
+			frame.addView(percent);
+			volumeLayout.addView(frame);
+			dialog.setView(volumeLayout);
+			volume.setProgress(u.volume);
+			percent.setText((u.volume * 200) / volume.getMax() + "%");
 			if (u.id == VentriloInterface.getuserid()) {
-				
+				dialog.setTitle("Set Transmit Volume:");
+				dialog.setPositiveButton("OK", new OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						VentriloInterface.setxmitvolume(volume.getProgress());
+						u.volume = volume.getProgress();
+						u.updateStatus();
+						getActivity().sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
+						volumePrefs.edit().putInt("transmit", volume.getProgress()).commit();
+					}
+				});
 			} else {
-				
+				dialog.setTitle("Set Volume for " + u.name);
+				dialog.setPositiveButton("OK", new OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						if (!u.muted)
+							VentriloInterface.setuservolume(u.id, volume.getProgress());
+						u.volume = volume.getProgress();
+						u.updateStatus();
+						getActivity().sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
+						volumePrefs.edit().putInt("vol" + u.id, volume.getProgress()).commit();
+					}
+				});
 			}
-			break;
-		case ContextMenuItems.ServerContext.ADMIN_LOGIN:
+			dialog.setNegativeButton("Cancel", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.SET_COMMENT:
+			dialog.setTitle("Set Comment:");
+			frame.addView(silent);
+			layout.addView(frame);
+			dialog.setView(layout);
+			input.setSingleLine();
+			input.setText(u.comment);
+			dialog.setPositiveButton("OK", new OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					VentriloInterface.settext(input.getText().toString(), u.url, "", silent.isChecked());
+				}
+			});
+			dialog.setNegativeButton("Cancel", null);
+			input.setText(u.comment);
+			dialog.show();
+			return true;
+		case ContextMenuItems.VIEW_COMMENT:
+			dialog.setTitle(u.name);
+			dialog.setView(layout);
+			input.setSingleLine();
+			input.setText(u.comment);
+			dialog.setPositiveButton("Copy", new OnClickListener(){
+				public void onClick(DialogInterface dialog, int which) {
+					ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE); 
+					clipboard.setText(input.getText().toString());
+				}
+			});
+			dialog.setNegativeButton("Done", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.SET_URL:
+			dialog.setTitle("Set URL:");
+			frame.addView(silent);
+			layout.addView(frame);
+			dialog.setView(layout);
+			input.setText(u.url.length() > 0 ? u.url : "http://");
+			input.setSingleLine();
+			dialog.setPositiveButton("OK", new OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					VentriloInterface.settext(u.comment, input.getText().toString(), "", silent.isChecked());
+				}
+			});
+			dialog.setNegativeButton("Cancel", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.VIEW_URL:
+			dialog.setTitle(u.name);
+			dialog.setView(layout);
+			input.setText(u.url);
+			input.setSingleLine();
+			dialog.setPositiveButton("Copy", new OnClickListener(){
+				public void onClick(DialogInterface dialog, int which) {
+					ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE); 
+					clipboard.setText(input.getText().toString());
+				}
+			});
+			dialog.setNeutralButton("Open", new OnClickListener(){
+				public void onClick(DialogInterface dialog, int which) {	
+					startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(input.getText().toString())));
+	            }
+			});
+			dialog.setNegativeButton("Done", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.ADMIN_LOGIN:
 			dialog.setTitle("Enter Admin Password:");
 			input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
 		    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
-			dialog.setView(input);
+			dialog.setView(layout);
 			dialog.setPositiveButton("Login", new OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					VentriloInterface.adminlogin(input.getText().toString());
+					s.setAdmin(true);
 				}
 			});
-			dialog.setNegativeButton("Cancel", new OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) { }
-			});
+			dialog.setNegativeButton("Cancel", null);
 			dialog.show();
-			break;
-		case ContextMenuItems.ServerContext.ADMIN_LOGOUT:
+			return true;
+		case ContextMenuItems.ADMIN_LOGOUT:
 			VentriloInterface.adminlogout();
-			break;
+			s.setAdmin(false);
+			return true;
+		case ContextMenuItems.MOVE_USER:
+			return true;
+		case ContextMenuItems.KICK_USER:
+			dialog.setTitle("Enter Reason for Kick:");
+			dialog.setView(layout);
+			dialog.setPositiveButton("Kick", new OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					VentriloInterface.kick(u.id, input.getText().toString());
+				}
+			});
+			dialog.setNegativeButton("Cancel", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.BAN_USER:
+			dialog.setTitle("Enter Reason for Ban:");
+			dialog.setView(layout);
+			dialog.setPositiveButton("Ban", new OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					VentriloInterface.ban(u.id, input.getText().toString());
+				}
+			});
+			dialog.setNegativeButton("Cancel", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.GLOBALLY_MUTE:
+			VentriloInterface.globalmute(u.id);
+			return true;
 		}
-		return super.onContextItemSelected(menuItem);
+		return false;
 	}
 	
 	public void update() {
@@ -226,25 +399,27 @@ public class ServerView extends Fragment {
 	}
 	
 	private void changeChannel(final Item.Channel c) {
+		String password = passwordPrefs.getString(c.id + "pw", "");
 		if (c.reqPassword) {
-			Builder passwordDialog = new AlertDialog.Builder(getActivity());
-		    input = new EditText(getActivity());
-		    input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
-		    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
-			passwordDialog.setTitle("Enter Channel Password:")
-			.setView(input)
-			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					VentriloInterface.changechannel(c.id, input.getText().toString());
-					return;
-				}
-			})
-			.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					return;
-				}
-			});
-			passwordDialog.show();
+			if (password.length() > 0) {
+				VentriloInterface.changechannel(c.id, password);
+			} else {
+				Builder passwordDialog = new AlertDialog.Builder(getActivity());
+			    input = new EditText(getActivity());
+			    input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
+			    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
+				passwordDialog.setTitle("Enter Channel Password:")
+				.setView(input)
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						VentriloInterface.changechannel(c.id, input.getText().toString());
+						passwordPrefs.edit().putString(c.id + "pw", input.getText().toString()).commit();
+						return;
+					}
+				})
+				.setNegativeButton("Cancel", null);
+				passwordDialog.show();
+			}
 		} else
 			VentriloInterface.changechannel(c.id, "");
 	}
@@ -258,31 +433,9 @@ public class ServerView extends Fragment {
 	
 	private OnChildClickListener onUserClick = new OnChildClickListener() {
 		public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-			final Item.Channel c = s.getItemData().getChannels().get(groupPosition);
-			if (c.reqPassword) {
-				Builder passwordDialog = new AlertDialog.Builder(getActivity());
-			    input = new EditText(getActivity());
-			    input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
-			    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
-				passwordDialog.setTitle("Enter Channel Password:")
-				.setView(input)
-				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						VentriloInterface.changechannel(c.id, input.getText().toString());
-						return;
-					}
-				})
-				.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						return;
-					}
-				});
-				passwordDialog.show();
-			} else
-				VentriloInterface.changechannel(c.id, "");
+			changeChannel(s.getItemData().getChannels().get(groupPosition));
 			return true;
 		}
-		
 	};
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -292,6 +445,8 @@ public class ServerView extends Fragment {
 			getActivity().registerReceiver(receiver, new IntentFilter(ViewPagerActivity.FRAGMENT_RECEIVER));
 			
 			prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+			volumePrefs = getActivity().getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE);
+			passwordPrefs = getActivity().getSharedPreferences("PASSWORDS" + s.getServerId(), Context.MODE_PRIVATE);
 
 			adapter = new VentriloidListAdapter(
 				getActivity(),
@@ -328,6 +483,7 @@ public class ServerView extends Fragment {
 			switch (type) {
 			case VentriloEvents.V3_EVENT_CHAN_BADPASS:
 				final Item.Channel c = s.getItemData().getChannelById(intent.getShortExtra("id", (short)0));
+				passwordPrefs.edit().remove(c.id + "pw").commit();
 				if (c.reqPassword) {
 					Builder passwordDialog = new AlertDialog.Builder(getActivity());
 				    input = new EditText(getActivity());
@@ -339,14 +495,11 @@ public class ServerView extends Fragment {
 					.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
 							VentriloInterface.changechannel(c.id, input.getText().toString());
+							passwordPrefs.edit().putString(c.id + "pw", input.getText().toString()).commit();
 							return;
 						}
 					})
-					.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							return;
-						}
-					});
+					.setNegativeButton("Cancel", null);
 					passwordDialog.show();
 				} else
 					VentriloInterface.changechannel(c.id, "");

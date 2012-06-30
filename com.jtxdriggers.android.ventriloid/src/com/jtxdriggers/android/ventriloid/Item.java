@@ -99,7 +99,7 @@ public class Item {
 		
 		public User() { }
 		
-		public User(short id, short parent, short realId, String name, String phonetic, String rank, String comment, String url, String integration) {
+		public User(short id, short parent, short realId, String name, String phonetic, String rank, String comment, String url, String integration, int volume, boolean muted) {
 			this.id = id;
 			this.parent = parent;
 			this.realId = realId;
@@ -109,6 +109,8 @@ public class Item {
 			this.comment = comment;
 			this.url = url;
 			this.integration = integration;
+			this.volume = volume;
+			this.muted = muted;
 		}
 		
 		private String formatRank(String rank) {
@@ -164,7 +166,7 @@ public class Item {
 				status += "M";
 			if (inChat)
 				status += "C";
-			if (volume != 74)
+			if (id != VentriloInterface.getuserid() && volume != 74)
 				status += "S";
 			
 			if (status.length() > 0) {

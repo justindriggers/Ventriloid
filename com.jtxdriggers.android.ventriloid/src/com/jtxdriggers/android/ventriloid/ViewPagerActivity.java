@@ -99,7 +99,6 @@ public class ViewPagerActivity extends FragmentActivity {
 	@Override
 	public void onStart() {
 		super.onStart();
-		registerReceiver(receiver, new IntentFilter(ACTIVITY_RECEIVER));
 		bindService(new Intent(VentriloidService.SERVICE_INTENT), mConnection, Context.BIND_AUTO_CREATE);
 	}
     
@@ -262,6 +261,7 @@ public class ViewPagerActivity extends FragmentActivity {
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
+			registerReceiver(receiver, new IntentFilter(ACTIVITY_RECEIVER));
 			s.processAll();
 		}
 

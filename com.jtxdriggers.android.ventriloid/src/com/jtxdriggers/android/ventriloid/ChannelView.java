@@ -90,7 +90,7 @@ public class ChannelView extends Fragment {
 		
 		if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
 			// Do stuff for group long click
-			menu.add(ContextMenu.NONE, ContextMenuItems.ChannelContext.CLEAR_PASSWORD, ContextMenu.NONE, "Clear Saved Password");
+			menu.add(ContextMenu.NONE, ContextMenuItems.CLEAR_PASSWORD, ContextMenu.NONE, "Clear Saved Password");
 		} else if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
 			// Do stuff for child long click
 			Item.User u = s.getItemData().getCurrentUsers().get(0)
@@ -99,8 +99,8 @@ public class ChannelView extends Fragment {
 				// Do stuff if you select yourself
 			} else {
 				// Do stuff for other users
-				menu.add(ContextMenu.NONE, ContextMenuItems.ChannelContext.SET_VOLUME, ContextMenu.NONE, "Set Volume");
-				menu.add(ContextMenu.NONE, ContextMenuItems.ChannelContext.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
+				menu.add(ContextMenu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Volume");
+				menu.add(ContextMenu.NONE, ContextMenuItems.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
 			}
 		}
 	}
@@ -110,18 +110,18 @@ public class ChannelView extends Fragment {
 		long packedPosition = ((ExpandableListContextMenuInfo) menuItem.getMenuInfo()).packedPosition;
 		
 		switch (menuItem.getItemId()) {
-		case ContextMenuItems.ChannelContext.CLEAR_PASSWORD:
-			break;
-		case ContextMenuItems.ChannelContext.MUTE:
+		case ContextMenuItems.CLEAR_PASSWORD:
+			return true;
+		case ContextMenuItems.MUTE:
 			Item.User u = s.getItemData().getCurrentUsers().get(0)
 				.get(ExpandableListView.getPackedPositionChild(packedPosition));
 			u.muted = !u.muted;
 			VentriloInterface.setuservolume(u.id, u.muted ? 0 : u.volume);
 			u.updateStatus();
 			getActivity().sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
-			break;
+			return true;
 		}
-		return super.onContextItemSelected(menuItem);
+		return false;
 	}
 	
 	public void update() {
