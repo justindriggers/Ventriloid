@@ -34,7 +34,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.ClipboardManager;
 import android.text.InputFilter;
@@ -66,7 +65,7 @@ public class ServerView extends Fragment {
 	private ExpandableListView list;
 	private VentriloidListAdapter adapter;
 	private VentriloidService s;
-	private SharedPreferences prefs, volumePrefs, passwordPrefs;
+	private SharedPreferences volumePrefs, passwordPrefs;
 	
 	// Stupid workaround for broken ExpanableListView SubMenus
 	private long packedPosition;
@@ -444,7 +443,6 @@ public class ServerView extends Fragment {
 			
 			getActivity().registerReceiver(receiver, new IntentFilter(ViewPagerActivity.FRAGMENT_RECEIVER));
 			
-			prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 			volumePrefs = getActivity().getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE);
 			passwordPrefs = getActivity().getSharedPreferences("PASSWORDS" + s.getServerId(), Context.MODE_PRIVATE);
 

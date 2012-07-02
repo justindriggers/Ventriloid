@@ -53,10 +53,8 @@ public class ItemData {
 	}
 	
 	public void addCurrentUser(Item.User user) {
-		if (user.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
-			user.indent = "     ";
+		if (user.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 			currentUsers.add(user);
-		}
 	}
 	
 	public void addUser(Item.User user) {
