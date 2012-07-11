@@ -32,6 +32,7 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 public class Manage extends Activity {
 	
@@ -62,11 +63,13 @@ public class Manage extends Activity {
 					prefs.edit().remove("server").commit();
 				db.deleteServer(db.getServer(getCurrentItemID(spinner)));
 				loadServers();
+        		Toast.makeText(Manage.this, "Server removed", Toast.LENGTH_SHORT).show();
 			}
         });
         
         edit.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
+        		prefs.edit().putInt("server", spinner.getSelectedItemPosition()).commit();
         		startActivity(new Intent(Manage.this, Edit.class).putExtra("id", getCurrentItemID(spinner)));
         	}
         });
@@ -82,6 +85,7 @@ public class Manage extends Activity {
         		prefs.edit().remove("server").commit();
         		db.clearServers();
         		loadServers();
+        		Toast.makeText(Manage.this, "All servers have been cleared", Toast.LENGTH_SHORT).show();
         	}
         });
         
@@ -96,8 +100,10 @@ public class Manage extends Activity {
     
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    	if (resultCode == RESULT_OK && requestCode == 1)
-    		finish();
+    	if (resultCode == RESULT_OK && requestCode == 1) {
+    		if (prefs.edit().putInt("server", db.getServersCount() - 1).commit())
+    			finish();
+    	}
     }
     
     private void loadServers() {

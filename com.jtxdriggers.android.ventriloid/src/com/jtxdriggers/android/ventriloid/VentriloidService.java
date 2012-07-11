@@ -39,6 +39,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class VentriloidService extends Service {
 	
@@ -87,8 +88,15 @@ public class VentriloidService extends Service {
 					}).start();
 				
 					start = Service.START_STICKY;
-				} else
+				} else {
+					VentriloEventData data = new VentriloEventData();
+					VentriloInterface.error(data);
+					sendBroadcast(new Intent(Main.RECEIVER)
+						.putExtra("type", VentriloEvents.V3_EVENT_LOGIN_FAIL)
+						.putExtra("message", bytesToString(data.error.message)));
+					
 					start = Service.START_NOT_STICKY;
+				}
 			}
 		}).start();
 		
@@ -107,7 +115,7 @@ public class VentriloidService extends Service {
 		if (prefs.getBoolean("vibrate", true));
 			vibrate = true;
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
-		//VentriloInterface.debuglevel(1 << 11);
+		VentriloInterface.debuglevel(1 << 11);
 		running = true;
 		new Thread(eventHandler).start();
 	}
@@ -375,6 +383,10 @@ public class VentriloidService extends Service {
 		case VentriloEvents.V3_EVENT_CHAN_BADPASS:
 			i.putExtra("id", data.channel.id);
 			break;
+			
+		case VentriloEvents.V3_EVENT_ERROR_MSG:
+			Toast.makeText(VentriloidService.this, bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+			break;
 
 		case VentriloEvents.V3_EVENT_PLAY_AUDIO:
 			if (((Item.User) items.getUserById(data.user.id)).xmit != Item.User.XMIT_ON)
@@ -467,7 +479,7 @@ public class VentriloidService extends Service {
 	}
 	
 	public Item.Channel getChannelFromData(VentriloEventData data) {
-		VentriloInterface.getchannel(data, data.channel.id);
+		VentriloInterface.getchannel(data, data.channel.id);		
 		Item item = new Item();
 		Item.Channel c = item.new Channel(data.channel.id,
 						data.data.channel.parent,

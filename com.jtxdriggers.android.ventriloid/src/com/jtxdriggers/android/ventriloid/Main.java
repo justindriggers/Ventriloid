@@ -38,6 +38,7 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 public class Main extends Activity {
 	
@@ -157,6 +158,12 @@ public class Main extends Activity {
 			case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 				dialog.dismiss();
 				startActivity(new Intent(Main.this, ViewPagerActivity.class));
+				break;
+			case VentriloEvents.V3_EVENT_LOGIN_FAIL:
+			case VentriloEvents.V3_EVENT_ERROR_MSG:
+				dialog.dismiss();
+				Toast.makeText(Main.this, intent.getExtras().getString("message"), Toast.LENGTH_SHORT).show();
+				break;
 			}
 		}
     };

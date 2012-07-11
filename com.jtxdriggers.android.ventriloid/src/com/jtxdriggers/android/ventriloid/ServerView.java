@@ -157,17 +157,23 @@ public class ServerView extends Fragment {
 				menu.add(ContextMenu.NONE, ContextMenuItems.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
 				menu.add(ContextMenu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Volume");
 				
-				SubMenu submenu = menu.addSubMenu("Admin Functions");
-				if (s.isAdmin() || VentriloInterface.getpermission("moveuser"))
-					submenu.add(ContextMenu.NONE, ContextMenuItems.MOVE_USER, ContextMenu.NONE, "Move User");
-				if (s.isAdmin() || VentriloInterface.getpermission("kickuser"))
-					submenu.add(ContextMenu.NONE, ContextMenuItems.KICK_USER, ContextMenu.NONE, "Kick User");
-				if (s.isAdmin() || VentriloInterface.getpermission("banuser"))
-					submenu.add(ContextMenu.NONE, ContextMenuItems.BAN_USER, ContextMenu.NONE, "Ban User");
-				if (s.isAdmin() && u.realId == 0)
-					submenu.add(ContextMenu.NONE, ContextMenuItems.GLOBALLY_MUTE, ContextMenu.NONE, u.globalMute ? "Globally Unmute" : "Globally Mute");
-				if (submenu.size() == 0)
-					menu.removeItem(submenu.getItem().getItemId());
+				boolean move = false,
+						kick = false,
+						ban = false;
+				
+				if (s.isAdmin() || (move = VentriloInterface.getpermission("moveuser")) ||
+						(kick = VentriloInterface.getpermission("kickuser")) ||
+						(ban = VentriloInterface.getpermission("banuser"))) {
+					SubMenu submenu = menu.addSubMenu("Admin Functions");
+					if (s.isAdmin() || move)
+						submenu.add(ContextMenu.NONE, ContextMenuItems.MOVE_USER, ContextMenu.NONE, "Move User");
+					if (s.isAdmin() || kick)
+						submenu.add(ContextMenu.NONE, ContextMenuItems.KICK_USER, ContextMenu.NONE, "Kick User");
+					if (s.isAdmin() || ban)
+						submenu.add(ContextMenu.NONE, ContextMenuItems.BAN_USER, ContextMenu.NONE, "Ban User");
+					if (s.isAdmin() && u.realId == 0)
+						submenu.add(ContextMenu.NONE, ContextMenuItems.GLOBALLY_MUTE, ContextMenu.NONE, u.globalMute ? "Globally Unmute" : "Globally Mute");
+				}
 			}
 		}
 	}
