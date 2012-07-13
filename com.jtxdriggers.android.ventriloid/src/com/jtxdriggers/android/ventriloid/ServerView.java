@@ -441,7 +441,6 @@ public class ServerView extends Fragment {
 			return true;
 		case ContextMenuItems.SERVER_ADMIN:
 		case ContextMenuItems.CHANNEL_ADMIN:
-		
 			return true;
 		default:
 			if (menuItem.getItemId() >= ContextMenuItems.MOVE_USER_TO) { 
