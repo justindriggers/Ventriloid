@@ -1022,6 +1022,21 @@ _v3_recv(int block) {/*{{{*/
                             _v3_destroy_packet(msg);
                         }
                         break;/*}}}*/
+                    case V3_EVENT_ADMIN_CHANNEL_KICK:/*{{{*/
+                        {
+                            v3_channel channel;
+                            memset(&channel, 0, sizeof(_v3_msg_channel));
+                            channel.id = ev.channel.id;
+                            _v3_debug(V3_DEBUG_INFO, "removing user from channel id %d", channel.id);
+                            _v3_net_message *msg = _v3_put_0x49(V3_REMOVE_FROM_CHANNEL, ev.user.id, NULL, &channel);
+                            if (_v3_send(msg)) {
+                                _v3_debug(V3_DEBUG_SOCKET, "sent admin channel kick request to server");
+                            } else {
+                                _v3_debug(V3_DEBUG_SOCKET, "failed to send admin channel kick request");
+                            }
+                            _v3_destroy_packet(msg);
+                        }
+                        break;/*}}}*/
                     case V3_EVENT_ADMIN_GLOBAL_MUTE:/*{{{*/
                         {
                             v3_user *user;
@@ -5944,6 +5959,9 @@ v3_admin_boot(int type, uint16_t user_id, char *reason) {/*{{{*/
         case V3_BOOT_CHANNEL_BAN:
             ev.type = V3_EVENT_ADMIN_CHANNEL_BAN;
             break;
+        case V3_BOOT_CHANNEL_KICK:
+        	ev.type = V3_EVENT_ADMIN_CHANNEL_KICK;
+        	break;
     }
 
     _v3_evpipe_write(v3_server.evpipe[1], &ev);

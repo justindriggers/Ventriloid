@@ -945,12 +945,13 @@ _v3_put_0x49(uint16_t subtype, uint16_t user_id, char *channel_password, _v3_msg
     msg->type = 0x49;
     switch (subtype) {
         case V3_CHANGE_CHANNEL:
+        case V3_REMOVE_FROM_CHANNEL:
             msg->len = sizeof(_v3_msg_0x49)-sizeof(void *) + sizeof(_v3_msg_channel) - sizeof(void *) * 4 + 6;
             _v3_debug(V3_DEBUG_PACKET_PARSE, "allocating %d bytes", msg->len);
             msgdata = malloc(sizeof(_v3_msg_0x49)-sizeof(void *)+sizeof(_v3_msg_channel));
             memset(msgdata, 0, sizeof(_v3_msg_0x49)-sizeof(void *)+sizeof(_v3_msg_channel));
             msgdata->type = msg->type;
-            msgdata->subtype = V3_CHANGE_CHANNEL;
+            msgdata->subtype = subtype;
             msgdata->user_id = user_id;
             if (channel_password != NULL && strlen(channel_password) != 0) {
                 _v3_hash_password((uint8_t *)channel_password, (uint8_t *)msgdata->hash_password);

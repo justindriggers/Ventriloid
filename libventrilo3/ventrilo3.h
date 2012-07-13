@@ -57,6 +57,7 @@
 #define V3_CHANGE_CHANNEL           0x03
 #define V3_MODIFY_CHANNEL           0x05
 #define V3_AUTHFAIL_CHANNEL         0x07
+#define V3_REMOVE_FROM_CHANNEL		0x09
 
 #define V3_JOIN_CHAT                0x00
 #define V3_LEAVE_CHAT               0x01
@@ -301,6 +302,7 @@ enum _v3_events {
     V3_EVENT_ADMIN_KICK,
     V3_EVENT_ADMIN_BAN,
     V3_EVENT_ADMIN_CHANNEL_BAN,
+    V3_EVENT_ADMIN_CHANNEL_KICK,
     V3_EVENT_ADMIN_GLOBAL_MUTE,
     V3_EVENT_ADMIN_CHANNEL_MUTE,
     V3_EVENT_FORCE_CHAN_MOVE,
@@ -331,6 +333,7 @@ enum _v3_boot_types {
     V3_BOOT_KICK,
     V3_BOOT_BAN,
     V3_BOOT_CHANNEL_BAN,
+    V3_BOOT_CHANNEL_KICK
 };
 
 extern char *_v3_bitmasks[];
