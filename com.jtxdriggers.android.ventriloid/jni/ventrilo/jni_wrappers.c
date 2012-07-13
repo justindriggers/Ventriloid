@@ -198,14 +198,30 @@ JNIEXPORT void  JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterfac
 	return;
 }
 
+JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_channelmute(JNIEnv* env, jobject obj, jshort userid) {
+	v3_admin_channel_mute(userid);
+	return;
+}
+
 JNIEXPORT void  JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_globalmute(JNIEnv* env, jobject obj, jshort userid) {
 	v3_admin_global_mute(userid);
+	return;
+}
+
+JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_channelkick(JNIEnv* env, jobject obj, jshort userid) {
+	v3_admin_boot(V3_BOOT_CHANNEL_KICK, userid, NULL);
 	return;
 }
 
 JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_kick(JNIEnv* env, jobject obj, jshort userid, jstring reason) {
 	char *_reason = get_string(env, reason);
 	v3_admin_boot(V3_BOOT_KICK, userid, _reason);
+	return;
+}
+
+JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_channelban(JNIEnv* env, jobject obj, jshort userid, jstring reason) {
+	char *_reason = get_string(env, reason);
+	v3_admin_boot(V3_BOOT_CHANNEL_BAN, userid, _reason);
 	return;
 }
 

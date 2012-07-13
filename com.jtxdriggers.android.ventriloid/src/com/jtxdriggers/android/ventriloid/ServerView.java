@@ -19,6 +19,8 @@
 
 package com.jtxdriggers.android.ventriloid;
 
+import java.util.ArrayList;
+
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.BroadcastReceiver;
@@ -109,10 +111,11 @@ public class ServerView extends Fragment {
 		packedPosition = ((ExpandableListContextMenuInfo) menuInfo).packedPosition;
 		int packedPositionType = ExpandableListView.getPackedPositionType(packedPosition);
 		
+		Item.Channel c = s.getItemData().getChannels()
+			.get(ExpandableListView.getPackedPositionGroup(packedPosition));
+		
 		if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
 			// Do stuff for group long click
-			Item.Channel c = s.getItemData().getChannels()
-				.get(ExpandableListView.getPackedPositionGroup(packedPosition));
 			if (c.id != VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 				// Do stuff if you don't select your current channel
 				menu.add(ContextMenu.NONE, ContextMenuItems.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
@@ -157,22 +160,48 @@ public class ServerView extends Fragment {
 				menu.add(ContextMenu.NONE, ContextMenuItems.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
 				menu.add(ContextMenu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Volume");
 				
-				boolean move = false,
-						kick = false,
+				boolean kick = false,
 						ban = false;
 				
-				if (s.isAdmin() || (move = VentriloInterface.getpermission("moveuser")) ||
-						(kick = VentriloInterface.getpermission("kickuser")) ||
+				if (s.isAdmin() || (kick = VentriloInterface.getpermission("kickuser")) ||
 						(ban = VentriloInterface.getpermission("banuser"))) {
-					SubMenu submenu = menu.addSubMenu("Admin Functions");
-					if (s.isAdmin() || move)
-						submenu.add(ContextMenu.NONE, ContextMenuItems.MOVE_USER, ContextMenu.NONE, "Move User");
+					SubMenu adminMenu = menu.addSubMenu(ContextMenu.NONE, ContextMenuItems.SERVER_ADMIN, ContextMenu.NONE, "Server Admin Functions");
 					if (s.isAdmin() || kick)
-						submenu.add(ContextMenu.NONE, ContextMenuItems.KICK_USER, ContextMenu.NONE, "Kick User");
+						adminMenu.add(ContextMenu.NONE, ContextMenuItems.KICK_USER, ContextMenu.NONE, "Kick User");
 					if (s.isAdmin() || ban)
-						submenu.add(ContextMenu.NONE, ContextMenuItems.BAN_USER, ContextMenu.NONE, "Ban User");
+						adminMenu.add(ContextMenu.NONE, ContextMenuItems.BAN_USER, ContextMenu.NONE, "Ban User");
 					if (s.isAdmin() && u.realId == 0)
-						submenu.add(ContextMenu.NONE, ContextMenuItems.GLOBALLY_MUTE, ContextMenu.NONE, u.globalMute ? "Globally Unmute" : "Globally Mute");
+						adminMenu.add(ContextMenu.NONE, ContextMenuItems.GLOBALLY_MUTE, ContextMenu.NONE, u.globalMute ? "Globally Unmute" : "Globally Mute");
+				}
+				
+				if (s.isAdmin() || c.isAdmin) {
+					SubMenu cAdminMenu = menu.addSubMenu(ContextMenu.NONE, ContextMenuItems.CHANNEL_ADMIN, ContextMenu.NONE, "Channel Admin Functions");
+					cAdminMenu.add(ContextMenu.NONE, ContextMenuItems.CHANNEL_KICK, ContextMenu.NONE, "Kick from Channel");
+					cAdminMenu.add(ContextMenu.NONE, ContextMenuItems.CHANNEL_BAN, ContextMenu.NONE, "Ban from Channel");
+					cAdminMenu.add(ContextMenu.NONE, ContextMenuItems.CHANNEL_MUTE, ContextMenu.NONE, u.channelMute ? "Channel Unmute" : "Channel Mute");
+				}
+				
+				ArrayList<Item.Channel> adminChannels = new ArrayList<Item.Channel>();
+				for (int i = 0; i < s.getItemData().getChannels().size(); i++) {
+					Item.Channel adminChannel = s.getItemData().getChannels().get(i);
+					if ((s.isAdmin() || adminChannel.isAdmin) && u.parent != adminChannel.id)
+						adminChannels.add(adminChannel);
+				}
+				if ((s.isAdmin() || VentriloInterface.getpermission("moveuser") || c.isAdmin) && adminChannels.size() > 0) {
+					SubMenu moveMenu = menu.addSubMenu(ContextMenu.NONE, ContextMenuItems.MOVE_USER, ContextMenu.NONE, "Move User To");
+					for (int i = 0; i < adminChannels.size(); i++) {
+						String name = adminChannels.get(i).name;
+						if (adminChannels.get(i).id == 0)
+							name = "(Lobby)";
+						else if (adminChannels.get(i).parent != 0) {
+							Item.Channel parent = s.getItemData().getChannelById(adminChannels.get(i).parent);
+							while (parent.id != 0) {
+								name = parent.name + " / " + name;
+								parent = s.getItemData().getChannelById(parent.parent);
+							}
+						}
+						moveMenu.add(ContextMenu.NONE, ContextMenuItems.MOVE_USER_TO + adminChannels.get(i).id, i, name);
+					}
 				}
 			}
 		}
@@ -226,7 +255,7 @@ public class ServerView extends Fragment {
 			VentriloInterface.sendpage(u.id);
 			return true;
 		case ContextMenuItems.PRIVATE_CHAT:
-			// TODO
+			// TODO Private Chat
 			return true;
 		case ContextMenuItems.MUTE:
 			u.muted = !u.muted;
@@ -368,8 +397,6 @@ public class ServerView extends Fragment {
 			VentriloInterface.adminlogout();
 			s.setAdmin(false);
 			return true;
-		case ContextMenuItems.MOVE_USER:
-			return true;
 		case ContextMenuItems.KICK_USER:
 			dialog.setTitle("Enter Reason for Kick:");
 			dialog.setView(layout);
@@ -395,8 +422,35 @@ public class ServerView extends Fragment {
 		case ContextMenuItems.GLOBALLY_MUTE:
 			VentriloInterface.globalmute(u.id);
 			return true;
+		case ContextMenuItems.CHANNEL_KICK:
+			VentriloInterface.channelkick(u.id);
+			return true;
+		case ContextMenuItems.CHANNEL_BAN:
+			dialog.setTitle("Enter Reason for Ban:");
+			dialog.setView(layout);
+			dialog.setPositiveButton("Ban", new OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					VentriloInterface.channelban(u.id, input.getText().toString());
+				}
+			});
+			dialog.setNegativeButton("Cancel", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.CHANNEL_MUTE:
+			VentriloInterface.channelmute(u.id);
+			return true;
+		case ContextMenuItems.SERVER_ADMIN:
+		case ContextMenuItems.CHANNEL_ADMIN:
+		
+			return true;
+		default:
+			if (menuItem.getItemId() >= ContextMenuItems.MOVE_USER_TO) { 
+				short channelid = (short) (menuItem.getItemId() - ContextMenuItems.MOVE_USER_TO);
+				VentriloInterface.forcechannelmove(u.id, channelid);
+				return true;
+			}
+			return false;
 		}
-		return false;
 	}
 	
 	public void update() {

@@ -115,7 +115,7 @@ public class VentriloidService extends Service {
 		if (prefs.getBoolean("vibrate", true));
 			vibrate = true;
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
-		VentriloInterface.debuglevel(1 << 11);
+		VentriloInterface.debuglevel(65535);
 		running = true;
 		new Thread(eventHandler).start();
 	}
@@ -326,7 +326,7 @@ public class VentriloidService extends Service {
 		switch (data.type) {
 		case VentriloEvents.V3_EVENT_PING:
 			items.setPing(data.ping);
-			sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER).putExtra("ping", data.ping));
+			sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER).putExtra("type", data.type).putExtra("ping", data.ping));
 			sendBroadcast = false;
 			break;
 			
@@ -427,6 +427,11 @@ public class VentriloidService extends Service {
 			items.removeCurrentUser(item.id);
 			items.addUser((Item.User) item);
 			items.addCurrentUser((Item.User) item);
+			break;
+			
+		case VentriloEvents.V3_EVENT_DISCONNECT:
+			sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER).putExtra("type", data.type));
+			sendBroadcast = false;
 			break;
 		}
 		if (sendBroadcast)

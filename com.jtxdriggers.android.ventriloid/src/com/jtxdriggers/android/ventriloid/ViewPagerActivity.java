@@ -273,11 +273,17 @@ public class ViewPagerActivity extends FragmentActivity {
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			int ping;
-			if ((ping = intent.getIntExtra("ping", -1)) < 0)
+			short type = intent.getShortExtra("type", (short)0);
+			switch (type) {
+			case VentriloEvents.V3_EVENT_DISCONNECT:
+				finish();
+				break;
+			case VentriloEvents.V3_EVENT_PING:
+				setPing(intent.getIntExtra("ping", -1));
+				break;
+			default:
 				s.processNext();
-			else
-				setPing(ping);
+			}
 		}
 	};
 	

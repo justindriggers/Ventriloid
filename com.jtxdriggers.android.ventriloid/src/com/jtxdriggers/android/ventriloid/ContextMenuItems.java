@@ -35,9 +35,16 @@ public class ContextMenuItems {
 	public static final int VIEW_URL		= 11;
 	public static final int ADMIN_LOGIN		= 12;
 	public static final int ADMIN_LOGOUT	= 13;
-	public static final int MOVE_USER		= 14;
-	public static final int KICK_USER		= 15;
-	public static final int BAN_USER		= 16;
-	public static final int GLOBALLY_MUTE	= 17;
+	public static final int KICK_USER		= 14;
+	public static final int BAN_USER		= 15;
+	public static final int GLOBALLY_MUTE	= 16;
+	public static final int CHANNEL_KICK	= 17;
+	public static final int CHANNEL_BAN		= 18;
+	public static final int CHANNEL_MUTE	= 19;
+	public static final int SERVER_ADMIN	= 20;
+	public static final int CHANNEL_ADMIN	= 21;
+	public static final int MOVE_USER		= 22;
+	// MOVE_USER_TO must be the highest int value for the options to work properly.
+	public static final int MOVE_USER_TO	= 23;
 	
 }
