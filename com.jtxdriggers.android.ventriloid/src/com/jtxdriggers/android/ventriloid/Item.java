@@ -69,10 +69,17 @@ public class Item {
 			HashMap<String, Object> channel = new HashMap<String, Object>();
 			channel.put("name", name);
 			channel.put("status", status);
-			channel.put("comment", comment);
+			channel.put("comment", formatComment(comment));
 			channel.put("indent", indent);
 			
 			return channel;
+		}
+		
+		private String formatComment(String comment) {
+			if (comment.length() > 0)
+				return " (" + comment + ")";
+			
+			return "";
 		}
 		
 		public void changeStatus(boolean admin) {

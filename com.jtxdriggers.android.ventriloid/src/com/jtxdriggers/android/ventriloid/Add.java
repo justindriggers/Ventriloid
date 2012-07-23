@@ -28,6 +28,7 @@ import android.view.View.OnKeyListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class Add extends Activity {
 	
@@ -53,10 +54,20 @@ public class Add extends Activity {
 				return false;
 			}
     	});
+    	
+    	port.setText("3784");
         
         save = (Button) findViewById(R.id.add);
         save.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
+				if (username.getText().toString().length() == 0 ||
+						servername.getText().toString().length() == 0 ||
+						hostname.getText().toString().length() == 0 ||
+						port.getText().toString().length() == 0) {
+					Toast.makeText(Add.this, "Please enter all required information", Toast.LENGTH_SHORT).show();
+					return;
+				}
+				
 				Server server = new Server(username.getText().toString().trim(), phonetic.getText().toString().trim(),
 						servername.getText().toString().trim(), hostname.getText().toString().trim(),
 						Integer.parseInt(port.getText().toString().trim()), password.getText().toString().trim());

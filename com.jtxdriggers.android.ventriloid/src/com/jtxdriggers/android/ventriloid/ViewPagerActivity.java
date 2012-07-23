@@ -197,6 +197,8 @@ public class ViewPagerActivity extends FragmentActivity {
 		});
 		mViewPager.setOffscreenPageLimit(3);
 		mViewPager.setCurrentItem(position);
+		if (prefs.getBoolean("screen_on", false))
+			mViewPager.setKeepScreenOn(true);
     }
     
 	private void initialiseTabHost(Bundle args) {
