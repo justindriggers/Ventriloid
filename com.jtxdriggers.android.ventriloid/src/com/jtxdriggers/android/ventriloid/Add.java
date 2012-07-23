@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
 import android.view.View.OnKeyListener;
 import android.view.Window;
 import android.widget.Button;
@@ -48,7 +49,7 @@ public class Add extends Activity {
         port = (EditText) findViewById(R.id.port);
         password = (EditText) findViewById(R.id.password);
         
-    	username.setOnKeyListener(new OnKeyListener(){
+    	username.setOnKeyListener(new OnKeyListener() {
     		public boolean onKey(View v, int keyCode, KeyEvent event) {
 				phonetic.setText(username.getText());
 				return false;
@@ -56,6 +57,12 @@ public class Add extends Activity {
     	});
     	
     	port.setText("3784");
+    	port.setOnFocusChangeListener(new OnFocusChangeListener() {
+			public void onFocusChange(View v, boolean hasFocus) {
+				if (hasFocus)
+					port.selectAll();
+			}
+    	});
         
         save = (Button) findViewById(R.id.add);
         save.setOnClickListener(new OnClickListener() {

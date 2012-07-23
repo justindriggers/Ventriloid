@@ -54,7 +54,7 @@
 		    	android:layout_height="wrap_content"
 		    	android:layout_width="fill_parent"
 		    	android:paddingBottom="15dp"
-		    	android:inputType="text" />
+		    	android:inputType="textFilter" />
 		    	
     		<LinearLayout android:layout_height="wrap_content"
     			android:layout_width="wrap_content"
@@ -76,7 +76,7 @@
 		    	android:layout_height="wrap_content"
 		    	android:layout_width="fill_parent"
 		    	android:paddingBottom="15dp"
-		    	android:inputType="text" />
+		    	android:inputType="textFilter" />
 		    	
     		<LinearLayout android:layout_height="wrap_content"
     			android:layout_width="wrap_content"
@@ -105,7 +105,7 @@
 		    	android:paddingBottom="15dp"
 		    	android:nextFocusDown="@+id/hostname"
 		    	android:nextFocusRight="@+id/hostname"
-		    	android:inputType="text" />
+		    	android:inputType="textFilter" />
 		    	
 		    <RelativeLayout android:layout_height="wrap_content"
 		    	android:layout_width="wrap_content">
@@ -139,7 +139,7 @@
 			    	android:paddingBottom="15dp"
 			    	android:nextFocusDown="@+id/port"
 			    	android:nextFocusRight="@+id/port"
-		    		android:inputType="textUri" />
+		    		android:inputType="textUri|textFilter" />
 			    	
 			    <TextView android:id="@+id/colon"
 			    	android:text="@string/colon"
