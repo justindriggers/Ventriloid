@@ -115,7 +115,7 @@ public class VentriloidService extends Service {
 		if (prefs.getBoolean("vibrate", true));
 			vibrate = true;
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
-		VentriloInterface.debuglevel(65535);
+		//VentriloInterface.debuglevel(65535);
 		running = true;
 		new Thread(eventHandler).start();
 	}

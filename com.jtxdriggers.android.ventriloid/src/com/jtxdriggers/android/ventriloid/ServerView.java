@@ -118,14 +118,14 @@ public class ServerView extends Fragment {
 			// Do stuff for group long click
 			if (c.id != VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 				// Do stuff if you don't select your current channel
-				menu.add(ContextMenu.NONE, ContextMenuItems.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
 			}
 			if (c.allowPhantoms && !c.hasPhantom)
-				menu.add(ContextMenu.NONE, ContextMenuItems.ADD_PHANTOM, ContextMenu.NONE, "Add Phantom");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.ADD_PHANTOM, ContextMenu.NONE, "Add Phantom");
 			else if (c.allowPhantoms && c.hasPhantom)
-				menu.add(ContextMenu.NONE, ContextMenuItems.REMOVE_PHANTOM, ContextMenu.NONE, "Remove Phantom");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.REMOVE_PHANTOM, ContextMenu.NONE, "Remove Phantom");
 			if (passwordPrefs.getString(c.id + "pw", "").length() > 0)
-				menu.add(ContextMenu.NONE, ContextMenuItems.CLEAR_PASSWORD, ContextMenu.NONE, "Clear Saved Password");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.CLEAR_PASSWORD, ContextMenu.NONE, "Clear Saved Password");
 		} else if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
 			// Do stuff for child long click
 			Item.User u = s.getItemData().getUsers()
@@ -134,31 +134,31 @@ public class ServerView extends Fragment {
 			
 			if (u.parent != VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 				// Do stuff if you select a user not in your current channel
-				menu.add(ContextMenu.NONE, ContextMenuItems.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
 			}
 			
 			if (u.id == VentriloInterface.getuserid()) {
 				// Do stuff if you select yourself
 				if (s.isAdmin())
-					menu.add(ContextMenu.NONE, ContextMenuItems.ADMIN_LOGOUT, ContextMenu.NONE, "Admin Logout");
+					menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.ADMIN_LOGOUT, ContextMenu.NONE, "Admin Logout");
 				else
-					menu.add(ContextMenu.NONE, ContextMenuItems.ADMIN_LOGIN, ContextMenu.NONE, "Admin Login");
-				menu.add(ContextMenu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Transmit Volume");
-				menu.add(ContextMenu.NONE, ContextMenuItems.SET_COMMENT, ContextMenu.NONE, "Set Comment");
-				menu.add(ContextMenu.NONE, ContextMenuItems.SET_URL, ContextMenu.NONE, "Set URL");
+					menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.ADMIN_LOGIN, ContextMenu.NONE, "Admin Login");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Transmit Volume");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.SET_COMMENT, ContextMenu.NONE, "Set Comment");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.SET_URL, ContextMenu.NONE, "Set URL");
 			} else {
 				// Do stuff for other users
 				if (u.realId == VentriloInterface.getuserid())
-					menu.add(ContextMenu.NONE, ContextMenuItems.REMOVE_PHANTOM, ContextMenu.NONE, "Remove Phantom");
+					menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.REMOVE_PHANTOM, ContextMenu.NONE, "Remove Phantom");
 				if (u.comment.length() > 0)
-					menu.add(ContextMenu.NONE, ContextMenuItems.VIEW_COMMENT, ContextMenu.NONE, "View Comment");
+					menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.VIEW_COMMENT, ContextMenu.NONE, "View Comment");
 				if (u.url.length() > 0)
-					menu.add(ContextMenu.NONE, ContextMenuItems.VIEW_URL, ContextMenu.NONE, "View URL");
+					menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.VIEW_URL, ContextMenu.NONE, "View URL");
 				if (s.isAdmin() || VentriloInterface.getpermission("sendpage"))
-					menu.add(ContextMenu.NONE, ContextMenuItems.SEND_PAGE, ContextMenu.NONE, "Send Page");
-				// menu.add(ContextMenu.NONE, ContextMenuItems.PRIVATE_CHAT, ContextMenu.NONE, "Private Chat");
-				menu.add(ContextMenu.NONE, ContextMenuItems.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
-				menu.add(ContextMenu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Volume");
+					menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.SEND_PAGE, ContextMenu.NONE, "Send Page");
+				// menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.PRIVATE_CHAT, ContextMenu.NONE, "Private Chat");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
+				menu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Volume");
 				
 				boolean kick = false,
 						ban = false;
@@ -167,18 +167,18 @@ public class ServerView extends Fragment {
 						(ban = VentriloInterface.getpermission("banuser"))) {
 					SubMenu adminMenu = menu.addSubMenu(ContextMenu.NONE, ContextMenuItems.SERVER_ADMIN, ContextMenu.NONE, "Server Admin Functions");
 					if (s.isAdmin() || kick)
-						adminMenu.add(ContextMenu.NONE, ContextMenuItems.KICK_USER, ContextMenu.NONE, "Kick User");
+						adminMenu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.KICK_USER, ContextMenu.NONE, "Kick User");
 					if (s.isAdmin() || ban)
-						adminMenu.add(ContextMenu.NONE, ContextMenuItems.BAN_USER, ContextMenu.NONE, "Ban User");
+						adminMenu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.BAN_USER, ContextMenu.NONE, "Ban User");
 					if (s.isAdmin() && u.realId == 0)
-						adminMenu.add(ContextMenu.NONE, ContextMenuItems.GLOBALLY_MUTE, ContextMenu.NONE, u.globalMute ? "Globally Unmute" : "Globally Mute");
+						adminMenu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.GLOBALLY_MUTE, ContextMenu.NONE, u.globalMute ? "Globally Unmute" : "Globally Mute");
 				}
 				
 				if (s.isAdmin() || c.isAdmin) {
 					SubMenu cAdminMenu = menu.addSubMenu(ContextMenu.NONE, ContextMenuItems.CHANNEL_ADMIN, ContextMenu.NONE, "Channel Admin Functions");
-					cAdminMenu.add(ContextMenu.NONE, ContextMenuItems.CHANNEL_KICK, ContextMenu.NONE, "Kick from Channel");
-					cAdminMenu.add(ContextMenu.NONE, ContextMenuItems.CHANNEL_BAN, ContextMenu.NONE, "Ban from Channel");
-					cAdminMenu.add(ContextMenu.NONE, ContextMenuItems.CHANNEL_MUTE, ContextMenu.NONE, u.channelMute ? "Channel Unmute" : "Channel Mute");
+					cAdminMenu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.CHANNEL_KICK, ContextMenu.NONE, "Kick from Channel");
+					cAdminMenu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.CHANNEL_BAN, ContextMenu.NONE, "Ban from Channel");
+					cAdminMenu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.CHANNEL_MUTE, ContextMenu.NONE, u.channelMute ? "Channel Unmute" : "Channel Mute");
 				}
 				
 				ArrayList<Item.Channel> adminChannels = new ArrayList<Item.Channel>();
@@ -200,7 +200,7 @@ public class ServerView extends Fragment {
 								parent = s.getItemData().getChannelById(parent.parent);
 							}
 						}
-						moveMenu.add(ContextMenu.NONE, ContextMenuItems.MOVE_USER_TO + adminChannels.get(i).id, i, name);
+						moveMenu.add(ContextMenuItems.SERVER_VIEW, ContextMenuItems.MOVE_USER_TO + adminChannels.get(i).id, i, name);
 					}
 				}
 			}
@@ -209,6 +209,9 @@ public class ServerView extends Fragment {
 	
 	@Override
 	public boolean onContextItemSelected(MenuItem menuItem) {
+		if (menuItem.getGroupId() != ContextMenuItems.SERVER_VIEW)
+			return super.onContextItemSelected(menuItem);
+		
 		// Instead of declaring this here, just use the class variable.
 		// Attempting to declare this here will cause a NullPointerException from the SubMenu admin functions.
 		// Since the SubMenu items are built from the primary menu, they don't contain the packedPosition variable
@@ -448,7 +451,7 @@ public class ServerView extends Fragment {
 				VentriloInterface.forcechannelmove(u.id, channelid);
 				return true;
 			}
-			return false;
+			return super.onContextItemSelected(menuItem);
 		}
 	}
 	

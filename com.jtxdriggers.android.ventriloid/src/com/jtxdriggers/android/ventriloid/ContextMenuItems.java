@@ -20,31 +20,37 @@
 package com.jtxdriggers.android.ventriloid;
 
 public class ContextMenuItems {
+	
+	public static final int SERVER_VIEW = -2;
+	public static final int CHANNEL_VIEW = -1;
 
-	public static final int MOVE_TO_CHANNEL	= 0;
-	public static final int CLEAR_PASSWORD	= 1;
-	public static final int ADD_PHANTOM		= 2;
-	public static final int REMOVE_PHANTOM	= 3;
-	public static final int	SEND_PAGE		= 4;
-	public static final int PRIVATE_CHAT	= 5;
-	public static final int MUTE			= 6;
-	public static final int SET_VOLUME		= 7;
-	public static final int SET_COMMENT		= 8;
-	public static final int VIEW_COMMENT	= 9;
-	public static final int SET_URL			= 10;
-	public static final int VIEW_URL		= 11;
-	public static final int ADMIN_LOGIN		= 12;
-	public static final int ADMIN_LOGOUT	= 13;
-	public static final int KICK_USER		= 14;
-	public static final int BAN_USER		= 15;
-	public static final int GLOBALLY_MUTE	= 16;
-	public static final int CHANNEL_KICK	= 17;
-	public static final int CHANNEL_BAN		= 18;
-	public static final int CHANNEL_MUTE	= 19;
-	public static final int SERVER_ADMIN	= 20;
-	public static final int CHANNEL_ADMIN	= 21;
-	public static final int MOVE_USER		= 22;
+	public static final int DISCONNECT		= 0;
+	public static final int USER_OPTIONS	= 1;
+	public static final int MOVE_TO_CHANNEL	= 2;
+	public static final int CLEAR_PASSWORD	= 3;
+	public static final int ADD_PHANTOM		= 4;
+	public static final int REMOVE_PHANTOM	= 5;
+	public static final int	SEND_PAGE		= 6;
+	public static final int PRIVATE_CHAT	= 7;
+	public static final int MUTE			= 8;
+	public static final int SET_VOLUME		= 9;
+	public static final int SET_COMMENT		= 10;
+	public static final int VIEW_COMMENT	= 11;
+	public static final int SET_URL			= 12;
+	public static final int VIEW_URL		= 13;
+	public static final int ADMIN_LOGIN		= 14;
+	public static final int ADMIN_LOGOUT	= 15;
+	public static final int KICK_USER		= 16;
+	public static final int BAN_USER		= 17;
+	public static final int GLOBALLY_MUTE	= 18;
+	public static final int CHANNEL_KICK	= 19;
+	public static final int CHANNEL_BAN		= 20;
+	public static final int CHANNEL_MUTE	= 21;
+	public static final int SERVER_ADMIN	= 22;
+	public static final int CHANNEL_ADMIN	= 23;
+	public static final int MOVE_USER		= 24;
+	
 	// MOVE_USER_TO must be the highest int value for the options to work properly.
-	public static final int MOVE_USER_TO	= 23;
+	public static final int MOVE_USER_TO	= 50;
 	
 }

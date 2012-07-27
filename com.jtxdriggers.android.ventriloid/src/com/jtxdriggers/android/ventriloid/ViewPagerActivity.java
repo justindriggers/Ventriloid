@@ -23,9 +23,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -38,12 +40,24 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.text.method.PasswordTransformationMethod;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager.LayoutParams;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TabHost;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TabHost.TabContentFactory;
 import android.widget.TabHost.TabSpec;
@@ -60,7 +74,7 @@ public class ViewPagerActivity extends FragmentActivity {
 	private FragmentPagerAdapter mPagerAdapter;
 	private List<Fragment> fragments;
 	private int position = 0;
-	private SharedPreferences prefs;
+	private SharedPreferences prefs, volumePrefs;
 	private boolean pttEnabled, toggle, toggleOn = false;
 	private int pttKey;
 	
@@ -137,6 +151,143 @@ public class ViewPagerActivity extends FragmentActivity {
 		if (!toggle)
 			s.setPTTOn(false);
 		return true;
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+    	SubMenu options = menu.addSubMenu(Menu.NONE, ContextMenuItems.USER_OPTIONS, Menu.NONE, "User Options").setIcon(android.R.drawable.ic_menu_manage);
+		options.add(Menu.NONE, ContextMenuItems.ADMIN_LOGOUT, Menu.NONE, "Admin Logout").setVisible(!s.isAdmin());
+		options.add(Menu.NONE, ContextMenuItems.ADMIN_LOGIN, Menu.NONE, "Admin Login").setVisible(s.isAdmin());
+		options.add(Menu.NONE, ContextMenuItems.SET_VOLUME, Menu.NONE, "Set Transmit Level");
+		options.add(Menu.NONE, ContextMenuItems.SET_COMMENT, Menu.NONE, "Set Comment");
+		options.add(Menu.NONE, ContextMenuItems.SET_URL, Menu.NONE, "Set URL");
+    	menu.add(Menu.NONE, ContextMenuItems.DISCONNECT, Menu.NONE, "Disconnect").setIcon(android.R.drawable.ic_menu_close_clear_cancel);
+    	return true;
+	}
+	
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		menu.findItem(ContextMenuItems.USER_OPTIONS).getSubMenu().findItem(ContextMenuItems.ADMIN_LOGOUT).setVisible(s.isAdmin());
+		menu.findItem(ContextMenuItems.USER_OPTIONS).getSubMenu().findItem(ContextMenuItems.ADMIN_LOGIN).setVisible(!s.isAdmin());
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+	
+		LinearLayout layout = new LinearLayout(this);
+		layout.setOrientation(LinearLayout.VERTICAL);
+		
+		final EditText input = new EditText(this);
+	    InputFilter[] FilterArray = new InputFilter[1];
+	    FilterArray[0] = new InputFilter.LengthFilter(127);
+	    input.setFilters(FilterArray);
+		layout.addView(input);
+		
+		final CheckBox silent = new CheckBox(this);
+		silent.setChecked(true);
+		silent.setText(" Send Silently ");
+		
+		LinearLayout frame = new LinearLayout(this);
+		frame.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+		frame.setGravity(Gravity.CENTER);
+		
+		final Item.User u = s.getItemData().getUserById(VentriloInterface.getuserid());
+			
+		switch (item.getItemId()) {
+		case ContextMenuItems.SET_VOLUME:
+			final TextView percent = new TextView(this);
+			final SeekBar volume = new SeekBar(this);
+			volume.setMax(148);
+			volume.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (progress >= 67 && progress <= 81) {
+						seekBar.setProgress(74);
+						percent.setText("100%");
+					} else
+						percent.setText((progress * 200) / seekBar.getMax() + "%");
+				}
+				public void onStartTrackingTouch(SeekBar seekBar) { }
+				public void onStopTrackingTouch(SeekBar seekBar) { }
+			});
+			LinearLayout volumeLayout = new LinearLayout(this);
+			volumeLayout.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT, Gravity.CENTER));
+			volumeLayout.setOrientation(LinearLayout.VERTICAL);
+			volumeLayout.addView(volume);
+			frame.addView(percent);
+			volumeLayout.addView(frame);
+			dialog.setView(volumeLayout);
+			volume.setProgress(u.volume);
+			percent.setText((u.volume * 200) / volume.getMax() + "%");
+			dialog.setTitle("Set Transmit Volume:");
+			dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					VentriloInterface.setxmitvolume(volume.getProgress());
+					u.volume = volume.getProgress();
+					u.updateStatus();
+					sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
+					volumePrefs.edit().putInt("transmit", volume.getProgress()).commit();
+				}
+			});
+			dialog.setNegativeButton("Cancel", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.SET_COMMENT:
+			dialog.setTitle("Set Comment:");
+			frame.addView(silent);
+			layout.addView(frame);
+			dialog.setView(layout);
+			input.setSingleLine();
+			input.setText(u.comment);
+			dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					VentriloInterface.settext(input.getText().toString(), u.url, "", silent.isChecked());
+				}
+			});
+			dialog.setNegativeButton("Cancel", null);
+			input.setText(u.comment);
+			dialog.show();
+			return true;
+		case ContextMenuItems.SET_URL:
+			dialog.setTitle("Set URL:");
+			frame.addView(silent);
+			layout.addView(frame);
+			dialog.setView(layout);
+			input.setText(u.url.length() > 0 ? u.url : "http://");
+			input.setSingleLine();
+			dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					VentriloInterface.settext(u.comment, input.getText().toString(), "", silent.isChecked());
+				}
+			});
+			dialog.setNegativeButton("Cancel", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.ADMIN_LOGIN:
+			dialog.setTitle("Enter Admin Password:");
+			input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
+		    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
+			dialog.setView(layout);
+			dialog.setPositiveButton("Login", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					VentriloInterface.adminlogin(input.getText().toString());
+					s.setAdmin(true);
+				}
+			});
+			dialog.setNegativeButton("Cancel", null);
+			dialog.show();
+			return true;
+		case ContextMenuItems.ADMIN_LOGOUT:
+			VentriloInterface.adminlogout();
+			s.setAdmin(false);
+			return true;
+		case ContextMenuItems.DISCONNECT:
+			finish();
+			return true;
+		default:
+			return false;
+		}
 	}
     
     @SuppressWarnings("unused")
@@ -264,6 +415,9 @@ public class ViewPagerActivity extends FragmentActivity {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
 			registerReceiver(receiver, new IntentFilter(ACTIVITY_RECEIVER));
+			
+			volumePrefs = getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE);
+			
 			s.processAll();
 		}
 
