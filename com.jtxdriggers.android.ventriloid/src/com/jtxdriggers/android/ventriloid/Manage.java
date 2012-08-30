@@ -22,6 +22,9 @@ package com.jtxdriggers.android.ventriloid;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -59,11 +62,19 @@ public class Manage extends Activity {
         
         delete.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				if (spinner.getSelectedItemPosition() == prefs.getInt("server", 0))
-					prefs.edit().remove("server").commit();
-				db.deleteServer(db.getServer(getCurrentItemID(spinner)));
-				loadServers();
-        		Toast.makeText(Manage.this, "Server removed", Toast.LENGTH_SHORT).show();
+        		Builder confirm = new AlertDialog.Builder(Manage.this);
+        		confirm.setTitle("Are you sure?");
+        		confirm.setPositiveButton("Yes", new AlertDialog.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						if (spinner.getSelectedItemPosition() == prefs.getInt("server", 0))
+							prefs.edit().remove("server").commit();
+						db.deleteServer(db.getServer(getCurrentItemID(spinner)));
+						loadServers();
+		        		Toast.makeText(Manage.this, "Server removed", Toast.LENGTH_SHORT).show();
+					}
+        		});
+        		confirm.setNegativeButton("No", null);
+        		confirm.show();
 			}
         });
         
@@ -82,10 +93,18 @@ public class Manage extends Activity {
         
         reset.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
-        		prefs.edit().remove("server").commit();
-        		db.clearServers();
-        		loadServers();
-        		Toast.makeText(Manage.this, "All servers have been cleared", Toast.LENGTH_SHORT).show();
+        		Builder confirm = new AlertDialog.Builder(Manage.this);
+        		confirm.setTitle("Are you sure?");
+        		confirm.setPositiveButton("Yes", new AlertDialog.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+		        		prefs.edit().remove("server").commit();
+		        		db.clearServers();
+		        		loadServers();
+		        		Toast.makeText(Manage.this, "All servers have been cleared", Toast.LENGTH_SHORT).show();
+					}
+        		});
+        		confirm.setNegativeButton("No", null);
+        		confirm.show();
         	}
         });
         
