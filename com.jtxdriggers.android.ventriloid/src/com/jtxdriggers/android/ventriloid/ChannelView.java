@@ -259,8 +259,8 @@ public class ChannelView extends Fragment {
 			volume.setMax(148);
 			volume.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if (progress >= 67 && progress <= 81) {
-						seekBar.setProgress(74);
+					if (progress >= 72 && progress <= 86 && progress != 79) {
+						seekBar.setProgress(79);
 						percent.setText("100%");
 					} else
 						percent.setText((progress * 200) / seekBar.getMax() + "%");

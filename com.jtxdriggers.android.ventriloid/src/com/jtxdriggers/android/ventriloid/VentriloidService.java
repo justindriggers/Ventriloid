@@ -476,8 +476,8 @@ public class VentriloidService extends Service {
 						bytesToString(data.text.url),
 						bytesToString(data.text.integration_text),
 						data.user.id == VentriloInterface.getuserid() ?
-								volumePrefs.getInt("transmit", 74) :
-								volumePrefs.getInt("vol" + data.user.id, 74),
+								volumePrefs.getInt("transmit", 79) :
+								volumePrefs.getInt("vol" + data.user.id, 79),
 						volumePrefs.getBoolean("mute" + data.user.id, false));
 		u.updateStatus();
 		return u;
