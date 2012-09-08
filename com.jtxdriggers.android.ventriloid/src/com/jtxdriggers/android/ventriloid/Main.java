@@ -58,7 +58,7 @@ public class Main extends Activity {
         setContentView(R.layout.main);
         
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        
+
         spinner = (Spinner) findViewById(R.id.servers);
         connect = (Button) findViewById(R.id.connect);
         manage = (Button) findViewById(R.id.manage);
@@ -119,9 +119,10 @@ public class Main extends Activity {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, servers);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner.setAdapter(adapter);
-		spinner.setSelection(prefs.getInt("server", 0));
     	
     	boolean isEnabled = servers.size() > 0;
+    	if (isEnabled)
+    		spinner.setSelection(prefs.getInt("server", 0));
 		spinner.setEnabled(isEnabled);
 		connect.setEnabled(isEnabled);
     }

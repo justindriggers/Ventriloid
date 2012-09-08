@@ -54,7 +54,8 @@ import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
 import android.widget.ExpandableListView.OnChildClickListener;
-import android.widget.ExpandableListView.OnGroupClickListener;
+import android.widget.ExpandableListView.OnGroupCollapseListener;
+import android.widget.ExpandableListView.OnGroupExpandListener;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.SeekBar;
@@ -80,8 +81,6 @@ public class ServerView extends Fragment {
 		list.setGroupIndicator(null);
 		list.setBackgroundColor(Color.WHITE);
 		list.setCacheColorHint(0);
-		list.setOnGroupClickListener(onChannelClick);
-		list.setOnChildClickListener(onUserClick);
 		
 		return list;
 	}
@@ -270,7 +269,7 @@ public class ServerView extends Fragment {
 		case ContextMenuItems.SET_VOLUME:
 			final TextView percent = new TextView(getActivity());
 			final SeekBar volume = new SeekBar(getActivity());
-			volume.setMax(148);
+			volume.setMax(158);
 			volume.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (progress >= 72 && progress <= 86 && progress != 79) {
@@ -455,10 +454,6 @@ public class ServerView extends Fragment {
 		}
 	}
 	
-	public void update() {
-		adapter.update();
-	}
-	
 	private void changeChannel(final Item.Channel c) {
 		String password = passwordPrefs.getString(c.id + "pw", "");
 		if (c.reqPassword) {
@@ -485,20 +480,6 @@ public class ServerView extends Fragment {
 			VentriloInterface.changechannel(c.id, "");
 	}
 	
-	private OnGroupClickListener onChannelClick = new OnGroupClickListener() {
-		public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-			changeChannel(s.getItemData().getChannels().get(groupPosition));
-			return true;
-		}
-	};
-	
-	private OnChildClickListener onUserClick = new OnChildClickListener() {
-		public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-			changeChannel(s.getItemData().getChannels().get(groupPosition));
-			return true;
-		}
-	};
-	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
@@ -522,11 +503,34 @@ public class ServerView extends Fragment {
 				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
 		
 			list.setAdapter(adapter);
-			update();
-
+			adapter.update();
+			
 			for (int i = 0; i < adapter.getGroupCount(); i++) {
 				list.expandGroup(i);
 			}
+			
+			/*
+			 * So many silly workarounds. In Eclair, it seems I have to use two separate listeners to prevent the groups from collapsing.
+			 * In addition, I have to put the listeners after the "expand all" for-loop to prevent it from joining every channel as each group expands!
+			 * I don't remember having any of these problems with Donut (however having to use Strings and parseShort instead of just using shorts was annoying).
+			 */
+			
+			list.setOnGroupExpandListener(new OnGroupExpandListener() {
+				public void onGroupExpand(int groupPosition) {
+					changeChannel(s.getItemData().getChannels().get(groupPosition));
+				}
+			});
+			list.setOnGroupCollapseListener(new OnGroupCollapseListener() {
+				public void onGroupCollapse(int groupPosition) {
+					list.expandGroup(groupPosition);
+				}
+			});
+			list.setOnChildClickListener(new OnChildClickListener() {
+				public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+					changeChannel(s.getItemData().getChannels().get(groupPosition));
+					return true;
+				}
+			});
 			
 			registerForContextMenu(list);
 		}
@@ -565,7 +569,7 @@ public class ServerView extends Fragment {
 					VentriloInterface.changechannel(c.id, "");
 				break;
 			default:
-				update();
+				adapter.update();
 			}
 		}
 	};

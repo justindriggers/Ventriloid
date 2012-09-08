@@ -51,11 +51,12 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
+import android.widget.ExpandableListView.OnGroupCollapseListener;
+import android.widget.ExpandableListView.OnGroupExpandListener;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
-import android.widget.ExpandableListView.OnGroupClickListener;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
@@ -78,11 +79,6 @@ public class ChannelView extends Fragment {
 		list.setGroupIndicator(null);
 		list.setBackgroundColor(Color.WHITE);
 		list.setCacheColorHint(0);
-		list.setOnGroupClickListener(new OnGroupClickListener() {
-			public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-				return true;
-			}
-		});
 		
 		return list;
 	}
@@ -256,7 +252,7 @@ public class ChannelView extends Fragment {
 		case ContextMenuItems.SET_VOLUME:
 			final TextView percent = new TextView(getActivity());
 			final SeekBar volume = new SeekBar(getActivity());
-			volume.setMax(148);
+			volume.setMax(158);
 			volume.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (progress >= 72 && progress <= 86 && progress != 79) {
@@ -441,14 +437,6 @@ public class ChannelView extends Fragment {
 		}
 	}
 	
-	public void update() {
-		adapter.update();
-
-		for (int i = 0; i < adapter.getGroupCount(); i++) {
-			list.expandGroup(i);
-		}
-	}
-	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
@@ -472,7 +460,18 @@ public class ChannelView extends Fragment {
 				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
 		
 			list.setAdapter(adapter);
-			update();
+			adapter.update();
+			
+			list.expandGroup(0);
+
+			list.setOnGroupExpandListener(new OnGroupExpandListener() {
+				public void onGroupExpand(int groupPosition) { }
+			});
+			list.setOnGroupCollapseListener(new OnGroupCollapseListener() {
+				public void onGroupCollapse(int groupPosition) {
+					list.expandGroup(groupPosition);
+				}
+			});
 			
 			registerForContextMenu(list);
 		}
@@ -485,7 +484,7 @@ public class ChannelView extends Fragment {
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			update();
+			adapter.update();
 		}
 	};
 }

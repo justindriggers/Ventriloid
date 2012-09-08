@@ -100,7 +100,7 @@ public class Item {
 		public static final int GLOBAL_MUTE = 2;
 		
 		public String rank, url, integration;
-		public int xmit = XMIT_OFF, volume = 74;
+		public int xmit = XMIT_OFF, volume = 79;
 		public short realId;
 		public boolean muted = false, globalMute = false, channelMute = false, inChat = false;
 		
@@ -173,7 +173,7 @@ public class Item {
 				status += "M";
 			if (inChat)
 				status += "C";
-			if (id != VentriloInterface.getuserid() && volume != 74)
+			if (id != VentriloInterface.getuserid() && volume != 79)
 				status += "S";
 			
 			if (status.length() > 0) {
