@@ -62,10 +62,17 @@ inline void set_bool(JNIEnv* env, jobject parent_obj, jclass parent_cls, char *n
 	(*env)->SetBooleanField(env, parent_obj, (*env)->GetFieldID(env, parent_cls, name, "Z"), val);	
 }
 
-inline void set_byte_array(JNIEnv* env, jobject parent_obj, jclass parent_cls, char* name, jbyteArray data, jint sz) {
+inline void set_byte_array(JNIEnv* env, jobject parent_obj, jclass parent_cls, char* name, jbyteArray data) {
 	jbyteArray *arr = (*env)->GetObjectField(env, parent_obj, (*env)->GetFieldID(env, parent_cls, name, "[B"));
 	jbyte *carr = (*env)->GetByteArrayElements(env, arr, NULL);
 	strcpy(carr, data);
+	(*env)->ReleaseByteArrayElements(env, arr, carr, 0);
+}
+
+inline void set_pcm_byte_array(JNIEnv* env, jobject parent_obj, jclass parent_cls, char* name, jbyteArray data, jint sz) {
+	jbyteArray *arr = (*env)->GetObjectField(env, parent_obj, (*env)->GetFieldID(env, parent_cls, name, "[B"));
+	jbyte *carr = (*env)->GetByteArrayElements(env, arr, NULL);
+	memcpy(carr, data, sz);
 	(*env)->ReleaseByteArrayElements(env, arr, carr, 0);
 }
 
@@ -295,7 +302,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 	jclass  event_class = get_class(env, eventdata);
 	jobject error = get_object(env, eventdata, event_class, "error", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_error;");
 	jclass  error_class = get_class(env, error);
-	set_byte_array(env, error, error_class, "message", _v3_error(NULL), 512);
+	set_byte_array(env, error, error_class, "message", _v3_error(NULL));
 }
 
 JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_getuser(JNIEnv* env, jobject obj, jobject eventdata, jshort userid) {
@@ -308,19 +315,19 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 		jclass rank_class = get_class(env, rank);
 		jobject text = get_object(env, eventdata, event_class, "text", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_text;");
 		jclass  text_class = get_class(env, text);
-		set_byte_array(env, text, text_class, "name", u->name, 32);
-		set_byte_array(env, text, text_class, "phonetic", u->phonetic, 32);
-		set_byte_array(env, text, text_class, "comment", u->comment, 128);
-		set_byte_array(env, text, text_class, "url", u->url, 128);
-		set_byte_array(env, text, text_class, "integration_text", u->integration_text, 128);
+		set_byte_array(env, text, text_class, "name", u->name);
+		set_byte_array(env, text, text_class, "phonetic", u->phonetic);
+		set_byte_array(env, text, text_class, "comment", u->comment);
+		set_byte_array(env, text, text_class, "url", u->url);
+		set_byte_array(env, text, text_class, "integration_text", u->integration_text);
 		set_short(env, text, text_class, "real_user_id", u->real_user_id);
 		set_short(env, rank, rank_class, "id", u->rank_id);
 
 		v3_rank *r = v3_get_rank(u->rank_id);
 		if(r) {
 			set_short(env, rank, rank_class, "level", r->level);
-			set_byte_array(env, rank, rank_class, "name", r->name, 32);
-			set_byte_array(env, rank, rank_class, "description", r->description, 128);
+			set_byte_array(env, rank, rank_class, "name", r->name);
+			set_byte_array(env, rank, rank_class, "description", r->description);
 			v3_free_rank(r);
 		}
 
@@ -345,9 +352,9 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 		set_bool (env, channel, channel_class, "is_admin", v3_is_channel_admin(channelid));
 		set_bool (env, channel, channel_class, "allow_phantoms", c->allow_phantoms != 0);
 		set_bool (env, channel, channel_class, "allow_paging", c->allow_paging != 0);
-		set_byte_array(env, text, text_class, "name", c->name, 32);
-		set_byte_array(env, text, text_class, "phonetic", c->phonetic, 32);
-		set_byte_array(env, text, text_class, "comment", c->comment, 128);
+		set_byte_array(env, text, text_class, "name", c->name);
+		set_byte_array(env, text, text_class, "phonetic", c->phonetic);
+		set_byte_array(env, text, text_class, "comment", c->comment);
 		v3_free_channel(c);
 	}
 }
@@ -376,7 +383,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					// Sample.
 					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
-					set_byte_array(env, data, data_class, "sample", ev->data->sample, ev->pcm.length);
+					set_pcm_byte_array(env, data, data_class, "sample", ev->data->sample, ev->pcm.length);
 				}
 				break;
 				
@@ -446,7 +453,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					jobject status = get_object(env, eventdata, event_class, "status", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_status;");
 					jclass  status_class = get_class(env, status);
 					set_byte(env, status, status_class, "percent", ev->status.percent);
-					set_byte_array(env, status, status_class, "message", ev->status.message, sizeof(ev->status.message));
+					set_byte_array(env, status, status_class, "message", ev->status.message);
 				}
 				break;
 				
@@ -472,7 +479,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					// Chat message.
 					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
-					set_byte_array(env, data, data_class, "chatmessage", ev->data->chatmessage, sizeof(ev->data->chatmessage));
+					set_byte_array(env, data, data_class, "chatmessage", ev->data->chatmessage);
 					
 					// Flags.
 					set_int(env, eventdata, event_class, "flags", ev->flags);
@@ -487,7 +494,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					jclass  data_class = get_class(env, data);
 					jobject account = get_object(env, data, data_class, "account", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data$_account;");
 					jclass  account_class = get_class(env, account);
-					set_byte_array(env, account, account_class, "username", ev->data->account.username, sizeof(ev->data->account.username));
+					set_byte_array(env, account, account_class, "username", ev->data->account.username);
 				}
 				break;
 			
@@ -507,7 +514,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					// MOTD.
 					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
-					set_byte_array(env, data, data_class, "motd", ev->data->motd, sizeof(ev->data->motd));
+					set_byte_array(env, data, data_class, "motd", ev->data->motd);
 					
 					// Flags.
 					set_int(env, eventdata, event_class, "flags", ev->flags);
@@ -525,7 +532,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					// Error message.
 					jobject error = get_object(env, eventdata, event_class, "error", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_error;");
 					jclass  error_class = get_class(env, error);
-					set_byte_array(env, error, error_class, "message", ev->error.message, sizeof(ev->error.message));
+					set_byte_array(env, error, error_class, "message", ev->error.message);
 				}
 				break;
 				
@@ -535,7 +542,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					// Error message & disconnect flag.
 					jobject error = get_object(env, eventdata, event_class, "error", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_error;");
 					jclass  error_class = get_class(env, error);
-					set_byte_array(env, error, error_class, "message", ev->error.message, sizeof(ev->error.message));
+					set_byte_array(env, error, error_class, "message", ev->error.message);
 					set_bool(env, error, error_class, "disconnected", ev->error.disconnected != 0);	
 				}
 				break;
@@ -565,7 +572,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					// Chat message.
 					jobject data = get_object(env, eventdata, event_class, "data", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_data;");
 					jclass  data_class = get_class(env, data);
-					set_byte_array(env, data, data_class, "chatmessage", ev->data->chatmessage, sizeof(ev->data->chatmessage));
+					set_byte_array(env, data, data_class, "chatmessage", ev->data->chatmessage);
 				}
 				break;
 				
