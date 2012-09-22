@@ -63,7 +63,10 @@ inline void set_bool(JNIEnv* env, jobject parent_obj, jclass parent_cls, char *n
 }
 
 inline void set_byte_array(JNIEnv* env, jobject parent_obj, jclass parent_cls, char* name, jbyteArray data, jint sz) {
-	(*env)->SetByteArrayRegion(env, (*env)->GetObjectField(env, parent_obj, (*env)->GetFieldID(env, parent_cls, name, "[B")), 0, sz, data);	
+	jbyteArray *arr = (*env)->GetObjectField(env, parent_obj, (*env)->GetFieldID(env, parent_cls, name, "[B"));
+	jbyte *carr = (*env)->GetByteArrayElements(env, arr, NULL);
+	strcpy(carr, data);
+	(*env)->ReleaseByteArrayElements(env, arr, carr, 0);
 }
 
 JNIEXPORT jboolean JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_recv() {

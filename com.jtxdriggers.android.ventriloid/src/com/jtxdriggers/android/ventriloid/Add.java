@@ -56,6 +56,13 @@ public class Add extends Activity {
 			}
     	});
     	
+    	phonetic.setOnFocusChangeListener(new OnFocusChangeListener() {
+    		public void onFocusChange(View v, boolean hasFocus) {
+    			if (hasFocus)
+    				phonetic.selectAll();
+    		}
+    	});
+    	
     	port.setText("3784");
     	port.setOnFocusChangeListener(new OnFocusChangeListener() {
 			public void onFocusChange(View v, boolean hasFocus) {
