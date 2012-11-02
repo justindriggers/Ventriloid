@@ -75,12 +75,12 @@ public class Edit extends Activity {
         save.setText("Save Changes");
         save.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				server.setUsername(username.getText().toString().trim());
-				server.setPhonetic(phonetic.getText().toString().trim());
-				server.setServername(servername.getText().toString().trim());
-				server.setHostname(hostname.getText().toString().trim());
-				server.setPort(Integer.parseInt(port.getText().toString().trim()));
-				server.setPassword(password.getText().toString().trim());
+				server.setUsername(username.getText().toString());
+				server.setPhonetic(phonetic.getText().toString());
+				server.setServername(servername.getText().toString());
+				server.setHostname(hostname.getText().toString());
+				server.setPort(Integer.parseInt(port.getText().toString()));
+				server.setPassword(password.getText().toString());
 				
 				db.updateServer(server);
 				finish();

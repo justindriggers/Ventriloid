@@ -82,9 +82,9 @@ public class Add extends Activity {
 					return;
 				}
 				
-				Server server = new Server(username.getText().toString().trim(), phonetic.getText().toString().trim(),
-						servername.getText().toString().trim(), hostname.getText().toString().trim(),
-						Integer.parseInt(port.getText().toString().trim()), password.getText().toString().trim());
+				Server server = new Server(username.getText().toString(), phonetic.getText().toString(),
+						servername.getText().toString(), hostname.getText().toString(),
+						Integer.parseInt(port.getText().toString()), password.getText().toString());
 				
 				ServerAdapter db = new ServerAdapter(Add.this);
 				db.addServer(server);
