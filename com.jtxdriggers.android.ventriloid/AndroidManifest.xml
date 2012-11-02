@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.jtxdriggers.android.ventriloid"
-      android:versionName="3.0.0a3" android:versionCode="252">
+      android:versionName="3.0.0a4" android:versionCode="253">
       
     <uses-sdk android:targetSdkVersion="7" android:minSdkVersion="7" />
     
