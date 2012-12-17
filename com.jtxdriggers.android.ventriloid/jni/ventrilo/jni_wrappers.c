@@ -348,7 +348,7 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 		set_short(env, channel, channel_class, "parent", c->parent);
 		set_short(env, channel, channel_class, "channel_codec", c->channel_codec);
 		set_short(env, channel, channel_class, "channel_format",c->channel_format);
-		set_bool (env, channel, channel_class, "password_protected", c->password_protected != 0);
+		set_bool (env, channel, channel_class, "password_protected", v3_channel_requires_password(channelid));
 		set_bool (env, channel, channel_class, "is_admin", v3_is_channel_admin(channelid));
 		set_bool (env, channel, channel_class, "allow_phantoms", c->allow_phantoms != 0);
 		set_bool (env, channel, channel_class, "allow_paging", c->allow_paging != 0);
