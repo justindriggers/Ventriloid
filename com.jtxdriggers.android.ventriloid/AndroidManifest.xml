@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.jtxdriggers.android.ventriloid"
-      android:versionName="3.0.0a4" android:versionCode="253">
+      android:versionName="3.0.0a5" android:versionCode="254">
       
     <uses-sdk android:targetSdkVersion="7" android:minSdkVersion="7" />
     
@@ -10,10 +10,10 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <application android:icon="@drawable/icon" android:label="@string/app_name">
+    <application android:icon="@drawable/ic_launcher" android:label="@string/app_name">
         
 	    <service android:name=".VentriloidService"
-			android:icon="@drawable/icon"
+			android:icon="@drawable/ic_launcher"
 			android:label="@string/service_name">
 			
 	        <intent-filter>

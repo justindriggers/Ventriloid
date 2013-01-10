@@ -438,7 +438,7 @@ public class ViewPagerActivity extends FragmentActivity {
 				setPing(intent.getIntExtra("ping", -1));
 				break;
 			default:
-				s.processNext();
+				s.updateViews();
 			}
 		}
 	};

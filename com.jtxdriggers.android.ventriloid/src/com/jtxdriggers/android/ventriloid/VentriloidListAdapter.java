@@ -43,7 +43,6 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 			List<? extends List<Item.User>> childData, int childLayout, String[] childFrom, int[] childTo) {
 		
 		super(context, getChannelHashMaps(groupData), groupLayout, groupFrom, groupTo, getUserHashMaps(childData), childLayout, childFrom, childTo);
-		System.out.println("CREATE LISTADAPTER");
 		s = service;
 		isChannelView = channelView;
 		mGroupFrom = groupFrom;
@@ -94,8 +93,6 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 	}
 
 	public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-		System.out.println("GROUP " + groupPosition);
-		System.out.println("CHILD " + childPosition);
 		View v;
 		 
 		if (convertView == null)
