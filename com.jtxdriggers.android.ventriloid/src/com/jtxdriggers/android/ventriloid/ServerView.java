@@ -55,7 +55,6 @@ import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ExpandableListView.OnGroupCollapseListener;
-import android.widget.ExpandableListView.OnGroupExpandListener;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.SeekBar;
@@ -66,7 +65,6 @@ public class ServerView extends Fragment {
 
 	private EditText input;
 	private ExpandableListView list;
-	private VentriloidListAdapter adapter;
 	private VentriloidService s;
 	private SharedPreferences volumePrefs, passwordPrefs;
 	
@@ -488,40 +486,16 @@ public class ServerView extends Fragment {
 			
 			volumePrefs = getActivity().getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE);
 			passwordPrefs = getActivity().getSharedPreferences("PASSWORDS" + s.getServerId(), Context.MODE_PRIVATE);
-
-			adapter = new VentriloidListAdapter(
-				getActivity(),
-				s,
-				false,
-				s.getItemData().getChannels(),
-				R.layout.channel_row,
-				new String[] { "indent", "status", "name", "comment" },
-				new int[] { R.id.crowindent, R.id.crowstatus, R.id.crowtext, R.id.crowcomment },
-				s.getItemData().getUsers(),
-				R.layout.user_row,
-				new String[] { "indent", "xmit", "status", "rank", "name", "comment", "integration" },
-				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
 		
-			list.setAdapter(adapter);
-			adapter.update();
+			list.setAdapter(s.getServerAdapter());
 			
-			for (int i = 0; i < adapter.getGroupCount(); i++) {
+			for (int i = 0; i < s.getServerAdapter().getGroupCount(); i++) {
 				list.expandGroup(i);
 			}
 			
-			/*
-			 * So many silly workarounds. In Eclair, it seems I have to use two separate listeners to prevent the groups from collapsing.
-			 * In addition, I have to put the listeners after the "expand all" for-loop to prevent it from joining every channel as each group expands!
-			 * I don't remember having any of these problems with Donut (however having to use Strings and parseShort instead of just using shorts was annoying).
-			 */
-			
-			list.setOnGroupExpandListener(new OnGroupExpandListener() {
-				public void onGroupExpand(int groupPosition) {
-					changeChannel(s.getItemData().getChannels().get(groupPosition));
-				}
-			});
 			list.setOnGroupCollapseListener(new OnGroupCollapseListener() {
 				public void onGroupCollapse(int groupPosition) {
+					changeChannel(s.getItemData().getChannels().get(groupPosition));
 					list.expandGroup(groupPosition);
 				}
 			});
@@ -569,7 +543,9 @@ public class ServerView extends Fragment {
 					VentriloInterface.changechannel(c.id, "");
 				break;
 			default:
-				adapter.update();
+				for (int i = 0; i < s.getServerAdapter().getGroupCount(); i++) {
+					list.expandGroup(i);
+				}
 			}
 		}
 	};

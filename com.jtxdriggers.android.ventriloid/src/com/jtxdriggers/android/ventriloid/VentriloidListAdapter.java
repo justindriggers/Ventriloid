@@ -34,8 +34,6 @@ import android.widget.TextView;
 public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 	
 	private VentriloidService s;
-	private List<Item.Channel> mGroupData;
-	private List<? extends List<Item.User>> mChildData; 
 	private String[] mGroupFrom, mChildFrom;
 	private int[] mGroupTo, mChildTo;
 	private boolean isChannelView;
@@ -45,27 +43,13 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 			List<? extends List<Item.User>> childData, int childLayout, String[] childFrom, int[] childTo) {
 		
 		super(context, getChannelHashMaps(groupData), groupLayout, groupFrom, groupTo, getUserHashMaps(childData), childLayout, childFrom, childTo);
-
+		System.out.println("CREATE LISTADAPTER");
 		s = service;
 		isChannelView = channelView;
-		mGroupData = groupData;
 		mGroupFrom = groupFrom;
 		mGroupTo = groupTo;
-		mChildData = childData;
 		mChildFrom = childFrom;
 		mChildTo = childTo;
-	}
-	
-	public void update() {
-		ItemData items = s.getItemData();
-		if (isChannelView) {
-			mGroupData = items.getCurrentChannel();
-			mChildData = items.getCurrentUsers();
-		} else {
-			mGroupData = items.getChannels();
-			mChildData = items.getUsers();
-		}
-		notifyDataSetChanged();
 	}
 	 
 	private static List<? extends Map<String, ?>> getChannelHashMaps(List<? extends Item.Channel> channels) {
@@ -90,26 +74,28 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 	}
 	
 	public int getGroupCount() {
-		return mGroupData.size();
+		return isChannelView ? 1 : s.getItemData().getChannels().size();
 	}
 	
 	public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
         View v;
         
         if (convertView == null)
-            v = newGroupView(isExpanded, parent);
+            v = newGroupView(true, parent);
         else
             v = convertView;
 
-        bindView(v, mGroupData.get(groupPosition), mGroupFrom, mGroupTo);
-        return v;
+        bindView(v, isChannelView ? s.getItemData().getCurrentChannel().get(0) : s.getItemData().getChannels().get(groupPosition), mGroupFrom, mGroupTo);
+    	return v;
     }
 	
 	public int getChildrenCount(int groupPosition) {
-		return mChildData.get(groupPosition).size();
+		return isChannelView ? s.getItemData().getCurrentUsers().get(0).size() : s.getItemData().getUsers().get(groupPosition).size();
 	}
 
 	public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+		System.out.println("GROUP " + groupPosition);
+		System.out.println("CHILD " + childPosition);
 		View v;
 		 
 		if (convertView == null)
@@ -117,7 +103,7 @@ public class VentriloidListAdapter extends SimpleExpandableListAdapter {
 		else
 			v = convertView;
 	    
-		bindView(v, mChildData.get(groupPosition).get(childPosition), mChildFrom, mChildTo);
+		bindView(v, isChannelView ? s.getItemData().getCurrentUsers().get(0).get(childPosition) : s.getItemData().getUsers().get(groupPosition).get(childPosition), mChildFrom, mChildTo);
 		return v;
 	}
 	 

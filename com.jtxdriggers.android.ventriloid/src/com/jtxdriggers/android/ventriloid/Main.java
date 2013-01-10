@@ -158,7 +158,7 @@ public class Main extends Activity {
 			switch (type) {
 			case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 				dialog.dismiss();
-				startActivity(new Intent(Main.this, ViewPagerActivity.class));
+				startActivity(new Intent(Main.this, ViewPagerActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 				break;
 			case VentriloEvents.V3_EVENT_LOGIN_FAIL:
 			case VentriloEvents.V3_EVENT_ERROR_MSG:

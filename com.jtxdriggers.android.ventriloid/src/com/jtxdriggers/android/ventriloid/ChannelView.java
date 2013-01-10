@@ -22,12 +22,10 @@ package com.jtxdriggers.android.ventriloid;
 import java.util.ArrayList;
 
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
@@ -64,7 +62,6 @@ public class ChannelView extends Fragment {
 
 	private EditText input;
 	private ExpandableListView list;
-	private VentriloidListAdapter adapter;
 	private VentriloidService s;
 	private SharedPreferences volumePrefs, passwordPrefs;
 	
@@ -97,7 +94,6 @@ public class ChannelView extends Fragment {
 	
 	@Override
 	public void onStop() {
-		getActivity().unregisterReceiver(receiver);
 		getActivity().unbindService(mConnection);
 		super.onStop();
 	}
@@ -441,26 +437,10 @@ public class ChannelView extends Fragment {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
 			
-			getActivity().registerReceiver(receiver, new IntentFilter(ViewPagerActivity.FRAGMENT_RECEIVER));
-			
 			volumePrefs = getActivity().getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE);
 			passwordPrefs = getActivity().getSharedPreferences("PASSWORDS" + s.getServerId(), Context.MODE_PRIVATE);
-
-			adapter = new VentriloidListAdapter(
-				getActivity(),
-				s,
-				true,
-				s.getItemData().getCurrentChannel(),
-				R.layout.channel_row,
-				new String[] { "indent", "status", "name", "comment" },
-				new int[] { R.id.crowindent, R.id.crowstatus, R.id.crowtext, R.id.crowcomment },
-				s.getItemData().getCurrentUsers(),
-				R.layout.user_row,
-				new String[] { "indent", "xmit", "status", "rank", "name", "comment", "integration" },
-				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
 		
-			list.setAdapter(adapter);
-			adapter.update();
+			list.setAdapter(s.getChannelAdapter());
 			
 			list.expandGroup(0);
 
@@ -478,13 +458,6 @@ public class ChannelView extends Fragment {
 
 		public void onServiceDisconnected(ComponentName className) {
 			s = null;
-		}
-	};
-	
-	private BroadcastReceiver receiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			adapter.update();
 		}
 	};
 }

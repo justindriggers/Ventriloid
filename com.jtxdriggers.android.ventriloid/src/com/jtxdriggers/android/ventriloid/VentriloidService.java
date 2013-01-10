@@ -58,6 +58,7 @@ public class VentriloidService extends Service {
 	private Server server;
 	private boolean running = false;
 	private ItemData items = new ItemData();
+	private VentriloidListAdapter sAdapter, cAdapter;
 	private Recorder recorder = new Recorder(this);
 	private Player player = new Player();
 	private ConcurrentLinkedQueue<VentriloEventData> queue;
@@ -106,6 +107,32 @@ public class VentriloidService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		sAdapter = new VentriloidListAdapter(
+				getApplicationContext(),
+				this,
+				false,
+				getItemData().getChannels(),
+				R.layout.channel_row,
+				new String[] { "indent", "status", "name", "comment" },
+				new int[] { R.id.crowindent, R.id.crowstatus, R.id.crowtext, R.id.crowcomment },
+				getItemData().getUsers(),
+				R.layout.user_row,
+				new String[] { "indent", "xmit", "status", "rank", "name", "comment", "integration" },
+				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
+		
+		cAdapter = new VentriloidListAdapter(
+				getApplicationContext(),
+				this,
+				true,
+				getItemData().getChannels(),
+				R.layout.channel_row,
+				new String[] { "indent", "status", "name", "comment" },
+				new int[] { R.id.crowindent, R.id.crowstatus, R.id.crowtext, R.id.crowcomment },
+				getItemData().getUsers(),
+				R.layout.user_row,
+				new String[] { "indent", "xmit", "status", "rank", "name", "comment", "integration" },
+				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
+		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		voiceActivation = prefs.getBoolean("voice_activation", false);
 		if (voiceActivation)
@@ -320,14 +347,14 @@ public class VentriloidService extends Service {
 	
 	public void process(VentriloEventData data) {
 		Item item;
-		boolean sendBroadcast = true;
+		boolean updateUI = true;
 		Intent i = new Intent(ViewPagerActivity.FRAGMENT_RECEIVER).putExtra("type", data.type);
 		
 		switch (data.type) {
 		case VentriloEvents.V3_EVENT_PING:
 			items.setPing(data.ping);
 			sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER).putExtra("type", data.type).putExtra("ping", data.ping));
-			sendBroadcast = false;
+			updateUI = false;
 			break;
 			
 		case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
@@ -382,6 +409,7 @@ public class VentriloidService extends Service {
 			
 		case VentriloEvents.V3_EVENT_CHAN_BADPASS:
 			i.putExtra("id", data.channel.id);
+			sendBroadcast(i);
 			break;
 			
 		case VentriloEvents.V3_EVENT_ERROR_MSG:
@@ -392,7 +420,7 @@ public class VentriloidService extends Service {
 			if (((Item.User) items.getUserById(data.user.id)).xmit != Item.User.XMIT_ON)
 				items.setXmit(data.user.id, Item.User.XMIT_ON);
 			else
-				sendBroadcast = false;
+				updateUI = false;
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_TALK_START:
@@ -431,11 +459,15 @@ public class VentriloidService extends Service {
 			
 		case VentriloEvents.V3_EVENT_DISCONNECT:
 			sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER).putExtra("type", data.type));
-			sendBroadcast = false;
+			updateUI = false;
 			break;
 		}
-		if (sendBroadcast)
+
+		if (updateUI) {
 			sendBroadcast(i);
+			sAdapter.notifyDataSetChanged();
+			cAdapter.notifyDataSetChanged();
+		}
 	}
 	
 	public void setXmit(boolean on) {
@@ -519,6 +551,22 @@ public class VentriloidService extends Service {
 			notif.defaults = Notification.DEFAULT_VIBRATE;
 			nm.notify(2, notif);
 		}
+	}
+
+	public VentriloidListAdapter getServerAdapter() {
+		return sAdapter;
+	}
+
+	public void setServerAdapter(VentriloidListAdapter sAdapter) {
+		this.sAdapter = sAdapter;
+	}
+
+	public VentriloidListAdapter getChannelAdapter() {
+		return cAdapter;
+	}
+
+	public void setChannelAdapter(VentriloidListAdapter cAdapter) {
+		this.cAdapter = cAdapter;
 	}
 
 }
