@@ -417,8 +417,6 @@ public class ViewPagerActivity extends FragmentActivity {
 			registerReceiver(receiver, new IntentFilter(ACTIVITY_RECEIVER));
 			
 			volumePrefs = getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE);
-			
-			s.processAll();
 		}
 
 		public void onServiceDisconnected(ComponentName className) {

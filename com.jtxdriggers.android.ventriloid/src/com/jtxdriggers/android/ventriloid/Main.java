@@ -158,12 +158,13 @@ public class Main extends Activity {
 			switch (type) {
 			case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 				dialog.dismiss();
-				startActivity(new Intent(Main.this, ViewPagerActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+				startActivity(new Intent(Main.this, ViewPagerActivity.class));
 				break;
 			case VentriloEvents.V3_EVENT_LOGIN_FAIL:
 			case VentriloEvents.V3_EVENT_ERROR_MSG:
 				dialog.dismiss();
 				Toast.makeText(Main.this, intent.getExtras().getString("message"), Toast.LENGTH_SHORT).show();
+				stopService(serviceIntent);
 				break;
 			}
 		}

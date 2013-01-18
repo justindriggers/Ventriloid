@@ -262,7 +262,7 @@ public class ServerView extends Fragment {
 			VentriloInterface.setuservolume(u.id, u.muted ? 0 : u.volume);
 			volumePrefs.edit().putBoolean("mute" + u.id, u.muted).commit();
 			u.updateStatus();
-			getActivity().sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
+			s.updateViews();
 			return true;
 		case ContextMenuItems.SET_VOLUME:
 			final TextView percent = new TextView(getActivity());
@@ -295,7 +295,7 @@ public class ServerView extends Fragment {
 						VentriloInterface.setxmitvolume(volume.getProgress());
 						u.volume = volume.getProgress();
 						u.updateStatus();
-						getActivity().sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
+						s.updateViews();
 						volumePrefs.edit().putInt("transmit", volume.getProgress()).commit();
 					}
 				});
@@ -307,7 +307,7 @@ public class ServerView extends Fragment {
 							VentriloInterface.setuservolume(u.id, volume.getProgress());
 						u.volume = volume.getProgress();
 						u.updateStatus();
-						getActivity().sendBroadcast(new Intent(ViewPagerActivity.FRAGMENT_RECEIVER));
+						s.updateViews();
 						volumePrefs.edit().putInt("vol" + u.id, volume.getProgress()).commit();
 					}
 				});
