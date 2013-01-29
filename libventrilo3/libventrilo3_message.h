@@ -396,6 +396,7 @@ int         _v3_put_msg_string(void *buffer, char *string);
 uint16_t *  _v3_get_msg_uint16_array(void *offset, uint16_t *len);
 int         _v3_put_msg_uint16_array(void *buffer, uint16_t len, uint16_t *array);
 int         _v3_get_msg_channel(void *offset, _v3_msg_channel *channel);
+int			_v3_get_msg_channel_id(void *offset, _v3_msg_channel *channel);
 int         _v3_put_msg_channel(void *buffer, _v3_msg_channel *channel);
 int         _v3_get_msg_user(void *offset, _v3_msg_user *user);
 int         _v3_put_msg_user(void *buf, _v3_msg_user *user);

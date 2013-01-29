@@ -154,6 +154,20 @@ _v3_get_msg_channel(void *offset, _v3_msg_channel *channel) {/*{{{*/
 }/*}}}*/
 
 int
+_v3_get_msg_channel_id(void *offset, _v3_msg_channel *channel) {/*{{{*/
+	uint16_t len;
+	void *start_offset = offset;
+
+	_v3_func_enter("_v3_get_msg_channel_id");
+	// get the channel information
+	memcpy(channel, offset, 48);
+	offset+=48;
+
+	_v3_func_leave("_v3_get_msg_channel_id");
+	return (offset - start_offset);
+}/*}}}*/
+
+int
 _v3_get_msg_user(void *offset, _v3_msg_user *user) {/*{{{*/
     uint16_t len;
     void *start_offset = offset;
@@ -921,14 +935,8 @@ _v3_get_0x49(_v3_net_message *msg) {/*{{{*/
     m = malloc(sizeof(_v3_msg_0x49));
     memcpy(m, msg->data, sizeof(_v3_msg_0x49) - sizeof(void *));
     m->channel = malloc(sizeof(v3_channel));
-    _v3_get_msg_channel(msg->data+sizeof(_v3_msg_0x49) - sizeof(void *), m->channel);
-    _v3_debug(V3_DEBUG_PACKET_PARSE, "got channel: id: %d | parent: %d | name: %s | phonetic: %s | comment: %s",
-            m->channel->id,
-            m->channel->parent,
-            m->channel->name,
-            m->channel->phonetic,
-            m->channel->comment
-            );
+    _v3_get_msg_channel_id(msg->data+sizeof(_v3_msg_0x49) - sizeof(void *), m->channel);
+    _v3_debug(V3_DEBUG_PACKET_PARSE, "got channel: id: %d", m->channel->id);
     msg->contents = m;
 
     _v3_func_leave("_v3_get_0x49");
