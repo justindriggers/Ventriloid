@@ -75,7 +75,7 @@ public class Item {
 			return channel;
 		}
 		
-		private String formatComment(String comment) {
+		public String formatComment(String comment) {
 			if (comment.length() > 0)
 				return " (" + comment + ")";
 			
@@ -120,14 +120,14 @@ public class Item {
 			this.muted = muted;
 		}
 		
-		private String formatRank(String rank) {
+		public String formatRank(String rank) {
 			if (rank.length() > 0)
 				return "[" + rank + "] ";
 			else
 				return "";
 		}
 		
-		private String formatComment(String url, String comment) {
+		public String formatComment(String url, String comment) {
 			boolean hasUrl = url.length() > 0;
 			boolean hasComment = comment.length() > 0;
 			
@@ -141,7 +141,7 @@ public class Item {
 			return "";
 		}
 		
-		private String formatIntegration(String integration) {
+		public String formatIntegration(String integration) {
 			if (integration.length() > 0)
 				return " \"" + integration + "\"";
 			else

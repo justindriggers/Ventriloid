@@ -1,62 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:holo="http://schemas.android.com/apk/res-auto">
     
-    <PreferenceCategory android:title="General">
+    <PreferenceCategory holo:title="General">
         
-        <CheckBoxPreference android:key="screen_on"
-            android:title="Keep Screen On"
-            android:summary="WARNING: Drains battery!"
-            android:defaultValue="false"
-            android:order="0" />
+        <CheckBoxPreference holo:key="screen_on"
+            holo:title="Keep Screen On"
+            holo:summary="WARNING: Drains battery!"
+            holo:defaultValue="false"
+            holo:order="0" />
 	    
-	    <CheckBoxPreference android:key="voice_activation"
-	        android:title="Voice Activation"
-	        android:summary="Select to enable voice activation (highly experimental)"
-	        android:defaultValue="false"
-	        android:order="1" />
+	    <CheckBoxPreference holo:key="voice_activation"
+	        holo:title="Voice Activation"
+	        holo:summary="Select to enable voice activation (highly experimental)"
+	        holo:defaultValue="false"
+	        holo:order="1" />
         
     </PreferenceCategory>
 	
-	<PreferenceCategory android:key="ptt"
-	    android:title="Push to Talk">
+	<PreferenceCategory holo:key="ptt"
+	    holo:title="Push to Talk">
 	    
-	    <CheckBoxPreference android:key="show_ptt"
-	        android:title="Enable Global Push to Talk"
-	        android:summary="Displays system-wide Push to Talk button"
-	        android:defaultValue="false"
-	        android:order="2" />
-	    
-		<CheckBoxPreference android:key="toggle_mode"
-			android:title="Push to Talk toggle"
-			android:summary="Select if you prefer an on/off toggle rather than a press-and-hold button"
-			android:defaultValue="false"
-			android:order="3" />
+		<CheckBoxPreference holo:key="toggle_mode"
+			holo:title="Push to Talk toggle"
+			holo:summary="Select if you prefer an on/off toggle rather than a press-and-hold button"
+			holo:defaultValue="false"
+			holo:order="3" />
 		
-		<CheckBoxPreference android:key="custom_ptt"
-			android:title="Enable Push to Talk Hardware Key"
-			android:summary="Only works with app in foreground"
-			android:defaultValue="false"
-			android:order="4" />
+		<CheckBoxPreference holo:key="custom_ptt"
+			holo:title="Enable Push to Talk Hardware Key"
+			holo:summary="Only works with app in foreground"
+			holo:defaultValue="false"
+			holo:order="4" />
 		
-		<Preference android:key="ptt_key"
-			android:title="Set Push to Talk Key"
-			android:dependency="custom_ptt"
-			android:order="5" />
+		<Preference holo:key="ptt_key"
+			holo:title="Set Push to Talk Key"
+			holo:dependency="custom_ptt"
+			holo:order="5" />
 		
-		<CheckBoxPreference android:key="vibrate"
-			android:title="Push to Talk Vibrate"
-			android:summary="Select if you would like your phone to vibrate on Push to Talk"
-			android:defaultValue="true"
-			android:order="6" />
-		
-	</PreferenceCategory>
-	
-	<PreferenceCategory android:title="Other">
-	    
-		<Preference android:key="donate"
-			android:title="Donate"
-			android:summary="Select to go to PayPal via your web browser"
-			android:order="7" />
+		<CheckBoxPreference holo:key="vibrate"
+			holo:title="Push to Talk Vibrate"
+			holo:summary="Select if you would like your phone to vibrate on Push to Talk"
+			holo:defaultValue="true"
+			holo:order="6" />
 		
 	</PreferenceCategory>
 	

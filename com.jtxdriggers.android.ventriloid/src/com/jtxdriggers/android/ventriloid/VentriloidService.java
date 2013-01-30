@@ -21,26 +21,23 @@ package com.jtxdriggers.android.ventriloid;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.holoeverywhere.widget.Toast;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.PixelFormat;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnTouchListener;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.Toast;
 
 public class VentriloidService extends Service {
 	
@@ -49,27 +46,35 @@ public class VentriloidService extends Service {
 	}
 	
 	public static String SERVICE_INTENT = "com.jtxdriggers.android.ventriloid.SERVICE";
+	public static String ACTIVITY_RECEIVER = "com.jtxdriggers.android.ventriloid.VentriloidService.ACTIVITY_RECEIVER";
 	
-	private final IBinder mBinder = new MyBinder();
-	private WindowManager wm;
+	private static boolean connected = false;
+	
+	private final IBinder BINDER = new MyBinder();
+	private final Handler HANDLER = new Handler();
+	
+	private SharedPreferences prefs, volumePrefs, passwordPrefs;
 	private NotificationManager nm;
-	private Intent notifIntent;
-	private PendingIntent pendingIntent;
 	private Vibrator vibrator;
-	private SharedPreferences prefs, volumePrefs;
 	private Server server;
-	private boolean running = false; //, processed = false;
-	private ItemData items = new ItemData();
+	private ConcurrentLinkedQueue<VentriloEventData> queue;
+	private ItemData items;
+	
 	private VentriloidListAdapter sAdapter, cAdapter;
+	
 	private Recorder recorder = new Recorder(this);
 	private Player player = new Player();
-	private ConcurrentLinkedQueue<VentriloEventData> queue;
-	private Button ptt;
+	
 	private boolean voiceActivation = false,
+		muted = false,
 		vibrate = false,
-		admin = false;
-	private int start;
-	private double threshold = -1;
+		admin = false,
+		running = false,
+		disconnect = false;
+	private int start,
+		reconnectTimer,
+		viewType = ViewFragment.VIEW_TYPE_SERVER;
+	private double threshold;
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -78,12 +83,12 @@ public class VentriloidService extends Service {
 		server = db.getServer(id);
 
 		volumePrefs = getSharedPreferences("VOLUMES" + server.getId(), Context.MODE_PRIVATE);
+        passwordPrefs = getSharedPreferences("PASSWORDS" + server.getId(), Context.MODE_PRIVATE);
 
 		new Thread(new Runnable() {
 			public void run() {
 				if (VentriloInterface.login(server.getHostname() + ":" + server.getPort(),
 						server.getUsername(), server.getPassword(), server.getPhonetic())) {
-
 					new Thread(new Runnable() {
 						public void run() {
 							while (VentriloInterface.recv());
@@ -94,8 +99,8 @@ public class VentriloidService extends Service {
 				} else {
 					VentriloEventData data = new VentriloEventData();
 					VentriloInterface.error(data);
-					sendBroadcast(new Intent(Main.RECEIVER)
-						.putExtra("type", VentriloEvents.V3_EVENT_LOGIN_FAIL)
+					sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
+						.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL)
 						.putExtra("message", bytesToString(data.error.message)));
 					
 					start = Service.START_NOT_STICKY;
@@ -109,45 +114,21 @@ public class VentriloidService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		sAdapter = new VentriloidListAdapter(
-				getApplicationContext(),
-				this,
-				false,
-				getItemData().getChannels(),
-				R.layout.channel_row,
-				new String[] { "indent", "status", "name", "comment" },
-				new int[] { R.id.crowindent, R.id.crowstatus, R.id.crowtext, R.id.crowcomment },
-				getItemData().getUsers(),
-				R.layout.user_row,
-				new String[] { "indent", "xmit", "status", "rank", "name", "comment", "integration" },
-				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
 		
-		cAdapter = new VentriloidListAdapter(
-				getApplicationContext(),
-				this,
-				true,
-				getItemData().getChannels(),
-				R.layout.channel_row,
-				new String[] { "indent", "status", "name", "comment" },
-				new int[] { R.id.crowindent, R.id.crowstatus, R.id.crowtext, R.id.crowcomment },
-				getItemData().getUsers(),
-				R.layout.user_row,
-				new String[] { "indent", "xmit", "status", "rank", "name", "comment", "integration" },
-				new int[] { R.id.urowindent, R.id.IsTalking, R.id.urowstatus, R.id.urowrank, R.id.urowtext, R.id.urowcomment, R.id.urowint });
+		registerReceiver(activityReceiver, new IntentFilter(ACTIVITY_RECEIVER));
+
+		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		voiceActivation = prefs.getBoolean("voice_activation", false);
-		if (voiceActivation)
-			threshold = 55.03125;
-		
-		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		notifIntent = new Intent(this, ViewPagerActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		pendingIntent = PendingIntent.getActivity(VentriloidService.this, 0, notifIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-		
+		threshold = voiceActivation ? 55.03125 : -1;
 		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-		if (prefs.getBoolean("vibrate", true));
-			vibrate = true;
+		vibrate = prefs.getBoolean("vibrate", true);
+		
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
+		
+		items = new ItemData();
+		
 		//VentriloInterface.debuglevel(65535);
 		running = true;
 		new Thread(eventHandler).start();
@@ -155,13 +136,8 @@ public class VentriloidService extends Service {
 
 	@Override
 	public void onDestroy() {
+		unregisterReceiver(activityReceiver);
 		player.stop();
-        if(ptt != null) {
-        	try {
-        		wm.removeView(ptt);
-        	} catch (IllegalArgumentException e) { }
-            ptt = null;
-        }
 		VentriloInterface.logout();
 		nm.cancelAll();
 		running = false;
@@ -170,8 +146,7 @@ public class VentriloidService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		createPTT();
-		return mBinder;
+		return BINDER;
 	}
 	
 	public void setPTTOn(boolean on) {
@@ -187,60 +162,6 @@ public class VentriloidService extends Service {
 			if (vibrate)
 				vibrator.vibrate(25);
 		}
-	}
-	
-	private void createPTT() {		
-		final boolean show = prefs.getBoolean("show_ptt", false);
-		final boolean toggle = prefs.getBoolean("toggle_mode", false);
-		ptt = new Button(this);
-		ptt.setOnTouchListener(new OnTouchListener() {
-			boolean toggleOn = false;
-			public boolean onTouch(View v, MotionEvent event) {
-				if (show) {
-					if (event.getAction() == MotionEvent.ACTION_DOWN) {
-						if (toggle) {
-							if (toggleOn) {
-								setPTTOn(false);
-								ptt.setPressed(false);
-								toggleOn = false;
-							} else {
-								setPTTOn(true);
-								ptt.setPressed(true);
-								toggleOn = true;
-							}
-						} else {
-							setPTTOn(true);
-							ptt.setPressed(true);
-						}
-					} else if (!toggle && event.getAction() == MotionEvent.ACTION_UP) {
-						setPTTOn(false);
-						ptt.setPressed(false);
-					}
-					return true;
-				}
-				return false;
-			}
-		});
-		ptt.setText("Push to Talk");
-		
-		wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-		
-		int width = 0, height = 0,
-			overlayType = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-			flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-		
-		if (show && !voiceActivation) {
-			width = WindowManager.LayoutParams.FILL_PARENT;
-			height = WindowManager.LayoutParams.WRAP_CONTENT;
-		}
-		
-		if (prefs.getBoolean("screen_on", false))
-			flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
-
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-        		width, height, overlayType, flags, PixelFormat.TRANSPARENT);
-        params.gravity = Gravity.BOTTOM;
-		wm.addView(ptt, params);
 	}
 
 	public class MyBinder extends Binder {
@@ -260,9 +181,9 @@ public class VentriloidService extends Service {
 			
 			while (running) {
 				final VentriloEventData data = new VentriloEventData();
-				VentriloInterface.getevent(data); 
+				VentriloInterface.getevent(data);
 				
-				switch (data.type) {
+				switch (data.type) {					
 				case VentriloEvents.V3_EVENT_USER_LOGIN:
 					item = getUserFromData(data);
 					if (item.id == VentriloInterface.getuserid())
@@ -270,22 +191,33 @@ public class VentriloidService extends Service {
 					else
 						VentriloInterface.setuservolume(data.user.id, ((Item.User) item).muted ? 0 : ((Item.User) item).volume);
 					if ((data.flags & (1 << 0)) == 0 && data.text.real_user_id == 0)
-						createNotification(item.name + " has logged in.", data.type, 0);
+						createNotification(item.name + " has logged in.", data.type, 1);
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					player.close(data.user.id);
 					item = items.getUserById(data.user.id);
 					if (((Item.User) item).realId == 0)
-						createNotification(item.name + " has logged out.", data.type, 0);
+						createNotification(item.name + " has logged out.", data.type, 1);
 					break;
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
-					createNotification("Now Connected.", data.type, 0);
+					connected = true;
+					Intent notifIntent = new Intent(VentriloidService.this, Connected.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+					PendingIntent pendingIntent = PendingIntent.getActivity(VentriloidService.this, 0, notifIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+					NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(VentriloidService.this)
+				        .setSmallIcon(R.drawable.headset)
+						.setContentIntent(pendingIntent)
+				        .setContentText("Connected to " + server.getServername())
+			        	.setTicker("Now Connected.")
+			        	.setContentTitle("Ventriloid")
+			        	.setOngoing(true)
+			        	.setAutoCancel(false);
+					startForeground(1, notifBuilder.getNotification());
 					recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
 					if (voiceActivation)
 						recorder.start(threshold);
-					sendBroadcast(new Intent(Main.RECEIVER).putExtra("type", VentriloEvents.V3_EVENT_LOGIN_COMPLETE));
+					sendBroadcast(new Intent(Main.SERVICE_RECEIVER).putExtra("type", data.type));
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
@@ -297,15 +229,16 @@ public class VentriloidService extends Service {
 					} else {
 						item = items.getUserById(data.user.id);
 						if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-							createNotification(item.name + " joined the channel.", data.type, 0);
+							createNotification(item.name + " joined the channel.", data.type, 1);
 						else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-							createNotification(item.name + " left the channel.", data.type, 0);
+							createNotification(item.name + " left the channel.", data.type, 1);
 						player.close(data.user.id);
 					}
 					break;
 
 				case VentriloEvents.V3_EVENT_PLAY_AUDIO:
-					player.write(data.user.id, data.pcm.rate, data.pcm.channels, data.data.sample, data.pcm.length);
+					if (!muted)
+						player.write(data.user.id, data.pcm.rate, data.pcm.channels, data.data.sample, data.pcm.length);
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_TALK_END:
@@ -313,6 +246,57 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
 				case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
 					player.close(data.user.id);
+					break;
+					
+				case VentriloEvents.V3_EVENT_DISCONNECT:
+					connected = false;
+					if (!disconnect) {
+						item = items.getCurrentChannel().get(0);
+						final short id = item.id;
+						final String comment = items.getComment();
+						final String url = items.getUrl();
+						final String integrationText = items.getIntegrationText();
+						reconnectTimer = 10;
+						items = new ItemData();
+						HANDLER.post(new Runnable() {
+							@Override
+							public void run() {
+								if (disconnect)
+									return;
+								
+								if (reconnectTimer > 0) {
+									createNotification("Reconnecting in " + reconnectTimer + " seconds", data.type, 1);
+									sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
+										.putExtra("type", (short) -1)
+										.putExtra("timer", reconnectTimer));
+									reconnectTimer--;
+									HANDLER.postDelayed(this, 1000);
+								} else {
+									if (VentriloInterface.login(server.getHostname() + ":" + server.getPort(),
+											server.getUsername(), server.getPassword(), server.getPhonetic())) {
+										new Thread(new Runnable() {
+											public void run() {
+												while (VentriloInterface.recv());
+											}
+										}).start();
+										VentriloInterface.settext(comment, url, integrationText, true);
+										items.setComment(comment);
+										items.setUrl(url);
+										items.setIntegrationText(integrationText);
+										VentriloInterface.changechannel(id, passwordPrefs.getString(id + "pw", ""));
+									} else {
+										VentriloEventData data = new VentriloEventData();
+										VentriloInterface.error(data);
+										sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
+											.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL));
+										Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+										reconnectTimer = 10;
+										HANDLER.post(this);
+									}
+								}
+							}
+						});
+					}
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_PAGE:
@@ -339,30 +323,14 @@ public class VentriloidService extends Service {
 		}
 	};
 	
-/*	public boolean processNext() {
-		VentriloEventData data = queue.poll();
-		if (data != null) {
-			process(data);
-			return true;
-		}
-		return false;
-	}
-	
-	public void processAll() {
-		VentriloEventData data;
-		while ((data = queue.poll()) != null)
-			process(data);
-		processed = true;
-	}*/
-	
-	public void process(VentriloEventData data) {
+	public void process(final VentriloEventData data) {
 		Item item;
 		boolean sendBroadcast = true;
 		
 		switch (data.type) {
 		case VentriloEvents.V3_EVENT_PING:
 			items.setPing(data.ping);
-			sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER).putExtra("type", data.type).putExtra("ping", data.ping));
+			sendBroadcast(new Intent(Connected.SERVICE_RECEIVER).putExtra("type", data.type).putExtra("ping", data.ping));
 			sendBroadcast = false;
 			break;
 			
@@ -398,17 +366,16 @@ public class VentriloidService extends Service {
 			item = items.getUserById(data.user.id);
 			short from = item.parent;
 			item.parent = data.channel.id;
+			items.removeUser(data.user.id);
+			items.addUser((Item.User) item);
 			if (item.id == VentriloInterface.getuserid()) {
 				items.setCurrentChannel(item.parent);
-				items.addCurrentUser((Item.User) item);
 			} else {
 				if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 					items.addCurrentUser((Item.User) item);
 				else if (from == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 					items.removeCurrentUser(item.id);
 			}
-			items.removeUser(data.user.id);
-			items.addUser((Item.User) item);
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAN_ADD:
@@ -417,7 +384,7 @@ public class VentriloidService extends Service {
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAN_BADPASS:
-			Intent i = new Intent(ViewPagerActivity.FRAGMENT_RECEIVER)
+			Intent i = new Intent(Connected.SERVICE_RECEIVER)
 				.putExtra("type", data.type)
 				.putExtra("id", data.channel.id);
 			sendBroadcast(i);
@@ -425,7 +392,14 @@ public class VentriloidService extends Service {
 			break;
 			
 		case VentriloEvents.V3_EVENT_ERROR_MSG:
-			Toast.makeText(VentriloidService.this, bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+			if (data.error.disconnected)
+				disconnect();
+			HANDLER.post(new Runnable() {
+				@Override
+				public void run() {
+					Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+				}
+			});
 			sendBroadcast = false;
 			break;
 
@@ -463,7 +437,12 @@ public class VentriloidService extends Service {
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_MODIFY:
+			Item old = items.getUserById(data.user.id);
 			item = getUserFromData(data);
+			((Item.User) item).channelMute = ((Item.User) old).channelMute;
+			((Item.User) item).globalMute = ((Item.User) old).globalMute;
+			((Item.User) item).inChat = ((Item.User) old).inChat;
+			((Item.User) item).updateStatus();
 			items.removeUser(item.id);
 			items.removeCurrentUser(item.id);
 			items.addUser((Item.User) item);
@@ -472,7 +451,7 @@ public class VentriloidService extends Service {
 		}
 
 		if (sendBroadcast) {
-			sendBroadcast(new Intent(ViewPagerActivity.ACTIVITY_RECEIVER).putExtra("type", data.type));
+			sendBroadcast(new Intent(Connected.SERVICE_RECEIVER).putExtra("type", data.type));
 		}
 	}
 	
@@ -539,10 +518,15 @@ public class VentriloidService extends Service {
 		return server.getId();
 	}
 	
+	public String getServername() {
+		return server.getServername();
+	}
+	
 	private void createNotification(String text, short type, int id) {
+		Intent notifIntent = new Intent(this, Connected.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notifIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 		NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(VentriloidService.this)
-			.setTicker(text)
-	        .setSmallIcon(R.drawable.ic_launcher)
+	        .setSmallIcon(R.drawable.headset)
 			.setContentIntent(pendingIntent);
 		
 		switch (type) {
@@ -551,19 +535,32 @@ public class VentriloidService extends Service {
 		case VentriloEvents.V3_EVENT_USER_LOGOUT:
 		case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
 	        notifBuilder.setContentText("Connected to " + server.getServername())
+	        	.setTicker(text)
 	        	.setContentTitle("Ventriloid")
 	        	.setOngoing(true)
 	        	.setAutoCancel(false);
 			break;
 		case VentriloEvents.V3_EVENT_USER_PAGE:
 			notifBuilder.setContentText(text)
+        		.setTicker(text)
         		.setContentTitle("Page Received")
         		.setAutoCancel(true)
-        		.setDefaults(Notification.DEFAULT_VIBRATE)
-        		.setContentIntent(pendingIntent);
+	        	.setOngoing(false)
+        		.setDefaults(Notification.DEFAULT_VIBRATE);
 			break;
 		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_MESSAGE:
-			// TO-DO Make private chat ID's negative so they won't overwrite page notifications
+			// TODO Make private chat ID's negative so they won't overwrite page notifications
+			break;
+		case VentriloEvents.V3_EVENT_DISCONNECT:
+			Intent disconnectedIntent = new Intent(this, Main.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			PendingIntent disconnectedPendingIntent = PendingIntent.getActivity(this, 0, disconnectedIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+			notifBuilder.setContentIntent(disconnectedPendingIntent)
+				.setContentTitle("Disconnected from Server")
+				.setContentText(text)
+				.setOngoing(true)
+				.setAutoCancel(false);
+			if (text.contains(10 + ""))
+				notifBuilder.setTicker("Disconnected from Server");
 			break;
 		}
 		nm.notify(id, notifBuilder.getNotification());
@@ -573,21 +570,50 @@ public class VentriloidService extends Service {
 		return sAdapter;
 	}
 
-	public void setServerAdapter(VentriloidListAdapter sAdapter) {
-		this.sAdapter = sAdapter;
-	}
-
 	public VentriloidListAdapter getChannelAdapter() {
 		return cAdapter;
 	}
-
-	public void setChannelAdapter(VentriloidListAdapter cAdapter) {
-		this.cAdapter = cAdapter;
-	}
 	
-	public void updateViews() {
+	public void notifyDataSetChanged() {
 		sAdapter.notifyDataSetChanged();
 		cAdapter.notifyDataSetChanged();
 	}
+	
+	public void disconnect() {
+		disconnect = true;
+		connected = false;
+		stopForeground(true);
+		stopSelf();
+	}
+	
+	public static boolean isConnected() {
+		return connected;
+	}
+	
+	public void setViewType(int viewType) {
+		this.viewType = viewType;
+	}
+	
+	public int getViewType() {
+		return viewType;
+	}
+	
+	public boolean isMuted() {
+		return muted;
+	}
 
+	public void setMuted(boolean muted) {
+		this.muted = muted;
+	}
+
+	private BroadcastReceiver activityReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			switch (intent.getIntExtra("type", -1)) {
+			case VentriloEvents.V3_EVENT_DISCONNECT:
+				disconnect();
+				break;
+			}
+		}
+	};
 }

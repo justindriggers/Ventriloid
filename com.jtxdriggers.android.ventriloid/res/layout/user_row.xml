@@ -1,68 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
-    android:layout_height="wrap_content"
-    android:layout_width="fill_parent"
-    android:padding="10dp" 
-    android:gravity="center_vertical">
-
-    <TextView android:id="@+id/urowindent"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:gravity="center_vertical"
+	android:minHeight="?listPreferredItemHeightSmall"
+	android:paddingLeft="@dimen/preference_child_padding_side"
+	android:paddingRight="?android:attr/scrollbarSize">
+	
+	<TextView
+		android:id="@+id/indent"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:typeface="sans"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:maxLines="1" />
-    
-    <ImageView android:id="@+id/IsTalking"
+		android:singleLine="true"
+		android:textAppearance="?textAppearanceListItemSmall" />
+	
+	<ImageView
+		android:id="@+id/icon"
         android:layout_height="10dip"
         android:layout_width="10dip"
-        android:layout_marginRight="7dip"
-        android:contentDescription="@string/user_status" />
-    
-    <TextView android:id="@+id/urowstatus"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:typeface="sans"
-        android:textStyle="normal"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:maxLines="1" />
-    
-    <TextView android:id="@+id/urowrank"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:typeface="sans"
-        android:textStyle="normal"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:maxLines="1" />
-    
-    <TextView android:id="@+id/urowtext"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:typeface="sans"
-        android:textStyle="normal"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:maxLines="1" />
-    
-    <TextView android:id="@+id/urowcomment"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:typeface="sans"
-        android:textStyle="normal"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:maxLines="1" />
-    
-    <TextView android:id="@+id/urowint"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:typeface="sans"
-        android:textStyle="normal"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:maxLines="1" />
-
+		android:layout_marginRight="6dip" />
+	
+	<TextView
+		android:id="@+id/title"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:ellipsize="marquee"
+		android:fadingEdge="horizontal"
+		android:singleLine="true"
+		android:textAppearance="?textAppearanceListItemSmall" />
+		
 </LinearLayout>

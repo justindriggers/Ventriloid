@@ -148,12 +148,15 @@ public class ServerAdapter extends SQLiteOpenHelper {
 	            server.setHostname(cursor.getString(4));
 	            server.setPort(Integer.parseInt(cursor.getString(5)));
 	            
-	            serverList.add(server.getUsername() + "@" + server.getServername() + ": " + server.getHostname() + ":" + server.getPort());
+	            serverList.add(server.getServername());
 	        } while (cursor.moveToNext());
 	    }
 	    cursor.close();
 	    db.close();
-	 
+	    
+	    if (serverList.size() < 1)
+	    	serverList.add("No servers added");
+	    
 	    return serverList;
 	}
 	

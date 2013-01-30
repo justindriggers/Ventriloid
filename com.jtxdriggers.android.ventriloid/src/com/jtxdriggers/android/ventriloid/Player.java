@@ -41,7 +41,7 @@ public class Player {
 		// This thread tricks the system into letting us control volume no matter what activity is in the foreground.
 		running = true;
 		blankTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 8000, 2, AudioFormat.ENCODING_PCM_16BIT,
-				AudioTrack.getMinBufferSize(8000, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT),
+				AudioTrack.getMinBufferSize(8000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT),
 				AudioTrack.MODE_STREAM);
 		blankTrack.play();
 		new Thread(new Runnable() {
@@ -91,7 +91,7 @@ public class Player {
 		AudioTrack track;
 		if ((track = tracks.get(id)) == null) {
 			int bufferSize = 0;
-			int channelsConfig = (channels == 2) ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO;
+			int channelsConfig = (channels == 2) ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO;
 			if (rate == 48000) {
 				bufferSize = AudioTrack.getMinBufferSize(rate, channelsConfig, AudioFormat.ENCODING_PCM_16BIT);
 			} else

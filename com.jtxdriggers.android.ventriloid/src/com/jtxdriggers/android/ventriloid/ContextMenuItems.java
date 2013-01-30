@@ -21,9 +21,6 @@ package com.jtxdriggers.android.ventriloid;
 
 public class ContextMenuItems {
 	
-	public static final int SERVER_VIEW = -2;
-	public static final int CHANNEL_VIEW = -1;
-
 	public static final int DISCONNECT		= 0;
 	public static final int USER_OPTIONS	= 1;
 	public static final int MOVE_TO_CHANNEL	= 2;

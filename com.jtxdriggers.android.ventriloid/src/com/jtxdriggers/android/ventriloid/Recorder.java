@@ -49,7 +49,7 @@ public class Recorder {
 			audiorecord = new AudioRecord(
 					MediaRecorder.AudioSource.MIC,
 					rate,
-					AudioFormat.CHANNEL_CONFIGURATION_MONO,
+					AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT,
 					bufferSize);
 			
@@ -92,7 +92,7 @@ public class Recorder {
 			audiorecord = new AudioRecord(
 					MediaRecorder.AudioSource.MIC,
 					rate,
-					AudioFormat.CHANNEL_CONFIGURATION_MONO,
+					AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT,
 					bufferSize);
 			
@@ -153,7 +153,7 @@ public class Recorder {
 		if (rate == 48000) {
 			return AudioRecord.getMinBufferSize(
 					48000,
-					AudioFormat.CHANNEL_CONFIGURATION_MONO,
+					AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT);
 		}
 		final int[] rates = { 8000, 11025, 16000, 22050, 32000, 44100 };
@@ -163,7 +163,7 @@ public class Recorder {
 				for (int j = i; j < rates.length; j++) {
 					buffer = AudioRecord.getMinBufferSize(
 							rates[j],
-							AudioFormat.CHANNEL_CONFIGURATION_MONO,
+							AudioFormat.CHANNEL_IN_MONO,
 							AudioFormat.ENCODING_PCM_16BIT);
 					if (buffer > 0 && buffer <= VentriloInterface.pcmlengthforrate(rates[j])) {
 						if (rates[j] != rate)
@@ -174,7 +174,7 @@ public class Recorder {
 				for (int j = i - 1; j >= 0; j--) {
 					buffer = AudioRecord.getMinBufferSize(
 							rates[j],
-							AudioFormat.CHANNEL_CONFIGURATION_MONO,
+							AudioFormat.CHANNEL_IN_MONO,
 							AudioFormat.ENCODING_PCM_16BIT);
 					if (buffer > 0 && buffer <= VentriloInterface.pcmlengthforrate(rates[j])) {
 						if (rates[j] != rate) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Justin Driggers <jtxdriggers@gmail.com>
+ * Copyright 2013 Justin Driggers <jtxdriggers@gmail.com>
  * 
  * This file is part of Ventriloid.
  *
@@ -20,124 +20,116 @@
 package com.jtxdriggers.android.ventriloid;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import org.holoeverywhere.LayoutInflater;
+import org.holoeverywhere.widget.TextView;
 
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseExpandableListAdapter;
 import android.widget.ImageView;
-import android.widget.SimpleExpandableListAdapter;
-import android.widget.TextView;
 
-public class VentriloidListAdapter extends SimpleExpandableListAdapter {
+public class VentriloidListAdapter extends BaseExpandableListAdapter {
 	
-	private VentriloidService s;
-	private String[] mGroupFrom, mChildFrom;
-	private int[] mGroupTo, mChildTo;
+	private Context mContext;
+	private ArrayList<Item.Channel> channels;
+	private ArrayList<ArrayList<Item.User>> users; 
 	private boolean isChannelView;
 
-	public VentriloidListAdapter(Context context, VentriloidService service, boolean channelView,
-			List<Item.Channel> groupData, int groupLayout, String[] groupFrom, int[] groupTo,
-			List<? extends List<Item.User>> childData, int childLayout, String[] childFrom, int[] childTo) {
-		
-		super(context, getChannelHashMaps(groupData), groupLayout, groupFrom, groupTo, getUserHashMaps(childData), childLayout, childFrom, childTo);
-		s = service;
+	public VentriloidListAdapter(Context context, boolean channelView) {
+		mContext = context;
 		isChannelView = channelView;
-		mGroupFrom = groupFrom;
-		mGroupTo = groupTo;
-		mChildFrom = childFrom;
-		mChildTo = childTo;
-	}
-	 
-	private static List<? extends Map<String, ?>> getChannelHashMaps(List<? extends Item.Channel> channels) {
-		ArrayList<HashMap<String, Object>> channelList = new ArrayList<HashMap<String, Object>>();
-		for (int i = 0; i < channels.size(); i++) {
-			HashMap<String, Object> c = channels.get(i).toHashMap();
-			channelList.add(c);
-		}
-		return channelList;
-	}
-	 
-	private static List<? extends List<? extends Map<String, ?>>> getUserHashMaps(List<? extends List<? extends Item.User>> users) {
-		ArrayList<ArrayList<HashMap<String, Object>>> userList = new ArrayList<ArrayList<HashMap<String, Object>>>();
-		for (int i = 0; i < users.size(); i++) {
-			userList.add(new ArrayList<HashMap<String, Object>>());
-			for (int j = 0; j < users.get(i).size(); j++) {
-				HashMap<String, Object> u = users.get(i).get(j).toHashMap();
-				userList.get(i).add(u);
-			}
-		}
-		return userList;
 	}
 	
-	public int getGroupCount() {
-		return isChannelView ? 1 : s.getItemData().getChannels().size();
-	}
-	
-	public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-        View v;
-        
-        if (convertView == null)
-            v = newGroupView(true, parent);
-        else
-            v = convertView;
-
-        bindView(v, isChannelView ? s.getItemData().getCurrentChannel().get(0) : s.getItemData().getChannels().get(groupPosition), mGroupFrom, mGroupTo);
-    	return v;
-    }
-	
-	public int getChildrenCount(int groupPosition) {
-		return isChannelView ? s.getItemData().getCurrentUsers().get(0).size() : s.getItemData().getUsers().get(groupPosition).size();
+	public void setContent(ItemData items) {
+		channels = isChannelView ? items.getCurrentChannel() : items.getChannels();
+		users = isChannelView ? items.getCurrentUsers() : items.getUsers();
+		notifyDataSetChanged();
 	}
 
+	@Override
+	public Item.User getChild(int groupPosition, int childPosition) {
+		try {
+			return users.get(groupPosition).get(childPosition);
+		} catch (IndexOutOfBoundsException e) {
+			return null;
+		}
+	}
+
+	@Override
+	public long getChildId(int groupPosition, int childPosition) {
+		try {
+			return users.get(groupPosition).get(childPosition).id;
+		} catch (IndexOutOfBoundsException e) {
+			return -1;
+		}
+	}
+
+	@Override
 	public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-		View v;
-		 
+		Item.User user = getChild(groupPosition, childPosition);
+		
 		if (convertView == null)
-			v = newChildView(isLastChild, parent);
-		else
-			v = convertView;
-	    
-		bindView(v, isChannelView ? s.getItemData().getCurrentUsers().get(0).get(childPosition) : s.getItemData().getUsers().get(groupPosition).get(childPosition), mChildFrom, mChildTo);
-		return v;
+			convertView = LayoutInflater.inflate(mContext, R.layout.user_row);
+		
+		if (user == null)
+			return convertView;
+		
+		TextView indent = (TextView) convertView.findViewById(R.id.indent);
+		indent.setText(isChannelView ? "     " : user.indent);
+		
+		ImageView imageView = (ImageView) convertView.findViewById(R.id.icon);
+		imageView.setImageResource(user.xmit);
+		
+		TextView textView = (TextView) convertView.findViewById(R.id.title);
+		textView.setText(user.status + user.formatRank(user.rank) + user.name + user.formatComment(user.url, user.comment) + user.formatIntegration(user.integration));
+		return convertView;
 	}
-	 
-	private void bindView(View view, Item.User data, String[] from, int[] to) {
-		HashMap<String, Object> map = data.toHashMap();
-		for (int i = 0; i < to.length; i++) {
-			Object item = map.get(from[i]);
-			
-			if (i == 0 && isChannelView) {
-				item = "     ";
-			}
-			
-			if (i == 1) {
-				ImageView imgV = (ImageView) view.findViewById(to[i]);
-				if (imgV != null)
-					imgV.setImageResource((Integer) item);
-			} else {
-				TextView v = (TextView) view.findViewById(to[i]);
-				if (v != null)
-					v.setText(item.toString());
-			}
+
+	@Override
+	public int getChildrenCount(int groupPosition) {
+		try {
+			return users.get(groupPosition).size();
+		} catch (IndexOutOfBoundsException e) {
+			return -1;
 		}
 	}
-	
-	private void bindView(View view, Item.Channel data, String[] from, int[] to) {
-		HashMap<String, Object> map = data.toHashMap();
-		for (int i = 0; i < to.length; i++) {
-			Object item = map.get(from[i]);
-			
-			if (i == 0 && isChannelView) {
-				item = "";
-			}
-			
-			TextView v = (TextView) view.findViewById(to[i]);
-			if (v != null)
-				v.setText(item.toString());
-		}
+
+	@Override
+	public Item.Channel getGroup(int groupPosition) {
+		return channels.get(groupPosition);
+	}
+
+	@Override
+	public int getGroupCount() {
+		return channels.size();
+	}
+
+	@Override
+	public long getGroupId(int groupPosition) {
+		return channels.get(groupPosition).id;
+	}
+
+	@Override
+	public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+		Item.Channel channel = getGroup(groupPosition);
+		if (convertView == null)
+			convertView = LayoutInflater.inflate(mContext, R.layout.channel_row);
+		
+		TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
+		textView.setText((isChannelView ? "" : channel.indent) + channel.status + channel.name + channel.formatComment(channel.comment));
+		return convertView;
+	}
+
+	@Override
+	public boolean hasStableIds() {
+		return true;
+	}
+
+	@Override
+	public boolean isChildSelectable(int groupPosition, int childPosition) {
+		return true;
 	}
 
 }

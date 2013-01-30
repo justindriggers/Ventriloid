@@ -24,16 +24,18 @@ import java.util.ArrayList;
 public class ItemData {
 
 	private ArrayList<Item.Channel> channels = new ArrayList<Item.Channel>();
-	private Item.Channel currentChannel; 
+	private ArrayList<Item.Channel> currentChannels = new ArrayList<Item.Channel>(); 
 	private ArrayList<ArrayList<Item.User>> users = new ArrayList<ArrayList<Item.User>>();
-	private ArrayList<Item.User> currentUsers = new ArrayList<Item.User>(); 
+	private ArrayList<ArrayList<Item.User>> currentUsers = new ArrayList<ArrayList<Item.User>>(); 
 	private int ping = 0;
+	private String comment = "", url = "", integrationText = "";
 	
 	public ItemData() {
 		Item i = new Item();
 		channels.add(i.new Channel());
-		currentChannel = i.new Channel();
+		currentChannels.add(i.new Channel());
 		users.add(new ArrayList<Item.User>());
+		currentUsers.add(new ArrayList<Item.User>());
 	}
 	
 	public void addChannel(Item.Channel channel) {
@@ -54,7 +56,7 @@ public class ItemData {
 	
 	public void addCurrentUser(Item.User user) {
 		if (user.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-			currentUsers.add(user);
+			currentUsers.get(0).add(user);
 	}
 	
 	public void addUser(Item.User user) {
@@ -81,26 +83,19 @@ public class ItemData {
 	}
 	
 	public ArrayList<Item.Channel> getCurrentChannel() {
-		ArrayList<Item.Channel> c = new ArrayList<Item.Channel>();
-		c.add(currentChannel);
-		return c;
+		return currentChannels;
 	}
 	
 	public Item.User getCurrentUserById(short id) {
-		for (int i = 0; i < currentUsers.size(); i++) {
-			if (currentUsers.get(i).id == id)
-				return currentUsers.get(i);
+		for (int i = 0; i < currentUsers.get(0).size(); i++) {
+			if (currentUsers.get(0).get(i).id == id)
+				return currentUsers.get(0).get(i);
 		}
 		return null;
 	}
 	
 	public ArrayList<ArrayList<Item.User>> getCurrentUsers() {
-		ArrayList<ArrayList<Item.User>> u = new ArrayList<ArrayList<Item.User>>();
-		u.add(new ArrayList<Item.User>());
-		for (int i = 0; i < currentUsers.size(); i++) {
-			u.get(0).add(currentUsers.get(i));
-		}
-		return u;
+		return currentUsers;
 	}
 	
 	public ArrayList<ArrayList<Item.User>> getUsers() {
@@ -118,9 +113,9 @@ public class ItemData {
 	}
 	
 	public void removeCurrentUser(short id) {
-		for (int i = 0; i < currentUsers.size(); i++) {
-			if (currentUsers.get(i).id == id) {
-				currentUsers.remove(i);
+		for (int i = 0; i < currentUsers.get(0).size(); i++) {
+			if (currentUsers.get(0).get(i).id == id) {
+				currentUsers.get(0).remove(i);
 				return;
 			}
 		}
@@ -138,13 +133,14 @@ public class ItemData {
 	}
 	
 	public void setCurrentChannel(short id) {
-		currentUsers.clear();
+		currentChannels.clear();
+		currentUsers.get(0).clear();
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == id) {
-				currentChannel = channels.get(i);
+				currentChannels.add(0, channels.get(i));
 				
 				for (int j = 0; j < users.get(i).size(); j++) {
-					currentUsers.add(users.get(i).get(j));
+					currentUsers.get(0).add(users.get(i).get(j));
 				}
 				return;
 			}
@@ -153,14 +149,14 @@ public class ItemData {
 	
 	public void setLobby(Item.Channel lobby) {
 		channels.set(0, lobby);
-		currentChannel = lobby;
+		currentChannels.set(0, lobby);
 	}
 	
 	public void setXmit(short id, int xmit) {
 		Item.User u = getUserById(id);
-		u.xmit = xmit;
-		//if (u.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-		//	getCurrentUserById(id).xmit = xmit;
+		try {
+			u.xmit = xmit;
+		} catch (NullPointerException e) { }
 	}
 	
 	public int getPing() {
@@ -169,6 +165,30 @@ public class ItemData {
 	
 	public void setPing(int ping) {
 		this.ping = ping;
+	}
+
+	public String getComment() {
+		return comment;
+	}
+
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getIntegrationText() {
+		return integrationText;
+	}
+
+	public void setIntegrationText(String integrationText) {
+		this.integrationText = integrationText;
 	}
 	
 }
