@@ -60,8 +60,6 @@ public class VentriloidService extends Service {
 	private ConcurrentLinkedQueue<VentriloEventData> queue;
 	private ItemData items;
 	
-	private VentriloidListAdapter sAdapter, cAdapter;
-	
 	private Recorder recorder = new Recorder(this);
 	private Player player = new Player();
 	
@@ -564,19 +562,6 @@ public class VentriloidService extends Service {
 			break;
 		}
 		nm.notify(id, notifBuilder.getNotification());
-	}
-
-	public VentriloidListAdapter getServerAdapter() {
-		return sAdapter;
-	}
-
-	public VentriloidListAdapter getChannelAdapter() {
-		return cAdapter;
-	}
-	
-	public void notifyDataSetChanged() {
-		sAdapter.notifyDataSetChanged();
-		cAdapter.notifyDataSetChanged();
 	}
 	
 	public void disconnect() {

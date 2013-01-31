@@ -271,7 +271,7 @@ public class ViewFragment extends Fragment {
 			VentriloInterface.setuservolume(u.id, u.muted ? 0 : u.volume);
 			getActivity().getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE).edit().putBoolean("mute" + u.id, u.muted).commit();
 			u.updateStatus();
-			s.notifyDataSetChanged();
+			notifyDataSetChanged();
 			return true;
 		case ContextMenuItems.SET_VOLUME:
 			final TextView percent = new TextView(getActivity());
@@ -304,7 +304,7 @@ public class ViewFragment extends Fragment {
 						VentriloInterface.setxmitvolume(volume.getProgress());
 						u.volume = volume.getProgress();
 						u.updateStatus();
-						s.notifyDataSetChanged();
+						notifyDataSetChanged();
 						getActivity().getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE).edit().putInt("transmit", volume.getProgress()).commit();
 					}
 				});
@@ -316,7 +316,7 @@ public class ViewFragment extends Fragment {
 							VentriloInterface.setuservolume(u.id, volume.getProgress());
 						u.volume = volume.getProgress();
 						u.updateStatus();
-						s.notifyDataSetChanged();
+						notifyDataSetChanged();
 						getActivity().getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE).edit().putInt("vol" + u.id, volume.getProgress()).commit();
 					}
 				});
