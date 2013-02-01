@@ -1287,7 +1287,7 @@ _v3_recv_enc_msg(char *data) {/*{{{*/
     _v3_debug(V3_DEBUG_PACKET, "======= receiving encrypted TCP packet ============================");
     if ((recvlen = recv(_v3_sockd, (uint8_t *)&len+1, 1, 0)) != 1) {
         if (recvlen == 0 || recvlen == -1) {
-            _v3_error("server closed connection");
+            _v3_error("You have been disconnected from the server.");
             _v3_close_connection();
             _v3_func_leave("_v3_recv_enc_msg");
             return 0;
@@ -1298,7 +1298,7 @@ _v3_recv_enc_msg(char *data) {/*{{{*/
     }
     if ((recvlen = recv(_v3_sockd, (uint8_t *)&len, 1, 0)) != 1) {
         if (recvlen == 0 || recvlen == -1) {
-            _v3_error("server closed connection");
+            _v3_error("You have been disconnected from the server.");
             _v3_close_connection();
             _v3_func_leave("_v3_recv_enc_msg");
             return 0;
@@ -1311,7 +1311,7 @@ _v3_recv_enc_msg(char *data) {/*{{{*/
     for (packlen = 0; packlen < len; packlen += recvlen) {
         recvlen = recv(_v3_sockd, buff+packlen, len - packlen, 0);
         if (recvlen == 0) {
-            _v3_error("server has closed connected");
+            _v3_error("You have been disconnected from the server.");
             _v3_close_connection();
             _v3_func_leave("_v3_recv_enc_msg");
             return 0;
@@ -3753,7 +3753,7 @@ _v3_process_message(_v3_net_message *msg) {/*{{{*/
                 if (m->subtype & 0x01) {
                     error = true;
                     disconnected = true;
-                    strncat(buf, "You have been disconnected from the server.\n", 511);
+                    strncat(buf, "You have been disconnected from the server.", 511);
                     _v3_logout();
                 }
                 if (m->subtype & 0x02) {
@@ -3778,7 +3778,7 @@ _v3_process_message(_v3_net_message *msg) {/*{{{*/
                 }
                 if (m->subtype & 0x40) {
                     error = true;
-                    strncat(buf, "The supplied password is incorrect.\n", 511);
+                    strncat(buf, "The supplied password is incorrect.", 511);
                 }
                 if (m->subtype & 0x100) {
                     _v3_debug(V3_DEBUG_INTERNAL, "FIXME: Unknown subtype, please report a packetdump.");

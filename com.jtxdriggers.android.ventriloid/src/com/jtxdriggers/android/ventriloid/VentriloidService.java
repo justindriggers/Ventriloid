@@ -68,7 +68,7 @@ public class VentriloidService extends Service {
 		vibrate = false,
 		admin = false,
 		running = false,
-		disconnect = false;
+		disconnect;
 	private int start,
 		reconnectTimer,
 		viewType = ViewFragment.VIEW_TYPE_SERVER;
@@ -82,27 +82,34 @@ public class VentriloidService extends Service {
 
 		volumePrefs = getSharedPreferences("VOLUMES" + server.getId(), Context.MODE_PRIVATE);
         passwordPrefs = getSharedPreferences("PASSWORDS" + server.getId(), Context.MODE_PRIVATE);
+        
+        disconnect = true;
 
 		new Thread(new Runnable() {
 			public void run() {
 				if (VentriloInterface.login(server.getHostname() + ":" + server.getPort(),
-						server.getUsername(), server.getPassword(), server.getPhonetic())) {
-					new Thread(new Runnable() {
-						public void run() {
-							while (VentriloInterface.recv());
-						}
-					}).start();
-				
+						server.getUsername(), server.getPassword(), server.getPhonetic()))
 					start = Service.START_STICKY;
-				} else {
-					VentriloEventData data = new VentriloEventData();
-					VentriloInterface.error(data);
-					sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
-						.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL)
-						.putExtra("message", bytesToString(data.error.message)));
+				else {
+					HANDLER.post(new Runnable() {
+						@Override
+						public void run() {
+							VentriloEventData data = new VentriloEventData();
+							VentriloInterface.error(data);
+							sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
+								.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL));
+							Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+						}
+					});
 					
 					start = Service.START_NOT_STICKY;
 				}
+				
+				new Thread(new Runnable() {
+					public void run() {
+						while (VentriloInterface.recv());
+					}
+				}).start();
 			}
 		}).start();
 		
@@ -127,8 +134,7 @@ public class VentriloidService extends Service {
 		
 		items = new ItemData();
 		
-		//VentriloInterface.debuglevel(65535);
-		running = true;
+		VentriloInterface.debuglevel(65535);
 		new Thread(eventHandler).start();
 	}
 
@@ -174,7 +180,8 @@ public class VentriloidService extends Service {
 
 	private Runnable eventHandler = new Runnable() {
 		public void run() {
-			
+
+			running = true;
 			Item item;
 			
 			while (running) {
@@ -201,6 +208,7 @@ public class VentriloidService extends Service {
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 					connected = true;
+					disconnect = false;
 					Intent notifIntent = new Intent(VentriloidService.this, Connected.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 					PendingIntent pendingIntent = PendingIntent.getActivity(VentriloidService.this, 0, notifIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 					NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(VentriloidService.this)
@@ -216,6 +224,11 @@ public class VentriloidService extends Service {
 					if (voiceActivation)
 						recorder.start(threshold);
 					sendBroadcast(new Intent(Main.SERVICE_RECEIVER).putExtra("type", data.type));
+					break;
+					
+				case VentriloEvents.V3_EVENT_LOGIN_FAIL:
+					sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
+						.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL));
 					break;
 
 				case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
@@ -248,6 +261,16 @@ public class VentriloidService extends Service {
 					
 				case VentriloEvents.V3_EVENT_DISCONNECT:
 					connected = false;
+					
+					VentriloInterface.error(data);
+					if (data.error.message.length > 0 && !disconnect)
+						HANDLER.post(new Runnable() {
+							@Override
+							public void run() {
+								Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+							}
+						});
+					
 					if (!disconnect) {
 						item = items.getCurrentChannel().get(0);
 						final short id = item.id;
@@ -258,38 +281,39 @@ public class VentriloidService extends Service {
 						items = new ItemData();
 						HANDLER.post(new Runnable() {
 							@Override
-							public void run() {
-								if (disconnect)
-									return;
-								
-								if (reconnectTimer > 0) {
-									createNotification("Reconnecting in " + reconnectTimer + " seconds", data.type, 1);
-									sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
-										.putExtra("type", (short) -1)
-										.putExtra("timer", reconnectTimer));
-									reconnectTimer--;
-									HANDLER.postDelayed(this, 1000);
-								} else {
-									if (VentriloInterface.login(server.getHostname() + ":" + server.getPort(),
-											server.getUsername(), server.getPassword(), server.getPhonetic())) {
-										new Thread(new Runnable() {
-											public void run() {
-												while (VentriloInterface.recv());
-											}
-										}).start();
-										VentriloInterface.settext(comment, url, integrationText, true);
-										items.setComment(comment);
-										items.setUrl(url);
-										items.setIntegrationText(integrationText);
-										VentriloInterface.changechannel(id, passwordPrefs.getString(id + "pw", ""));
-									} else {
-										VentriloEventData data = new VentriloEventData();
-										VentriloInterface.error(data);
+							public void run() {								
+								if (!disconnect) {
+									if (reconnectTimer > 0) {
+										createNotification("Reconnecting in " + reconnectTimer + " seconds", data.type, 1);
 										sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
-											.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL));
-										Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
-										reconnectTimer = 10;
-										HANDLER.post(this);
+											.putExtra("type", (short) -1)
+											.putExtra("timer", reconnectTimer));
+										reconnectTimer--;
+										HANDLER.postDelayed(this, 1000);
+									} else {
+										if (VentriloInterface.login(server.getHostname() + ":" + server.getPort(),
+												server.getUsername(), server.getPassword(), server.getPhonetic())) {
+											new Thread(new Runnable() {
+												public void run() {
+													while (VentriloInterface.recv());
+												}
+											}).start();
+											VentriloInterface.settext(comment, url, integrationText, true);
+											items.setComment(comment);
+											items.setUrl(url);
+											items.setIntegrationText(integrationText);
+											VentriloInterface.changechannel(id, passwordPrefs.getString(id + "pw", ""));
+										} else {
+											VentriloEventData data = new VentriloEventData();
+											VentriloInterface.error(data);
+											sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
+												.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL));
+											Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+											if (data.error.disconnected)
+												disconnect();
+											reconnectTimer = 10;
+											HANDLER.post(this);
+										}
 									}
 								}
 							}
@@ -392,12 +416,13 @@ public class VentriloidService extends Service {
 		case VentriloEvents.V3_EVENT_ERROR_MSG:
 			if (data.error.disconnected)
 				disconnect();
-			HANDLER.post(new Runnable() {
-				@Override
-				public void run() {
-					Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
-				}
-			});
+			else
+				HANDLER.post(new Runnable() {
+					@Override
+					public void run() {
+						Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+					}
+				});
 			sendBroadcast = false;
 			break;
 
