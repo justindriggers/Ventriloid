@@ -66,13 +66,14 @@ public class Connected extends Activity {
 		sm.getListView().setOnChildClickListener(menuClickListener);
         
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        
+		bottomBar = (RelativeLayout) findViewById(R.id.bottomBar);
 		
 		if (!prefs.getBoolean("voice_activation", false)) {
 			pttToggle = prefs.getBoolean("toggle_mode", false);
 			pttEnabled = prefs.getBoolean("custom_ptt", false);
 			pttKey = pttEnabled ? prefs.getInt("ptt_key", KeyEvent.KEYCODE_CAMERA) : -1;
 
-			bottomBar = (RelativeLayout) findViewById(R.id.bottomBar);
 			pttSizeUp = (Button) findViewById(R.id.pttSizeUp);
 			pttSizeUp.setOnClickListener(sizeChangeListener);
 			pttSizeDown = (Button) findViewById(R.id.pttSizeDown);
