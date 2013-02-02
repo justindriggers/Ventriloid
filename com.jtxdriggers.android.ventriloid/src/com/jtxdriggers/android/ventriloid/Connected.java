@@ -274,6 +274,10 @@ public class Connected extends Activity {
 					break;
 				case VentriloidSlidingMenu.MENU_SET_URL:
 					break;
+				case VentriloidSlidingMenu.MENU_JOIN_CHAT:
+					VentriloInterface.joinchat();
+					startActivity(new Intent(Connected.this, Chat.class));
+					break;
 				}
 				break;
 			case VentriloidSlidingMenu.MENU_CLOSE:

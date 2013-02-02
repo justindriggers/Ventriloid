@@ -23,6 +23,7 @@ public class VentriloidSlidingMenu extends SlidingMenu {
 	
 	public static final int MENU_SET_COMMENT = 0;
 	public static final int MENU_SET_URL = 1;
+	public static final int MENU_JOIN_CHAT = 2;
 	
 	public static final int MENU_MINIMIZE = 0;
 	public static final int MENU_DISCONNECT = 1;
@@ -30,7 +31,7 @@ public class VentriloidSlidingMenu extends SlidingMenu {
 	private ExpandableListView mList;
 	private SlidingMenuAdapter adapter;
 	private String[] sections = {"Switch View", "User Options", "Close"};
-	private String[][] options = { {"Server", "Channel"}, {"Set Comment", "Set URL"}, {"Minimize", "Disconnect"} };
+	private String[][] options = { {"Server", "Channel"}, {"Set Comment", "Set URL", "Join Chat"}, {"Minimize", "Disconnect"} };
 	private int activeView = MENU_SERVER_VIEW;
 
 	public VentriloidSlidingMenu(Context context) {
@@ -81,6 +82,8 @@ public class VentriloidSlidingMenu extends SlidingMenu {
 				return R.drawable.comment;
 			case MENU_SET_URL:
 				return R.drawable.url;
+			case MENU_JOIN_CHAT:
+				return R.drawable.comment;
 			}
 			break;
 		case MENU_CLOSE:

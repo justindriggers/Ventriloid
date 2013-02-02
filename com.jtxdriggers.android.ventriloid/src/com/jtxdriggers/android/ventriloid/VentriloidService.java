@@ -135,7 +135,7 @@ public class VentriloidService extends Service {
 		
 		items = new ItemData();
 		
-		VentriloInterface.debuglevel(65535);
+		//VentriloInterface.debuglevel(65535);
 		new Thread(eventHandler).start();
 	}
 
@@ -471,6 +471,29 @@ public class VentriloidService extends Service {
 			items.removeCurrentUser(item.id);
 			items.addUser((Item.User) item);
 			items.addCurrentUser((Item.User) item);
+			break;
+			
+		case VentriloEvents.V3_EVENT_CHAT_MESSAGE:
+			item = items.getUserById(data.user.id);
+			items.addMessage((short) 0, item.name, bytesToString(data.data.chatmessage));
+			sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
+			sendBroadcast = false;
+			break;
+			
+		case VentriloEvents.V3_EVENT_CHAT_JOIN:
+			item = items.getUserById(data.user.id);
+			((Item.User) item).inChat = true;
+			((Item.User) item).updateStatus();
+			items.addChatUser(item.name);
+			sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
+			break;
+			
+		case VentriloEvents.V3_EVENT_CHAT_LEAVE:
+			item = items.getUserById(data.user.id);
+			((Item.User) item).inChat = false;
+			((Item.User) item).updateStatus();
+			items.removeChatUser(item.name);
+			sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
 			break;
 		}
 

@@ -20,13 +20,17 @@
 package com.jtxdriggers.android.ventriloid;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ItemData {
 
 	private ArrayList<Item.Channel> channels = new ArrayList<Item.Channel>();
 	private ArrayList<Item.Channel> currentChannels = new ArrayList<Item.Channel>(); 
 	private ArrayList<ArrayList<Item.User>> users = new ArrayList<ArrayList<Item.User>>();
-	private ArrayList<ArrayList<Item.User>> currentUsers = new ArrayList<ArrayList<Item.User>>(); 
+	private ArrayList<ArrayList<Item.User>> currentUsers = new ArrayList<ArrayList<Item.User>>();
+	
+	private HashMap<Short, ArrayList<ChatMessage>> chats = new HashMap<Short, ArrayList<ChatMessage>>();
+	
 	private int ping = 0;
 	private String comment = "", url = "", integrationText = "";
 	
@@ -36,6 +40,7 @@ public class ItemData {
 		currentChannels.add(i.new Channel());
 		users.add(new ArrayList<Item.User>());
 		currentUsers.add(new ArrayList<Item.User>());
+		chats.put((short) 0, new ArrayList<ChatMessage>());
 	}
 	
 	public void addChannel(Item.Channel channel) {
@@ -189,6 +194,26 @@ public class ItemData {
 
 	public void setIntegrationText(String integrationText) {
 		this.integrationText = integrationText;
+	}
+	
+	public void createChat(short id) {
+		chats.put(id, new ArrayList<ChatMessage>());
+	}
+	
+	public ArrayList<ChatMessage> getChat(short id) {
+		return chats.get(id);
+	}
+	
+	public void addMessage(short id, String username, String message) {
+		getChat(id).add(new ChatMessage(username, message));
+	}
+	
+	public void addChatUser(String username) {
+		getChat((short) 0).add(new ChatMessage(username, " has joined the chat."));
+	}
+	
+	public void removeChatUser(String username) {
+		getChat((short) 0).add(new ChatMessage(username, " has left the chat."));
 	}
 	
 }
