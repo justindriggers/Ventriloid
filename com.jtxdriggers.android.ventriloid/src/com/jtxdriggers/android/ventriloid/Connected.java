@@ -22,11 +22,17 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.InputType;
 import android.text.method.PasswordTransformationMethod;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.RelativeLayout;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -35,11 +41,14 @@ public class Connected extends Activity {
 	
 	public static final String SERVICE_RECEIVER = "com.jtxdriggers.android.ventriloid.Connected.SERVICE_RECEIVER";
 	
+	public static final int SMALL = 1, MEDIUM = 2, LARGE = 3;
+	
 	private VentriloidService s;
 	private VentriloidSlidingMenu sm;
 	private ViewFragment fragment;
 	
-	private Button ptt;
+	private Button ptt, pttSizeUp, pttSizeDown;
+	private RelativeLayout bottomBar;
 	private boolean pttToggle = false,
 		pttEnabled = false,
 		toggleOn = false;
@@ -62,7 +71,12 @@ public class Connected extends Activity {
 			pttToggle = prefs.getBoolean("toggle_mode", false);
 			pttEnabled = prefs.getBoolean("custom_ptt", false);
 			pttKey = pttEnabled ? prefs.getInt("ptt_key", KeyEvent.KEYCODE_CAMERA) : -1;
-		
+
+			bottomBar = (RelativeLayout) findViewById(R.id.bottomBar);
+			pttSizeUp = (Button) findViewById(R.id.pttSizeUp);
+			pttSizeUp.setOnClickListener(sizeChangeListener);
+			pttSizeDown = (Button) findViewById(R.id.pttSizeDown);
+			pttSizeDown.setOnClickListener(sizeChangeListener);
 			ptt = (Button) findViewById(R.id.ptt);
 	        ptt.setOnTouchListener(new OnTouchListener() {
 	            public boolean onTouch(View v, MotionEvent event) {
@@ -70,23 +84,25 @@ public class Connected extends Activity {
 	                    if (pttToggle) {
 	                    	toggleOn = !toggleOn;
 	                    	s.setPTTOn(toggleOn);
-	                    	ptt.setPressed(toggleOn);
+	                    	bottomBar.setBackgroundResource(toggleOn ? R.drawable.blue_gradient_bg : R.drawable.abs__ab_bottom_solid_light_holo);
 	                    	return true;
 	                    } else {
 		                    s.setPTTOn(true);
-		                    ptt.setPressed(true);
+		                    bottomBar.setBackgroundResource(R.drawable.blue_gradient_bg);
 		                    return true;
 	                    }
 	                } else if (!pttToggle && event.getAction() == MotionEvent.ACTION_UP) {
 	                    s.setPTTOn(false);
-	                    ptt.setPressed(false);
+	                    bottomBar.setBackgroundResource(R.drawable.abs__ab_bottom_solid_light_holo);
 	                    return true;
 	                }
 	                return false;
 	            }
 	        });
+	        
+			setPTTSize(prefs.getInt("ptt_size", SMALL));
 		} else
-			((LinearLayout) findViewById(R.id.bottomBar)).setVisibility(LinearLayout.GONE);
+			bottomBar.setVisibility(LinearLayout.GONE);
 	}
 	
 	@Override
@@ -157,10 +173,10 @@ public class Connected extends Activity {
 		if (pttToggle) {
 			toggleOn = !toggleOn;
 			s.setPTTOn(toggleOn);
-			ptt.setPressed(toggleOn);
+			bottomBar.setBackgroundResource(toggleOn ? R.drawable.blue_gradient_bg : R.drawable.abs__ab_bottom_solid_light_holo);
 		} else {
 			s.setPTTOn(true);
-            ptt.setPressed(true);
+            bottomBar.setBackgroundResource(R.drawable.blue_gradient_bg);
 		}
 		return true;
 	}
@@ -169,13 +185,58 @@ public class Connected extends Activity {
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		if (pttEnabled && !pttToggle && keyCode == pttKey) {
 			s.setPTTOn(false);
-            ptt.setPressed(false);
+            bottomBar.setBackgroundResource(R.drawable.abs__ab_bottom_solid_light_holo);
             return true;
-		} else if (keyCode == KeyEvent.KEYCODE_MENU && !sm.isMenuShowing())
+		} else if (keyCode == KeyEvent.KEYCODE_MENU && !sm.isMenuShowing()) {
 			sm.showMenu();
+			return true;
+		}
 
 		return super.onKeyUp(keyCode, event);
 	}
+	
+	private void setPTTSize(int size) {
+		int newSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48 * size, getResources().getDisplayMetrics());
+
+		ViewGroup.LayoutParams params = bottomBar.getLayoutParams();
+		ViewGroup.LayoutParams btnParams = ptt.getLayoutParams();
+		
+		Resizer animation = new Resizer(bottomBar, params.width, newSize);
+		bottomBar.startAnimation(animation);
+		Resizer btnAnimation = new Resizer(ptt, btnParams.width, newSize);
+		ptt.startAnimation(btnAnimation);
+		
+		switch (size) {
+		case SMALL:
+			pttSizeUp.setVisibility(View.VISIBLE);
+			pttSizeDown.setVisibility(View.GONE);
+			break;
+		case MEDIUM:
+			pttSizeUp.setVisibility(View.VISIBLE);
+			pttSizeDown.setVisibility(View.VISIBLE);
+			break;
+		case LARGE:
+			pttSizeUp.setVisibility(View.GONE);
+			pttSizeDown.setVisibility(View.VISIBLE);
+			break;
+		}
+		
+		PreferenceManager.getDefaultSharedPreferences(this).edit().putInt("ptt_size", size).commit();
+	}
+	
+	private OnClickListener sizeChangeListener = new OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			switch (v.getId()) {
+			case R.id.pttSizeUp:
+				setPTTSize(PreferenceManager.getDefaultSharedPreferences(Connected.this).getInt("ptt_size", SMALL) + 1);
+				break;
+			case R.id.pttSizeDown:
+				setPTTSize(PreferenceManager.getDefaultSharedPreferences(Connected.this).getInt("ptt_size", SMALL) - 1);		
+				break;
+			}
+		}
+	};
 	
 	private OnChildClickListener menuClickListener = new OnChildClickListener() {
 		@Override
@@ -307,6 +368,28 @@ public class Connected extends Activity {
 			getSupportActionBar().setSubtitle("Ping: " + ping + "ms");
 		else
 			getSupportActionBar().setSubtitle("Checking latency...");
+	}
+	
+	public class Resizer extends Animation {
+		
+	    private View mView;
+	    private float mHeight;
+	    private float mWidth;
+
+	    public Resizer(View v, float newWidth, float newHeight) {
+	        mHeight = newHeight;
+	        mWidth = newWidth;
+	        mView = v;
+	        setDuration(300);
+	    }
+
+	    @Override
+	    protected void applyTransformation(float interpolatedTime, Transformation t) {
+	        ViewGroup.LayoutParams p = mView.getLayoutParams();
+	        p.height = (int)((mHeight - p.height) * interpolatedTime + p.height);
+	        p.width = (int)((mWidth - p.width) * interpolatedTime + p.width);
+	        mView.requestLayout();
+	    }
 	}
 
 }

@@ -11,20 +11,44 @@
         android:layout_alignParentTop="true"
         android:layout_above="@+id/bottomBar" />
     
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/bottomBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:layout_alignParentBottom="true"
         android:background="@drawable/abs__ab_bottom_solid_light_holo"
         android:orientation="horizontal">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="@string/ptt" />
+        
+        <Button
+            android:id="@+id/pttSizeDown"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/down" />
         
         <Button
             android:id="@+id/ptt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/ptt" />
+            android:layout_toRightOf="@+id/pttSizeDown"
+            android:layout_toLeftOf="@+id/pttSizeUp"
+            android:background="@drawable/transparent" />
         
-    </LinearLayout>
+        <Button
+            android:id="@+id/pttSizeUp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/up" />
+        
+    </RelativeLayout>
 
 </RelativeLayout>

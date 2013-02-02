@@ -32,6 +32,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -550,6 +551,7 @@ public class VentriloidService extends Service {
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notifIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 		NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(VentriloidService.this)
 	        .setSmallIcon(R.drawable.headset)
+	        .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.launcher))
 			.setContentIntent(pendingIntent);
 		
 		switch (type) {
