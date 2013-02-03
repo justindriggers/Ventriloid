@@ -21,6 +21,8 @@ package com.jtxdriggers.android.ventriloid;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 public class ItemData {
 
@@ -32,17 +34,36 @@ public class ItemData {
 	private HashMap<Short, ArrayList<ChatMessage>> chats = new HashMap<Short, ArrayList<ChatMessage>>();
 	private ArrayList<Item.User> chatUsers = new ArrayList<Item.User>();
 	
+	private ArrayList<ArrayList<String>> menuItems = new ArrayList<ArrayList<String>>();
+	private HashMap<Short, Integer> chatPositions = new HashMap<Short, Integer>();
+	private int activeView = VentriloidSlidingMenu.MENU_SERVER_VIEW;
+	
 	private int ping = 0;
 	private String comment = "", url = "", integrationText = "";
 	private boolean inChat = false;
 	
 	public ItemData() {
-		Item i = new Item();
-		channels.add(i.new Channel());
-		currentChannels.add(i.new Channel());
+		Item item = new Item();
+		channels.add(item.new Channel());
+		currentChannels.add(item.new Channel());
 		users.add(new ArrayList<Item.User>());
 		currentUsers.add(new ArrayList<Item.User>());
-		chats.put((short) 0, new ArrayList<ChatMessage>());
+		
+		for (int i = 0; i < 3; i++) {
+			menuItems.add(new ArrayList<String>());
+        }
+
+		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).add("Server");
+		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).add("Channel");
+
+		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Admin Login");
+		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Set Transmit Volume");
+		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Set Comment");
+		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Set URL");
+		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Join Chat");
+
+		menuItems.get(VentriloidSlidingMenu.MENU_CLOSE).add("Minimize");
+		menuItems.get(VentriloidSlidingMenu.MENU_CLOSE).add("Disconnect");
 	}
 	
 	public void addChannel(Item.Channel channel) {
@@ -235,14 +256,73 @@ public class ItemData {
 		}
 	}
 	
-	public void joinChat() {
-		VentriloInterface.joinchat();
-		inChat = true;
+	public void setInChat(boolean inChat) {
+		this.inChat = inChat;
+		if (inChat) {
+			chats.put((short) 0, new ArrayList<ChatMessage>());
+			menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).set(VentriloidSlidingMenu.MENU_CHAT, "Leave Chat");
+			menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).add(2, "Server Chat");
+			setActiveView(2);
+			Iterator<Entry<Short, Integer>> iterator = chatPositions.entrySet().iterator();
+			while (iterator.hasNext()) {
+				Entry<Short, Integer> entry = iterator.next();
+				if (entry.getValue() >= 2)
+					chatPositions.put(entry.getKey(), entry.getValue() + 1);
+			}
+			chatPositions.put((short) 0, 2);
+		} else {
+			menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).set(VentriloidSlidingMenu.MENU_CHAT, "Join Chat");
+			menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).remove(2);
+			if (activeView == 2)
+				setActiveView(VentriloidSlidingMenu.MENU_SERVER_VIEW);
+			chatPositions.remove((short) 0);
+			Iterator<Entry<Short, Integer>> iterator = chatPositions.entrySet().iterator();
+			while (iterator.hasNext()) {
+				Entry<Short, Integer> entry = iterator.next();
+				if (entry.getValue() > 2)
+					chatPositions.put(entry.getKey(), entry.getValue() - 1);
+			}
+		}
 	}
 	
-	public void leaveChat() {
-		VentriloInterface.leavechat();
-		inChat = false;
+	public boolean inChat() {
+		return inChat;
+	}
+	
+	public void setIsAdmin(boolean isAdmin) {
+		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).set(VentriloidSlidingMenu.MENU_ADMIN, isAdmin ? "Admin Logout" : "Admin Login");
+	}
+	
+	public void addChat(short id, String name) {
+		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).add(name);
+		chatPositions.put(id, menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).size() - 1);
+	}
+	
+	public void removeChat(short id, String name) {
+		int position = findChatPosition(id);
+		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).remove(position);
+		Iterator<Entry<Short, Integer>> iterator = chatPositions.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Entry<Short, Integer> entry = iterator.next();
+			if (entry.getValue() > position)
+				chatPositions.put(entry.getKey(), entry.getValue() - 1);
+		}
+	}
+	
+	public int findChatPosition(short id) {
+		return chatPositions.get(id);
+	}
+	
+	public int getActiveView() {
+		return activeView;
+	}
+	
+	public void setActiveView(int activeView) {
+		this.activeView = activeView;
+	}
+	
+	public ArrayList<ArrayList<String>> getMenuItems() {
+		return menuItems;
 	}
 	
 }

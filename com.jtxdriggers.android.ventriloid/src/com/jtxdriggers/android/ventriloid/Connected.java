@@ -2,6 +2,7 @@ package com.jtxdriggers.android.ventriloid;
 
 import org.holoeverywhere.app.Activity;
 import org.holoeverywhere.app.AlertDialog;
+import org.holoeverywhere.app.Fragment;
 import org.holoeverywhere.widget.Button;
 import org.holoeverywhere.widget.EditText;
 import org.holoeverywhere.widget.ExpandableListView;
@@ -45,7 +46,7 @@ public class Connected extends Activity {
 	
 	private VentriloidService s;
 	private VentriloidSlidingMenu sm;
-	private ViewFragment fragment;
+	private Fragment fragment;
 	
 	private Button ptt, pttSizeUp, pttSizeDown;
 	private RelativeLayout bottomBar;
@@ -246,27 +247,38 @@ public class Connected extends Activity {
 			case VentriloidSlidingMenu.MENU_SWITCH_VIEW:
 				switch (childPosition) {
 				case VentriloidSlidingMenu.MENU_SERVER_VIEW:
-					s.setViewType(ViewFragment.VIEW_TYPE_SERVER);
+					s.setViewType(ViewFragment.VIEW_TYPE_SERVER, (short) -1);
 					fragment = ViewFragment.newInstance(s.getViewType());
 					getSupportFragmentManager()
 						.beginTransaction()
 						.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
 						.replace(R.id.content_frame, fragment)
 						.commit();
-					sm.setActiveView(VentriloidSlidingMenu.MENU_SERVER_VIEW);
-					sm.notifyDataSetChanged();
+					s.getItemData().setActiveView(VentriloidSlidingMenu.MENU_SERVER_VIEW);
+					sm.getAdapter().setMenuItems(s.getItemData());
 					return true;
 				case VentriloidSlidingMenu.MENU_CHANNEL_VIEW:
-					s.setViewType(ViewFragment.VIEW_TYPE_CHANNEL);
+					s.setViewType(ViewFragment.VIEW_TYPE_CHANNEL, (short) -1);
 					fragment = ViewFragment.newInstance(s.getViewType());
 					getSupportFragmentManager()
 						.beginTransaction()
 						.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
 						.replace(R.id.content_frame, fragment)
 						.commit();
-					sm.setActiveView(VentriloidSlidingMenu.MENU_CHANNEL_VIEW);
-					sm.notifyDataSetChanged();
+					s.getItemData().setActiveView(VentriloidSlidingMenu.MENU_CHANNEL_VIEW);
+					sm.getAdapter().setMenuItems(s.getItemData());
 					return true;
+				default:
+					s.setViewType(ViewFragment.VIEW_TYPE_CHAT, (short) 0);
+					fragment = ChatFragment.newInstance(s.getChatId());
+					getSupportFragmentManager()
+						.beginTransaction()
+						.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+						.replace(R.id.content_frame, fragment)
+						.commit();
+					s.getItemData().setActiveView(childPosition);
+					sm.getAdapter().setMenuItems(s.getItemData());
+					
 				}
 				break;
 			case VentriloidSlidingMenu.MENU_USER_OPTIONS:
@@ -275,9 +287,29 @@ public class Connected extends Activity {
 					break;
 				case VentriloidSlidingMenu.MENU_SET_URL:
 					break;
-				case VentriloidSlidingMenu.MENU_JOIN_CHAT:
-					s.getItemData().joinChat();
-					startActivity(new Intent(Connected.this, Chat.class));
+				case VentriloidSlidingMenu.MENU_CHAT:
+					if (s.getItemData().inChat()) {
+						s.leaveChat();
+						if (s.getViewType() == ViewFragment.VIEW_TYPE_CHAT) {
+							s.setViewType(ViewFragment.VIEW_TYPE_SERVER, (short) -1);
+							fragment = ViewFragment.newInstance(s.getViewType());
+							getSupportFragmentManager()
+								.beginTransaction()
+								.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+								.replace(R.id.content_frame, fragment)
+								.commit();
+						}
+					} else {
+						s.joinChat();
+						s.setViewType(ViewFragment.VIEW_TYPE_CHAT, (short) 0);
+						fragment = ChatFragment.newInstance(s.getChatId());
+						getSupportFragmentManager()
+							.beginTransaction()
+							.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+							.replace(R.id.content_frame, fragment)
+							.commit();
+					}
+					sm.getAdapter().setMenuItems(s.getItemData());
 					break;
 				}
 				break;
@@ -304,16 +336,21 @@ public class Connected extends Activity {
 			registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
 
 			getSupportActionBar().setTitle(s.getServername());
-
-			fragment = ViewFragment.newInstance(s.getViewType());
+			
+			s.getItemData().setActiveView(s.getViewType() == ViewFragment.VIEW_TYPE_CHAT ? s.getItemData().findChatPosition(s.getChatId()) : s.getViewType());
+			s.getItemData().setIsAdmin(s.isAdmin());
+			sm.setAdapter(new SlidingMenuAdapter(Connected.this, s.getItemData()));
+			
+			setPing(s.getItemData().getPing());
+			
+			if (s.getViewType() == ViewFragment.VIEW_TYPE_CHAT)
+				fragment = ChatFragment.newInstance(s.getChatId());
+			else
+				fragment = ViewFragment.newInstance(s.getViewType());
 			getSupportFragmentManager()
 				.beginTransaction()
 				.replace(R.id.content_frame, fragment)
 				.commit();
-			sm.setActiveView(s.getViewType());
-			sm.notifyDataSetChanged();
-			
-			setPing(s.getItemData().getPing());
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
@@ -324,8 +361,7 @@ public class Connected extends Activity {
 	private BroadcastReceiver serviceReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			short type = intent.getShortExtra("type", (short)0);
-			switch (type) {
+			switch (intent.getShortExtra("type", (short)0)) {
 			case VentriloEvents.V3_EVENT_DISCONNECT:
 				startActivity(new Intent(Connected.this, Main.class));
 				finish();
@@ -363,7 +399,7 @@ public class Connected extends Activity {
 	                    VentriloInterface.changechannel(c.id, "");
 	            break;
 			default:
-				fragment.notifyDataSetChanged();
+				sendBroadcast(new Intent(ViewFragment.SERVICE_RECEIVER));
 			}
 		}
 	};

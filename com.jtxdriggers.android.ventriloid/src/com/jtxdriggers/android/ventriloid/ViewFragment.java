@@ -12,18 +12,19 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.SubMenu;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.text.ClipboardManager;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.method.PasswordTransformationMethod;
@@ -42,10 +43,12 @@ import android.widget.ExpandableListView.OnGroupCollapseListener;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
+@SuppressWarnings("deprecation")
 public class ViewFragment extends Fragment {
 	
-	public static final int VIEW_TYPE_SERVER = 0;
-	public static final int VIEW_TYPE_CHANNEL = 1;
+	public static final String SERVICE_RECEIVER = "com.jtxdriggers.android.ventriloid.ViewFragment.SERVICE_RECEIVER";
+	
+	public static final int VIEW_TYPE_SERVER = 0, VIEW_TYPE_CHANNEL = 1, VIEW_TYPE_CHAT = 2;
 	
 	private VentriloidService s;
 	private ExpandableListView list;
@@ -105,6 +108,7 @@ public class ViewFragment extends Fragment {
 	
 	@Override
 	public void onStop() {
+		getActivity().unregisterReceiver(serviceReceiver);
 		getActivity().unbindService(serviceConnection);
 		super.onStop();
 	}
@@ -278,6 +282,7 @@ public class ViewFragment extends Fragment {
 			final SeekBar volume = new SeekBar(getActivity());
 			volume.setMax(158);
 			volume.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+				@Override
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 					if (progress >= 72 && progress <= 86 && progress != 79) {
 						seekBar.setProgress(79);
@@ -285,7 +290,9 @@ public class ViewFragment extends Fragment {
 					} else
 						percent.setText((progress * 200) / seekBar.getMax() + "%");
 				}
+				@Override
 				public void onStartTrackingTouch(SeekBar seekBar) { }
+				@Override
 				public void onStopTrackingTouch(SeekBar seekBar) { }
 			});
 			LinearLayout volumeLayout = new LinearLayout(getActivity());
@@ -300,6 +307,7 @@ public class ViewFragment extends Fragment {
 			if (u.id == VentriloInterface.getuserid()) {
 				dialog.setTitle("Set Transmit Volume:");
 				dialog.setPositiveButton("OK", new OnClickListener() {
+					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						VentriloInterface.setxmitvolume(volume.getProgress());
 						u.volume = volume.getProgress();
@@ -311,6 +319,7 @@ public class ViewFragment extends Fragment {
 			} else {
 				dialog.setTitle("Set Volume for " + u.name);
 				dialog.setPositiveButton("OK", new OnClickListener() {
+					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						if (!u.muted)
 							VentriloInterface.setuservolume(u.id, volume.getProgress());
@@ -332,6 +341,7 @@ public class ViewFragment extends Fragment {
 			input.setSingleLine();
 			input.setText(u.comment);
 			dialog.setPositiveButton("OK", new OnClickListener() {
+				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					s.getItemData().setComment(input.getText().toString());
 					VentriloInterface.settext(input.getText().toString(), u.url, "", silent.isChecked());
@@ -346,9 +356,10 @@ public class ViewFragment extends Fragment {
 			input.setSingleLine();
 			input.setText(u.comment);
 			dialog.setPositiveButton("Copy", new OnClickListener(){
+				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-					clipboard.setPrimaryClip(ClipData.newPlainText("Comment", input.getText().toString()));
+					ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE); 
+					clipboard.setText(input.getText().toString());
 				}
 			});
 			dialog.setNegativeButton("Done", null);
@@ -362,6 +373,7 @@ public class ViewFragment extends Fragment {
 			input.setText(u.url.length() > 0 ? u.url : "http://");
 			input.setSingleLine();
 			dialog.setPositiveButton("OK", new OnClickListener() {
+				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					s.getItemData().setUrl(input.getText().toString());
 					VentriloInterface.settext(u.comment, input.getText().toString(), "", silent.isChecked());
@@ -376,12 +388,14 @@ public class ViewFragment extends Fragment {
 			input.setText(u.url);
 			input.setSingleLine();
 			dialog.setPositiveButton("Copy", new OnClickListener(){
+				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE); 
-					clipboard.setPrimaryClip(ClipData.newPlainText("Comment", input.getText().toString()));
+					clipboard.setText(input.getText().toString());
 				}
 			});
 			dialog.setNeutralButton("Open", new OnClickListener(){
+				@Override
 				public void onClick(DialogInterface dialog, int which) {	
 					startActivity(new Intent(Intent.ACTION_VIEW,
 						Uri.parse(
@@ -401,6 +415,7 @@ public class ViewFragment extends Fragment {
 		    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
 			dialog.setView(layout);
 			dialog.setPositiveButton("Login", new OnClickListener() {
+				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					VentriloInterface.adminlogin(input.getText().toString());
 					s.setAdmin(true);
@@ -417,6 +432,7 @@ public class ViewFragment extends Fragment {
 			dialog.setTitle("Enter Reason for Kick:");
 			dialog.setView(layout);
 			dialog.setPositiveButton("Kick", new OnClickListener() {
+				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					VentriloInterface.kick(u.id, input.getText().toString());
 				}
@@ -428,6 +444,7 @@ public class ViewFragment extends Fragment {
 			dialog.setTitle("Enter Reason for Ban:");
 			dialog.setView(layout);
 			dialog.setPositiveButton("Ban", new OnClickListener() {
+				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					VentriloInterface.ban(u.id, input.getText().toString());
 				}
@@ -445,6 +462,7 @@ public class ViewFragment extends Fragment {
 			dialog.setTitle("Enter Reason for Ban:");
 			dialog.setView(layout);
 			dialog.setPositiveButton("Ban", new OnClickListener() {
+				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					VentriloInterface.channelban(u.id, input.getText().toString());
 				}
@@ -527,6 +545,8 @@ public class ViewFragment extends Fragment {
     private ServiceConnection serviceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
+			
+			getActivity().registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
 
 	    	prepareAdapter(viewType);
 	    	list.setAdapter(adapter);
@@ -538,6 +558,13 @@ public class ViewFragment extends Fragment {
 
 		public void onServiceDisconnected(ComponentName className) {
 			s = null;
+		}
+	};
+	
+	private BroadcastReceiver serviceReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			notifyDataSetChanged();
 		}
 	};
 }

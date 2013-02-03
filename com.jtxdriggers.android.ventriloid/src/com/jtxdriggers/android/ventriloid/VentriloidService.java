@@ -73,6 +73,7 @@ public class VentriloidService extends Service {
 	private int start,
 		reconnectTimer,
 		viewType = ViewFragment.VIEW_TYPE_SERVER;
+	private short chatId = -1;
 	private double threshold;
 	
 	@Override
@@ -269,6 +270,7 @@ public class VentriloidService extends Service {
 						final String comment = items.getComment();
 						final String url = items.getUrl();
 						final String integrationText = items.getIntegrationText();
+						final boolean inChat = items.inChat();
 						reconnectTimer = 10;
 						items = new ItemData();
 						HANDLER.post(new Runnable() {
@@ -295,6 +297,8 @@ public class VentriloidService extends Service {
 											items.setUrl(url);
 											items.setIntegrationText(integrationText);
 											VentriloInterface.changechannel(id, passwordPrefs.getString(id + "pw", ""));
+											if (inChat)
+												joinChat();
 										} else {
 											VentriloEventData data = new VentriloEventData();
 											VentriloInterface.error(data);
@@ -372,7 +376,7 @@ public class VentriloidService extends Service {
 			item = items.getUserById(data.user.id);
 			if (((Item.User) item).inChat) {
 				items.removeChatUser(data.user.id);
-				sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
+				sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
 			}
 			if (((Item.User) item).realId == VentriloInterface.getuserid())
 				items.getChannelById(item.parent).hasPhantom = false;
@@ -471,18 +475,18 @@ public class VentriloidService extends Service {
 		case VentriloEvents.V3_EVENT_CHAT_MESSAGE:
 			item = items.getUserById(data.user.id);
 			items.addMessage((short) 0, item.name, bytesToString(data.data.chatmessage));
-			sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
+			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
 			sendBroadcast = false;
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAT_JOIN:
 			items.addChatUser(data.user.id);
-			sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
+			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAT_LEAVE:
 			items.removeChatUser(data.user.id);
-			sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
+			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
 			break;
 		}
 
@@ -511,6 +515,8 @@ public class VentriloidService extends Service {
 		admin = isAdmin;
 		Item.Channel c = items.getChannels().get(0);
 		c.changeStatus(admin);
+		items.setIsAdmin(isAdmin);
+		sendBroadcast(new Intent(ViewFragment.SERVICE_RECEIVER));
 	}
 	
 	public ItemData getItemData() {
@@ -616,12 +622,17 @@ public class VentriloidService extends Service {
 		return connected;
 	}
 	
-	public void setViewType(int viewType) {
+	public void setViewType(int viewType, short chatId) {
 		this.viewType = viewType;
+		this.chatId = chatId;
 	}
 	
 	public int getViewType() {
 		return viewType;
+	}
+	
+	public short getChatId() {
+		return chatId;
 	}
 	
 	public boolean isMuted() {
@@ -642,4 +653,15 @@ public class VentriloidService extends Service {
 			}
 		}
 	};
+	
+	public void joinChat() {
+		items.setInChat(true);
+		VentriloInterface.joinchat();
+	}
+	
+	public void leaveChat() {
+		items.setInChat(false);
+		VentriloInterface.leavechat();
+	}
+	
 }
