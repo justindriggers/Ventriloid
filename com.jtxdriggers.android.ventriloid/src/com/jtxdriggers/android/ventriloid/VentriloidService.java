@@ -428,9 +428,9 @@ public class VentriloidService extends Service {
 			break;
 
 		case VentriloEvents.V3_EVENT_PLAY_AUDIO:
-			if (((Item.User) items.getUserById(data.user.id)).xmit != Item.User.XMIT_ON)
+			if (((Item.User) items.getUserById(data.user.id)).xmit != Item.User.XMIT_ON) {
 				items.setXmit(data.user.id, Item.User.XMIT_ON);
-			else
+			} else
 				sendBroadcast = false;
 			break;
 			
@@ -509,7 +509,9 @@ public class VentriloidService extends Service {
 			data.type = VentriloEvents.V3_EVENT_PLAY_AUDIO;
 		else
 			data.type = VentriloEvents.V3_EVENT_USER_TALK_END;
-		process(data);
+		try {
+			process(data);
+		} catch (NullPointerException e) { }
 	}
 	
 	public boolean isAdmin() {
