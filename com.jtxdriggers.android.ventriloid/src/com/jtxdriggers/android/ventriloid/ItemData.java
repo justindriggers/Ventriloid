@@ -30,9 +30,11 @@ public class ItemData {
 	private ArrayList<ArrayList<Item.User>> currentUsers = new ArrayList<ArrayList<Item.User>>();
 	
 	private HashMap<Short, ArrayList<ChatMessage>> chats = new HashMap<Short, ArrayList<ChatMessage>>();
+	private ArrayList<Item.User> chatUsers = new ArrayList<Item.User>();
 	
 	private int ping = 0;
 	private String comment = "", url = "", integrationText = "";
+	private boolean inChat = false;
 	
 	public ItemData() {
 		Item i = new Item();
@@ -205,15 +207,42 @@ public class ItemData {
 	}
 	
 	public void addMessage(short id, String username, String message) {
-		getChat(id).add(new ChatMessage(username, message));
+		getChat(id).add(new ChatMessage(username, ": " + message));
 	}
 	
-	public void addChatUser(String username) {
-		getChat((short) 0).add(new ChatMessage(username, " has joined the chat."));
+	public void addChatUser(short id) {
+		Item.User user = getUserById(id);
+		user.inChat = true;
+		user.updateStatus();
+		if (inChat) {
+			chatUsers.add(user);
+			getChat((short) 0).add(new ChatMessage(user.name, " has joined the chat."));
+		}
 	}
 	
-	public void removeChatUser(String username) {
-		getChat((short) 0).add(new ChatMessage(username, " has left the chat."));
+	public void removeChatUser(short id) {
+		Item.User user = getUserById(id);
+		user.inChat = false;
+		user.updateStatus();
+		if (inChat) {
+			for (int i = 0; i < chatUsers.size(); i++) {
+				if (user.id == id) {
+					chatUsers.remove(i);
+					break;
+				}
+			}
+			getChat((short) 0).add(new ChatMessage(user.name, " has left the chat."));
+		}
+	}
+	
+	public void joinChat() {
+		VentriloInterface.joinchat();
+		inChat = true;
+	}
+	
+	public void leaveChat() {
+		VentriloInterface.leavechat();
+		inChat = false;
 	}
 	
 }

@@ -276,7 +276,7 @@ public class Connected extends Activity {
 				case VentriloidSlidingMenu.MENU_SET_URL:
 					break;
 				case VentriloidSlidingMenu.MENU_JOIN_CHAT:
-					VentriloInterface.joinchat();
+					s.getItemData().joinChat();
 					startActivity(new Intent(Connected.this, Chat.class));
 					break;
 				}

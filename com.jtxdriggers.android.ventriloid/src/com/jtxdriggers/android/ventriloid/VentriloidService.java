@@ -197,30 +197,20 @@ public class VentriloidService extends Service {
 					else
 						VentriloInterface.setuservolume(data.user.id, ((Item.User) item).muted ? 0 : ((Item.User) item).volume);
 					if ((data.flags & (1 << 0)) == 0 && data.text.real_user_id == 0)
-						createNotification(item.name + " has logged in.", data.type, 1);
+						nm.notify(1, createNotification(item.name + " has logged in.", data.type));
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					player.close(data.user.id);
 					item = items.getUserById(data.user.id);
 					if (((Item.User) item).realId == 0)
-						createNotification(item.name + " has logged out.", data.type, 1);
+						nm.notify(1, createNotification(item.name + " has logged out.", data.type));
 					break;
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 					connected = true;
 					disconnect = false;
-					Intent notifIntent = new Intent(VentriloidService.this, Connected.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-					PendingIntent pendingIntent = PendingIntent.getActivity(VentriloidService.this, 0, notifIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-					NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(VentriloidService.this)
-				        .setSmallIcon(R.drawable.headset)
-						.setContentIntent(pendingIntent)
-				        .setContentText("Connected to " + server.getServername())
-			        	.setTicker("Now Connected.")
-			        	.setContentTitle("Ventriloid")
-			        	.setOngoing(true)
-			        	.setAutoCancel(false);
-					startForeground(1, notifBuilder.getNotification());
+					startForeground(1, createNotification("Now Connected.", data.type));
 					recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
 					if (voiceActivation)
 						recorder.start(threshold);
@@ -241,9 +231,9 @@ public class VentriloidService extends Service {
 					} else {
 						item = items.getUserById(data.user.id);
 						if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-							createNotification(item.name + " joined the channel.", data.type, 1);
+							nm.notify(1, createNotification(item.name + " joined the channel.", data.type));
 						else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-							createNotification(item.name + " left the channel.", data.type, 1);
+							nm.notify(1, createNotification(item.name + " left the channel.", data.type));
 						player.close(data.user.id);
 					}
 					break;
@@ -262,6 +252,7 @@ public class VentriloidService extends Service {
 					
 				case VentriloEvents.V3_EVENT_DISCONNECT:
 					connected = false;
+					recorder.stop();
 					
 					VentriloInterface.error(data);
 					if (data.error.message.length > 0 && !disconnect)
@@ -285,7 +276,7 @@ public class VentriloidService extends Service {
 							public void run() {								
 								if (!disconnect) {
 									if (reconnectTimer > 0) {
-										createNotification("Reconnecting in " + reconnectTimer + " seconds", data.type, 1);
+										nm.notify(1, createNotification("Reconnecting in " + reconnectTimer + " seconds", data.type));
 										sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
 											.putExtra("type", (short) -1)
 											.putExtra("timer", reconnectTimer));
@@ -324,7 +315,7 @@ public class VentriloidService extends Service {
 					
 				case VentriloEvents.V3_EVENT_USER_PAGE:
 					item = items.getUserById(data.user.id);
-					createNotification("Page from " + item.name, data.type, item.id);
+					nm.notify(item.id, createNotification("Page from " + item.name, data.type));
 					break;
 				}
 				
@@ -379,6 +370,10 @@ public class VentriloidService extends Service {
 			
 		case VentriloEvents.V3_EVENT_USER_LOGOUT:
 			item = items.getUserById(data.user.id);
+			if (((Item.User) item).inChat) {
+				items.removeChatUser(data.user.id);
+				sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
+			}
 			if (((Item.User) item).realId == VentriloInterface.getuserid())
 				items.getChannelById(item.parent).hasPhantom = false;
 			items.removeUser(data.user.id);
@@ -481,18 +476,12 @@ public class VentriloidService extends Service {
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAT_JOIN:
-			item = items.getUserById(data.user.id);
-			((Item.User) item).inChat = true;
-			((Item.User) item).updateStatus();
-			items.addChatUser(item.name);
+			items.addChatUser(data.user.id);
 			sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAT_LEAVE:
-			item = items.getUserById(data.user.id);
-			((Item.User) item).inChat = false;
-			((Item.User) item).updateStatus();
-			items.removeChatUser(item.name);
+			items.removeChatUser(data.user.id);
 			sendBroadcast(new Intent(Chat.ChatFragment.SERVICE_RECEIVER));
 			break;
 		}
@@ -571,7 +560,7 @@ public class VentriloidService extends Service {
 		return server.getServername();
 	}
 	
-	private void createNotification(String text, short type, int id) {
+	private Notification createNotification(String text, short type) {
 		Intent notifIntent = new Intent(this, Connected.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notifIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 		NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(VentriloidService.this)
@@ -613,7 +602,7 @@ public class VentriloidService extends Service {
 				notifBuilder.setTicker("Disconnected from Server");
 			break;
 		}
-		nm.notify(id, notifBuilder.getNotification());
+		return notifBuilder.getNotification();
 	}
 	
 	public void disconnect() {
