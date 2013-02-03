@@ -14,7 +14,6 @@
 		android:id="@android:id/list"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:layout_weight="1"
 		android:cacheColorHint="@android:color/transparent"
 		android:clipToPadding="false"
 		android:drawSelectorOnTop="false"
@@ -24,6 +23,7 @@
 		android:paddingRight="@dimen/preference_screen_header_padding_side"
 		android:paddingTop="@dimen/preference_screen_header_vertical_padding"
 		android:scrollbarAlwaysDrawVerticalTrack="true"
-		android:scrollbarStyle="@integer/preference_screen_header_scrollbarStyle" />
+		android:scrollbarStyle="@integer/preference_screen_header_scrollbarStyle"
+		android:divider="@drawable/transparent" />
     
 </RelativeLayout>
