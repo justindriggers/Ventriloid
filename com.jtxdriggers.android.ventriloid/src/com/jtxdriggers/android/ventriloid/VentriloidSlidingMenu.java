@@ -2,7 +2,11 @@ package com.jtxdriggers.android.ventriloid;
 
 import org.holoeverywhere.widget.ExpandableListView;
 
+import android.app.Activity;
 import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import com.slidingmenu.lib.SlidingMenu;
 
@@ -30,6 +34,7 @@ public class VentriloidSlidingMenu extends SlidingMenu {
 
         mList = (ExpandableListView) findViewById(android.R.id.list);
         mList.setGroupIndicator(null);
+        mList.setTranscriptMode(ExpandableListView.TRANSCRIPT_MODE_NORMAL);
 	}
 	
 	public ExpandableListView getListView() {
@@ -49,8 +54,29 @@ public class VentriloidSlidingMenu extends SlidingMenu {
         }
 	}
 	
-	public void notifyDataSetChanged() {
-		adapter.notifyDataSetChanged();
+	public void makeViewPersistent(Activity activity, int viewId) {
+		ViewGroup contentParent = (ViewGroup) getContent();
+		View v = contentParent.findViewById(viewId);
+		contentParent.removeView(v);
+		
+		ViewGroup parent = (ViewGroup) activity.findViewById(android.R.id.content);
+		View parentLayout = parent.getChildAt(0);
+		parent.removeView(parentLayout);
+		
+		RelativeLayout layout = new RelativeLayout(activity.getApplicationContext());
+		layout.addView(parentLayout);
+		
+		RelativeLayout.LayoutParams parentParams = (LayoutParams) parentLayout.getLayoutParams();
+		parentParams.addRule(RelativeLayout.ABOVE, viewId);
+		parentLayout.setLayoutParams(parentParams);
+		
+		RelativeLayout.LayoutParams params = (LayoutParams) v.getLayoutParams();
+		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		v.setLayoutParams(params);
+		
+		layout.addView(v);
+		
+		parent.addView(layout);
 	}
 
 }

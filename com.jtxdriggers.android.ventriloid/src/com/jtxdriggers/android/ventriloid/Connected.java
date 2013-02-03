@@ -64,6 +64,7 @@ public class Connected extends Activity {
 		
 		sm = new VentriloidSlidingMenu(this);
 		sm.attachToActivity(this, VentriloidSlidingMenu.SLIDING_CONTENT);
+		sm.makeViewPersistent(this, R.id.bottomBar);
 		sm.getListView().setOnChildClickListener(menuClickListener);
         
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);

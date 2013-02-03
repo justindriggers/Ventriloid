@@ -76,6 +76,7 @@ public class ViewFragment extends Fragment {
     	list.setGroupIndicator(null);
     	list.setDivider(getResources().getDrawable(R.drawable.abs__list_divider_holo_light));
     	list.setChildDivider(getResources().getDrawable(R.drawable.abs__list_divider_holo_light));
+        list.setTranscriptMode(ExpandableListView.TRANSCRIPT_MODE_NORMAL);
 		
     	list.setOnGroupCollapseListener(new OnGroupCollapseListener() {
             public void onGroupCollapse(int groupPosition) {
