@@ -398,6 +398,10 @@ public class VentriloidService extends Service {
 				else if (from == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 					items.removeCurrentUser(item.id);
 			}
+			if (((Item.User) item).realId == VentriloInterface.getuserid()) {
+				items.getChannelById(from).hasPhantom = false;
+				items.getChannelById(item.parent).hasPhantom = true;
+			}
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAN_ADD:
@@ -480,6 +484,7 @@ public class VentriloidService extends Service {
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAT_JOIN:
+			System.out.println("CHAT JOIN");
 			items.addChatUser(data.user.id);
 			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
 			break;
