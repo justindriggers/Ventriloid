@@ -106,7 +106,7 @@ public class Item {
 		
 		public User() { }
 		
-		public User(short id, short parent, short realId, String name, String phonetic, String rank, String comment, String url, String integration, int volume, boolean muted) {
+		public User(short id, short parent, short realId, String name, String phonetic, String rank, String comment, String url, String integration, int volume, boolean muted, boolean inChat) {
 			this.id = id;
 			this.parent = parent;
 			this.realId = realId;
@@ -118,6 +118,7 @@ public class Item {
 			this.integration = integration;
 			this.volume = volume;
 			this.muted = muted;
+			this.inChat = inChat;
 		}
 		
 		public String formatRank(String rank) {

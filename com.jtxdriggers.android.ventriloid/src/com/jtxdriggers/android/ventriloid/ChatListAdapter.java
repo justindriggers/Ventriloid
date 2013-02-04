@@ -39,11 +39,23 @@ public class ChatListAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 		ChatMessage message = messages.get(position);
 		
-		if (convertView == null)
+		switch (message.getType()) {
+		case ChatMessage.TYPE_MESSAGE:
+			convertView = LayoutInflater.inflate(mContext, R.layout.chat_message);
+			
+			TextView nameView = (TextView) convertView.findViewById(R.id.name);
+			nameView.setText(message.getUsername() + ": ");
+			
+			TextView messageView = (TextView) convertView.findViewById(R.id.message);
+			messageView.setText(message.getMessage());
+			break;
+		case ChatMessage.TYPE_NOTIFICATION:
 			convertView = LayoutInflater.inflate(mContext, R.layout.simple_list_item_1);
-		
-		TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
-		textView.setText(message.getUsername() + message.getMessage());
+			
+			TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
+			textView.setText(message.getUsername() + " " + message.getMessage());
+			break;
+		}
 		
 		return convertView;
 	}

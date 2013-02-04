@@ -228,16 +228,19 @@ public class ItemData {
 	}
 	
 	public void addMessage(short id, String username, String message) {
-		getChat(id).add(new ChatMessage(username, ": " + message));
+		getChat(id).add(new ChatMessage(username, message));
 	}
 	
 	public void addChatUser(short id) {
 		Item.User user = getUserById(id);
-		user.inChat = true;
-		user.updateStatus();
-		if (inChat) {
+		if (user != null) {
+			user.inChat = true;
+			user.updateStatus();
+		}
+		if (!isUserInChat(id))
 			chatUsers.add(user);
-			getChat((short) 0).add(new ChatMessage(user.name, " has joined the chat."));
+		if (inChat) {
+			getChat((short) 0).add(new ChatMessage(user.name, true));
 		}
 	}
 	
@@ -252,8 +255,16 @@ public class ItemData {
 					break;
 				}
 			}
-			getChat((short) 0).add(new ChatMessage(user.name, " has left the chat."));
+			getChat((short) 0).add(new ChatMessage(user.name, true));
 		}
+	}
+	
+	public boolean isUserInChat(short id) {
+		for (int i = 0; i < chatUsers.size(); i++) {
+			if (chatUsers.get(i).id == id)
+				return true;
+		}
+		return false;
 	}
 	
 	public void setInChat(boolean inChat) {

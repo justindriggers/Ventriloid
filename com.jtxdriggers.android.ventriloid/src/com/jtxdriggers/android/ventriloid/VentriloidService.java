@@ -538,7 +538,8 @@ public class VentriloidService extends Service {
 						data.user.id == VentriloInterface.getuserid() ?
 								volumePrefs.getInt("transmit", 79) :
 								volumePrefs.getInt("vol" + data.user.id, 79),
-						volumePrefs.getBoolean("mute" + data.user.id, false));
+						volumePrefs.getBoolean("mute" + data.user.id, false),
+						items.isUserInChat(data.user.id));
 		u.updateStatus();
 		return u;
 	}
