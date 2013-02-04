@@ -111,6 +111,10 @@ public class Connected extends Activity {
 	@Override
 	public void onStart() {
 		super.onStart();
+		if (!VentriloidService.isConnected()) {
+			startActivity(new Intent(this, Main.class));
+			finish();
+		}
 		bindService(new Intent(VentriloidService.SERVICE_INTENT), serviceConnection, Context.BIND_AUTO_CREATE);
 	}
     

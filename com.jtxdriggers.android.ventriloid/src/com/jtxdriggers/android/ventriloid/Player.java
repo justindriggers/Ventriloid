@@ -56,6 +56,7 @@ public class Player {
 	
 	public void stop() {
 		running = false;
+		blankTrack.pause();
 		blankTrack.flush();
 		blankTrack.release();
 	}

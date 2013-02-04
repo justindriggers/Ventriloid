@@ -143,7 +143,8 @@ public class Main extends Activity {
 				break;
 			case VentriloEvents.V3_EVENT_LOGIN_FAIL:
 			case VentriloEvents.V3_EVENT_ERROR_MSG:
-				dialog.dismiss();
+				if (dialog != null && dialog.isShowing())
+					dialog.dismiss();
 				break;
 			case -1:
 				if (dialog == null || !dialog.isShowing()) {
