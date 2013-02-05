@@ -6,6 +6,7 @@ import org.holoeverywhere.LayoutInflater;
 import org.holoeverywhere.widget.TextView;
 
 import android.content.Context;
+import android.text.util.Linkify;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -48,6 +49,7 @@ public class ChatListAdapter extends BaseAdapter {
 			
 			TextView messageView = (TextView) convertView.findViewById(R.id.message);
 			messageView.setText(message.getMessage());
+			Linkify.addLinks(messageView, Linkify.ALL);
 			break;
 		case ChatMessage.TYPE_NOTIFICATION:
 			convertView = LayoutInflater.inflate(mContext, R.layout.simple_list_item_1);

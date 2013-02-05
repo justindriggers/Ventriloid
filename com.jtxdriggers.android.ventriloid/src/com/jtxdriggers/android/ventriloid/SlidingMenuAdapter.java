@@ -43,12 +43,17 @@ public class SlidingMenuAdapter extends BaseExpandableListAdapter {
 				return R.drawable.server;
 			case VentriloidSlidingMenu.MENU_CHANNEL_VIEW:
 				return R.drawable.view;
+			default:
+				return R.drawable.comment;
 			}
-			break;
 		case VentriloidSlidingMenu.MENU_USER_OPTIONS:
 			switch (childPosition) {
+			case VentriloidSlidingMenu.MENU_ADMIN:
+				return R.drawable.admin;
+			case VentriloidSlidingMenu.MENU_SET_TRANSMIT:
+				return R.drawable.transmit;
 			case VentriloidSlidingMenu.MENU_SET_COMMENT:
-				return R.drawable.comment;
+				return R.drawable.edit;
 			case VentriloidSlidingMenu.MENU_SET_URL:
 				return R.drawable.url;
 			case VentriloidSlidingMenu.MENU_CHAT:

@@ -2,7 +2,6 @@ package com.jtxdriggers.android.ventriloid;
 
 import org.holoeverywhere.LayoutInflater;
 import org.holoeverywhere.app.Fragment;
-import org.holoeverywhere.widget.Button;
 import org.holoeverywhere.widget.EditText;
 import org.holoeverywhere.widget.ListView;
 
@@ -14,10 +13,16 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.widget.ImageButton;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 
 public class ChatFragment extends Fragment {
 	
@@ -26,6 +31,8 @@ public class ChatFragment extends Fragment {
 	private VentriloidService s;
 	private ListView list;
 	private ChatListAdapter adapter;
+	private EditText message;
+	private ImageButton send;
 	
 	private short id;
 	
@@ -47,8 +54,33 @@ public class ChatFragment extends Fragment {
     	list = (ListView) layout.findViewById(android.R.id.list);
     	list.setDivider(getResources().getDrawable(R.drawable.abs__list_divider_holo_light));
     	
-    	final EditText message = (EditText) layout.findViewById(R.id.message);
-    	Button send = (Button) layout.findViewById(R.id.send);
+    	message = (EditText) layout.findViewById(R.id.message);
+    	message.setOnEditorActionListener(new OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (message.getText().toString().length() > 0 && event != null) {
+					VentriloInterface.sendchatmessage(message.getText().toString());
+					message.setText("");
+				}
+				return true;
+			}
+    	});
+    	message.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) { }
+			
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+			
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (s == null || s.length() == 0)
+					send.setEnabled(false);
+				else
+					send.setEnabled(true);
+			}
+    	});
+    	send = (ImageButton) layout.findViewById(R.id.send);
     	send.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -56,6 +88,7 @@ public class ChatFragment extends Fragment {
 				message.setText("");
 			}
     	});
+        send.setEnabled(false);
 		
 		if (getDefaultSharedPreferences().getBoolean("screen_on", false))
 			list.setKeepScreenOn(true);

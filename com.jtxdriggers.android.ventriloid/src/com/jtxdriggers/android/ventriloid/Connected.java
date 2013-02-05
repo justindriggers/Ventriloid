@@ -21,9 +21,11 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.method.PasswordTransformationMethod;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -33,7 +35,11 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.CheckBox;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -274,7 +280,7 @@ public class Connected extends Activity {
 					sm.getAdapter().setMenuItems(s.getItemData());
 					return true;
 				default:
-					s.setViewType(ViewFragment.VIEW_TYPE_CHAT, (short) 0);
+					s.setViewType(ViewFragment.VIEW_TYPE_CHAT, s.getItemData().getChatIdFromPosition(childPosition));
 					fragment = ChatFragment.newInstance(s.getChatId());
 					getSupportFragmentManager()
 						.beginTransaction()
@@ -283,15 +289,130 @@ public class Connected extends Activity {
 						.commit();
 					s.getItemData().setActiveView(childPosition);
 					sm.getAdapter().setMenuItems(s.getItemData());
-					
+					return true;
 				}
-				break;
 			case VentriloidSlidingMenu.MENU_USER_OPTIONS:
+				AlertDialog.Builder dialog = new AlertDialog.Builder(Connected.this);
+				
+				LinearLayout layout = new LinearLayout(Connected.this);
+				layout.setOrientation(LinearLayout.VERTICAL);
+				
+				final EditText input = new EditText(Connected.this);
+			    InputFilter[] FilterArray = new InputFilter[1];
+			    FilterArray[0] = new InputFilter.LengthFilter(127);
+			    input.setFilters(FilterArray);
+			    int pixels = (int) (getResources().getDisplayMetrics().density * 20);
+			    LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+			    params.setMargins(pixels, pixels, pixels, pixels);
+			    input.setLayoutParams(params);
+				layout.addView(input);
+				
+				final CheckBox silent = new CheckBox(Connected.this);
+				silent.setChecked(true);
+				silent.setText(" Send Silently ");
+				
+				LinearLayout frame = new LinearLayout(Connected.this);
+				frame.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+				frame.setGravity(Gravity.CENTER);
+				
+				final Item.User u = s.getItemData().getUserById(VentriloInterface.getuserid());
+				
 				switch (childPosition) {
+				case VentriloidSlidingMenu.MENU_ADMIN:
+					if (s.isAdmin()) {
+						VentriloInterface.adminlogout();
+						s.setAdmin(false);
+					} else {
+						dialog.setTitle("Enter Admin Password:");
+						input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
+					    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
+						dialog.setView(layout);
+						dialog.setPositiveButton("Login", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								VentriloInterface.adminlogin(input.getText().toString());
+								s.setAdmin(true);
+							}
+						});
+						dialog.setNegativeButton("Cancel", null);
+						dialog.show();
+					}
+					return true;
+				case VentriloidSlidingMenu.MENU_SET_TRANSMIT:
+					final TextView percent = new TextView(Connected.this);
+					final SeekBar volume = new SeekBar(Connected.this);
+					volume.setMax(158);
+					volume.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+						@Override
+						public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+							if (progress >= 72 && progress <= 86 && progress != 79) {
+								seekBar.setProgress(79);
+								percent.setText("100%");
+							} else
+								percent.setText((progress * 200) / seekBar.getMax() + "%");
+						}
+						@Override
+						public void onStartTrackingTouch(SeekBar seekBar) { }
+						@Override
+						public void onStopTrackingTouch(SeekBar seekBar) { }
+					});
+					LinearLayout volumeLayout = new LinearLayout(Connected.this);
+					volumeLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
+					volumeLayout.setOrientation(LinearLayout.VERTICAL);
+					volumeLayout.addView(volume);
+					frame.addView(percent);
+					volumeLayout.addView(frame);
+					dialog.setView(volumeLayout);
+					volume.setProgress(u.volume);
+					percent.setText((u.volume * 200) / volume.getMax() + "%");
+					dialog.setTitle("Set Transmit Volume:");
+					dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							VentriloInterface.setxmitvolume(volume.getProgress());
+							u.volume = volume.getProgress();
+							u.updateStatus();
+							sendBroadcast(new Intent(ViewFragment.SERVICE_RECEIVER));
+							getSharedPreferences("VOLUMES" + s.getServerId(), Context.MODE_PRIVATE).edit().putInt("transmit", volume.getProgress()).commit();
+						}
+					});
+					dialog.setNegativeButton("Cancel", null);
+					dialog.show();
+					return true;
 				case VentriloidSlidingMenu.MENU_SET_COMMENT:
-					break;
+					dialog.setTitle("Set Comment:");
+					frame.addView(silent);
+					layout.addView(frame);
+					dialog.setView(layout);
+					input.setSingleLine();
+					input.setText(u.comment);
+					dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							s.getItemData().setComment(input.getText().toString());
+							VentriloInterface.settext(input.getText().toString(), u.url, "", silent.isChecked());
+						}
+					});
+					dialog.setNegativeButton("Cancel", null);
+					dialog.show();
+					return true;
 				case VentriloidSlidingMenu.MENU_SET_URL:
-					break;
+					dialog.setTitle("Set URL:");
+					frame.addView(silent);
+					layout.addView(frame);
+					dialog.setView(layout);
+					input.setText(u.url.length() > 0 ? u.url : "http://");
+					input.setSingleLine();
+					dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							s.getItemData().setUrl(input.getText().toString());
+							VentriloInterface.settext(u.comment, input.getText().toString(), "", silent.isChecked());
+						}
+					});
+					dialog.setNegativeButton("Cancel", null);
+					dialog.show();
+					return true;
 				case VentriloidSlidingMenu.MENU_CHAT:
 					if (s.getItemData().inChat()) {
 						s.leaveChat();
@@ -315,7 +436,7 @@ public class Connected extends Activity {
 							.commit();
 					}
 					sm.getAdapter().setMenuItems(s.getItemData());
-					break;
+					return true;
 				}
 				break;
 			case VentriloidSlidingMenu.MENU_CLOSE:
@@ -405,6 +526,7 @@ public class Connected extends Activity {
 	            break;
 			default:
 				sendBroadcast(new Intent(ViewFragment.SERVICE_RECEIVER));
+				sm.getAdapter().setMenuItems(s.getItemData());
 			}
 		}
 	};

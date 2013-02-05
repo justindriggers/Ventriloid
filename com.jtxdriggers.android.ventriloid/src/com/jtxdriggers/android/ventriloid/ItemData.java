@@ -325,6 +325,16 @@ public class ItemData {
 		return chatPositions.get(id);
 	}
 	
+	public synchronized short getChatIdFromPosition(int position) {
+		Iterator<Entry<Short, Integer>> iterator = chatPositions.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Entry<Short, Integer> entry = iterator.next();
+			if (entry.getValue() == position)
+				return entry.getKey();
+		}
+		return -1;
+	}
+	
 	public int getActiveView() {
 		return activeView;
 	}
