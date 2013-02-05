@@ -32,12 +32,13 @@ public class ItemData {
 	private ArrayList<ArrayList<Item.User>> currentUsers = new ArrayList<ArrayList<Item.User>>();
 	
 	private HashMap<Short, ArrayList<ChatMessage>> chats = new HashMap<Short, ArrayList<ChatMessage>>();
-	private ArrayList<Item.User> chatUsers = new ArrayList<Item.User>();
+	private ArrayList<Short> chatUsers = new ArrayList<Short>();
 	
 	private ArrayList<ArrayList<String>> menuItems = new ArrayList<ArrayList<String>>();
 	private HashMap<Short, Integer> chatPositions = new HashMap<Short, Integer>();
 	private int activeView = VentriloidSlidingMenu.MENU_SERVER_VIEW;
 	
+	private short userId;
 	private int ping = 0;
 	private String comment = "", url = "", integrationText = "";
 	private boolean inChat = false;
@@ -66,7 +67,7 @@ public class ItemData {
 		menuItems.get(VentriloidSlidingMenu.MENU_CLOSE).add("Disconnect");
 	}
 	
-	public void addChannel(Item.Channel channel) {
+	public synchronized void addChannel(Item.Channel channel) {
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == channel.parent) {
 				channel.indent = channels.get(i).indent + "     ";
@@ -82,12 +83,12 @@ public class ItemData {
 		}
 	}
 	
-	public void addCurrentUser(Item.User user) {
+	public synchronized void addCurrentUser(Item.User user) {
 		if (user.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 			currentUsers.get(0).add(user);
 	}
 	
-	public void addUser(Item.User user) {
+	public synchronized void addUser(Item.User user) {
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == user.parent) {
 				user.indent = channels.get(i).indent + "     ";
@@ -97,11 +98,11 @@ public class ItemData {
 		}
 	}
 	
-	public ArrayList<Item.Channel> getChannels() {
+	public synchronized ArrayList<Item.Channel> getChannels() {
 		return channels;
 	}
 	
-	public Item.Channel getChannelById(short id) {
+	public synchronized Item.Channel getChannelById(short id) {
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == id) {
 				return channels.get(i);
@@ -110,11 +111,11 @@ public class ItemData {
 		return null;
 	}
 	
-	public ArrayList<Item.Channel> getCurrentChannel() {
+	public synchronized ArrayList<Item.Channel> getCurrentChannel() {
 		return currentChannels;
 	}
 	
-	public Item.User getCurrentUserById(short id) {
+	public synchronized Item.User getCurrentUserById(short id) {
 		for (int i = 0; i < currentUsers.get(0).size(); i++) {
 			if (currentUsers.get(0).get(i).id == id)
 				return currentUsers.get(0).get(i);
@@ -122,15 +123,15 @@ public class ItemData {
 		return null;
 	}
 	
-	public ArrayList<ArrayList<Item.User>> getCurrentUsers() {
+	public synchronized ArrayList<ArrayList<Item.User>> getCurrentUsers() {
 		return currentUsers;
 	}
 	
-	public ArrayList<ArrayList<Item.User>> getUsers() {
+	public synchronized ArrayList<ArrayList<Item.User>> getUsers() {
 		return users;
 	}
 	
-	public Item.User getUserById(short id) {
+	public synchronized Item.User getUserById(short id) {
 		for (int i = 0; i < channels.size(); i++) {
 			for (int j = 0; j < users.get(i).size(); j++) {
 				if (users.get(i).get(j).id == id)
@@ -140,7 +141,7 @@ public class ItemData {
 		return null;
 	}
 	
-	public void removeCurrentUser(short id) {
+	public synchronized void removeCurrentUser(short id) {
 		for (int i = 0; i < currentUsers.get(0).size(); i++) {
 			if (currentUsers.get(0).get(i).id == id) {
 				currentUsers.get(0).remove(i);
@@ -149,7 +150,7 @@ public class ItemData {
 		}
 	}
 	
-	public void removeUser(short id) {
+	public synchronized void removeUser(short id) {
 		for (int i = 0; i < channels.size(); i++) {
 			for (int j = 0; j < users.get(i).size(); j++) {
 				if (users.get(i).get(j).id == id) {
@@ -160,7 +161,7 @@ public class ItemData {
 		}
 	}
 	
-	public void setCurrentChannel(short id) {
+	public synchronized void setCurrentChannel(short id) {
 		currentChannels.clear();
 		currentUsers.get(0).clear();
 		for (int i = 0; i < channels.size(); i++) {
@@ -175,12 +176,12 @@ public class ItemData {
 		}
 	}
 	
-	public void setLobby(Item.Channel lobby) {
+	public synchronized void setLobby(Item.Channel lobby) {
 		channels.set(0, lobby);
 		currentChannels.set(0, lobby);
 	}
 	
-	public void setXmit(short id, int xmit) {
+	public synchronized void setXmit(short id, int xmit) {
 		Item.User u = getUserById(id);
 		try {
 			u.xmit = xmit;
@@ -191,7 +192,7 @@ public class ItemData {
 		return ping;
 	}
 	
-	public void setPing(int ping) {
+	public synchronized void setPing(int ping) {
 		this.ping = ping;
 	}
 
@@ -219,55 +220,55 @@ public class ItemData {
 		this.integrationText = integrationText;
 	}
 	
-	public void createChat(short id) {
+	public synchronized void createChat(short id) {
 		chats.put(id, new ArrayList<ChatMessage>());
 	}
 	
-	public ArrayList<ChatMessage> getChat(short id) {
+	public synchronized ArrayList<ChatMessage> getChat(short id) {
 		return chats.get(id);
 	}
 	
-	public void addMessage(short id, String username, String message) {
+	public synchronized void addMessage(short id, String username, String message) {
 		getChat(id).add(new ChatMessage(username, message));
 	}
 	
-	public void addChatUser(short id) {
+	public synchronized void addChatUser(short id) {
 		Item.User user = getUserById(id);
 		if (user != null) {
 			user.inChat = true;
 			user.updateStatus();
+			if (inChat)
+				getChat((short) 0).add(new ChatMessage(user.name, true));
 		}
 		if (!isUserInChat(id))
-			chatUsers.add(user);
-		if (inChat) {
-			getChat((short) 0).add(new ChatMessage(user.name, true));
-		}
+			chatUsers.add(id);
 	}
 	
-	public void removeChatUser(short id) {
+	public synchronized void removeChatUser(short id) {
 		Item.User user = getUserById(id);
-		user.inChat = false;
-		user.updateStatus();
-		if (inChat) {
-			for (int i = 0; i < chatUsers.size(); i++) {
-				if (user.id == id) {
-					chatUsers.remove(i);
-					break;
-				}
+		if (user != null) {
+			user.inChat = false;
+			user.updateStatus();
+			if (inChat)
+				getChat((short) 0).add(new ChatMessage(user.name, false));
+		}
+		for (int i = 0; i < chatUsers.size(); i++) {
+			if (user.id == id) {
+				chatUsers.remove(i);
+				break;
 			}
-			getChat((short) 0).add(new ChatMessage(user.name, true));
 		}
 	}
 	
-	public boolean isUserInChat(short id) {
+	public synchronized boolean isUserInChat(short id) {
 		for (int i = 0; i < chatUsers.size(); i++) {
-			if (chatUsers.get(i).id == id)
+			if (chatUsers.get(i) == id)
 				return true;
 		}
 		return false;
 	}
 	
-	public void setInChat(boolean inChat) {
+	public synchronized void setInChat(boolean inChat) {
 		this.inChat = inChat;
 		if (inChat) {
 			chats.put((short) 0, new ArrayList<ChatMessage>());
@@ -300,16 +301,16 @@ public class ItemData {
 		return inChat;
 	}
 	
-	public void setIsAdmin(boolean isAdmin) {
+	public synchronized void setIsAdmin(boolean isAdmin) {
 		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).set(VentriloidSlidingMenu.MENU_ADMIN, isAdmin ? "Admin Logout" : "Admin Login");
 	}
 	
-	public void addChat(short id, String name) {
+	public synchronized void addChat(short id, String name) {
 		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).add(name);
 		chatPositions.put(id, menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).size() - 1);
 	}
 	
-	public void removeChat(short id, String name) {
+	public synchronized void removeChat(short id, String name) {
 		int position = findChatPosition(id);
 		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).remove(position);
 		Iterator<Entry<Short, Integer>> iterator = chatPositions.entrySet().iterator();
@@ -320,7 +321,7 @@ public class ItemData {
 		}
 	}
 	
-	public int findChatPosition(short id) {
+	public synchronized int findChatPosition(short id) {
 		return chatPositions.get(id);
 	}
 	
@@ -334,6 +335,14 @@ public class ItemData {
 	
 	public ArrayList<ArrayList<String>> getMenuItems() {
 		return menuItems;
+	}
+	
+	public void setUserId() {
+		userId = VentriloInterface.getuserid();
+	}
+	
+	public short getUserId() {
+		return userId;
 	}
 	
 }

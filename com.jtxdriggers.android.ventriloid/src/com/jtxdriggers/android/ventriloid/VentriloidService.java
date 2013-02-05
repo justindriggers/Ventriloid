@@ -68,6 +68,7 @@ public class VentriloidService extends Service {
 		muted = false,
 		vibrate = false,
 		admin = false,
+		rejoinChat = false,
 		running = false,
 		disconnect;
 	private int start,
@@ -198,24 +199,28 @@ public class VentriloidService extends Service {
 					else
 						VentriloInterface.setuservolume(data.user.id, ((Item.User) item).muted ? 0 : ((Item.User) item).volume);
 					if ((data.flags & (1 << 0)) == 0 && data.text.real_user_id == 0)
-						nm.notify(1, createNotification(item.name + " has logged in.", data.type));
+						nm.notify(items.getUserId(), createNotification(item.name + " has logged in.", data.type));
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					player.close(data.user.id);
 					item = items.getUserById(data.user.id);
 					if (((Item.User) item).realId == 0)
-						nm.notify(1, createNotification(item.name + " has logged out.", data.type));
+						nm.notify(items.getUserId(), createNotification(item.name + " has logged out.", data.type));
 					break;
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
 					connected = true;
 					disconnect = false;
-					startForeground(1, createNotification("Now Connected.", data.type));
+					items.setUserId();
+					nm.cancelAll();
+					startForeground(items.getUserId(), createNotification("Now Connected.", data.type));
 					recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
 					if (voiceActivation)
 						recorder.start(threshold);
 					sendBroadcast(new Intent(Main.SERVICE_RECEIVER).putExtra("type", data.type));
+					if (rejoinChat)
+						joinChat();
 					break;
 					
 				case VentriloEvents.V3_EVENT_LOGIN_FAIL:
@@ -232,9 +237,9 @@ public class VentriloidService extends Service {
 					} else {
 						item = items.getUserById(data.user.id);
 						if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-							nm.notify(1, createNotification(item.name + " joined the channel.", data.type));
+							nm.notify(items.getUserId(), createNotification(item.name + " joined the channel.", data.type));
 						else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-							nm.notify(1, createNotification(item.name + " left the channel.", data.type));
+							nm.notify(items.getUserId(), createNotification(item.name + " left the channel.", data.type));
 						player.close(data.user.id);
 					}
 					break;
@@ -267,6 +272,7 @@ public class VentriloidService extends Service {
 					if (!disconnect) {
 						item = items.getCurrentChannel().get(0);
 						final short id = item.id;
+						final short userId = items.getUserId();
 						final String comment = items.getComment();
 						final String url = items.getUrl();
 						final String integrationText = items.getIntegrationText();
@@ -278,7 +284,7 @@ public class VentriloidService extends Service {
 							public void run() {								
 								if (!disconnect) {
 									if (reconnectTimer > 0) {
-										nm.notify(1, createNotification("Reconnecting in " + reconnectTimer + " seconds", data.type));
+										nm.notify(userId, createNotification("Reconnecting in " + reconnectTimer + " seconds", data.type));
 										sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
 											.putExtra("type", (short) -1)
 											.putExtra("timer", reconnectTimer));
@@ -298,7 +304,7 @@ public class VentriloidService extends Service {
 											items.setIntegrationText(integrationText);
 											VentriloInterface.changechannel(id, passwordPrefs.getString(id + "pw", ""));
 											if (inChat)
-												joinChat();
+												rejoinChat = true;
 										} else {
 											VentriloEventData data = new VentriloEventData();
 											VentriloInterface.error(data);
@@ -484,7 +490,6 @@ public class VentriloidService extends Service {
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAT_JOIN:
-			System.out.println("CHAT JOIN");
 			items.addChatUser(data.user.id);
 			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
 			break;
