@@ -48,7 +48,7 @@ public class ChatFragment extends Fragment {
 	
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    	id = getArguments().getShort("viewId", (short) 0);
+    	id = getArguments().getShort("viewId", (short) -1);
     	
     	RelativeLayout layout = (RelativeLayout) LayoutInflater.inflate(getActivity(), R.layout.chat_fragment);
     	list = (ListView) layout.findViewById(android.R.id.list);
@@ -59,7 +59,10 @@ public class ChatFragment extends Fragment {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 				if (message.getText().toString().length() > 0 && event != null) {
-					VentriloInterface.sendchatmessage(message.getText().toString());
+					if (id == 0)
+						VentriloInterface.sendchatmessage(message.getText().toString());
+					else
+						VentriloInterface.sendprivatemessage(id, message.getText().toString());
 					message.setText("");
 				}
 				return true;
@@ -84,7 +87,10 @@ public class ChatFragment extends Fragment {
     	send.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				VentriloInterface.sendchatmessage(message.getText().toString());
+				if (id == 0)
+					VentriloInterface.sendchatmessage(message.getText().toString());
+				else
+					VentriloInterface.sendprivatemessage(id, message.getText().toString());
 				message.setText("");
 			}
     	});

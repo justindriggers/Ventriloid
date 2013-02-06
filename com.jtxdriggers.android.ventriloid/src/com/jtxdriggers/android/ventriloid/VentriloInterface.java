@@ -61,6 +61,7 @@ public class VentriloInterface {
 	public static native boolean	recv();
 	public static native void		sendaudio(byte[] pcm, int size, int rate);
 	public static native void 		sendchatmessage(String message);
+	public static native void		sendprivatemessage(short userid, String message);
 	public static native void		sendpage(short userid);
 	public static native void 		settext(String comment, String url, String integrationtext, Boolean silent);
 	public static native void 		setuservolume(short id, int level);

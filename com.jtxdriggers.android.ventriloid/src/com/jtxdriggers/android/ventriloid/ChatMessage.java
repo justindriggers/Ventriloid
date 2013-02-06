@@ -6,7 +6,7 @@ public class ChatMessage {
 	
 	public static final short JOIN = (short) -1, LEAVE = (short) -2;
 	
-	public static final int TYPE_MESSAGE = 0, TYPE_NOTIFICATION = 1;
+	public static final int TYPE_MESSAGE = 0, TYPE_ENTER_CHAT = 1, TYPE_LEAVE_CHAT = 2, TYPE_CLOSE_CHAT = 3, TYPE_REOPEN_CHAT = 4, TYPE_ERROR = -1;
 	
 	private String username;
 	private String message;
@@ -20,11 +20,27 @@ public class ChatMessage {
 		type = TYPE_MESSAGE;
 	}
 	
-	public ChatMessage(String username, boolean enter) {
+	public ChatMessage(String username, int type) {
 		this.username = username;
-		message = enter ? "has joined the chat."  : "has left the chat.";
+		this.type = type;
+		switch (type) {
+		case TYPE_ENTER_CHAT:
+			message = "has joined the chat.";
+			break;
+		case TYPE_LEAVE_CHAT:
+			message = "has left the chat.";
+			break;
+		case TYPE_CLOSE_CHAT:
+			message = "Private chat session has been closed.";
+			break;
+		case TYPE_REOPEN_CHAT:
+			message = "Private session has been reopened.";
+			break;
+		case TYPE_ERROR:
+			message = "Error sending message.";
+			break;
+		}
 		timestamp = new Date();
-		type = TYPE_NOTIFICATION;
 	}
 	
 	public String getUsername() {

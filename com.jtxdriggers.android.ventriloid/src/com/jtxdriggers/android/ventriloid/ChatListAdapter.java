@@ -6,6 +6,7 @@ import org.holoeverywhere.LayoutInflater;
 import org.holoeverywhere.widget.TextView;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.text.util.Linkify;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,11 +52,22 @@ public class ChatListAdapter extends BaseAdapter {
 			messageView.setText(message.getMessage());
 			Linkify.addLinks(messageView, Linkify.ALL);
 			break;
-		case ChatMessage.TYPE_NOTIFICATION:
+		case ChatMessage.TYPE_ENTER_CHAT:
+		case ChatMessage.TYPE_LEAVE_CHAT:
 			convertView = LayoutInflater.inflate(mContext, R.layout.simple_list_item_1);
 			
 			TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
 			textView.setText(message.getUsername() + " " + message.getMessage());
+			break;
+		case ChatMessage.TYPE_CLOSE_CHAT:
+		case ChatMessage.TYPE_REOPEN_CHAT:
+		case ChatMessage.TYPE_ERROR:
+			convertView = LayoutInflater.inflate(mContext, R.layout.simple_list_item_1);
+			
+			TextView notif = (TextView) convertView.findViewById(android.R.id.text1);
+			notif.setText(message.getMessage());
+			if (message.getType() == ChatMessage.TYPE_ERROR)
+				notif.setTextColor(Color.RED);
 			break;
 		}
 		

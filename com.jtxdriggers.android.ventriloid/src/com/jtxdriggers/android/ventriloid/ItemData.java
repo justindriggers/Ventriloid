@@ -232,13 +232,31 @@ public class ItemData {
 		getChat(id).add(new ChatMessage(username, message));
 	}
 	
+	public synchronized boolean chatOpened(short id) {
+		if (getChat(id) != null)
+			return true;
+		return false;
+	}
+	
+	public synchronized void closeChat(short id, String username) {
+		getChat(id).add(new ChatMessage(username, ChatMessage.TYPE_CLOSE_CHAT));
+	}
+	
+	public synchronized void reopenChat(short id, String username) {
+		getChat(id).add(new ChatMessage(username, ChatMessage.TYPE_REOPEN_CHAT));
+	}
+	
+	public synchronized void chatError(short id, String username) {
+		getChat(id).add(new ChatMessage(username, ChatMessage.TYPE_ERROR));
+	}
+	
 	public synchronized void addChatUser(short id) {
 		Item.User user = getUserById(id);
 		if (user != null) {
 			user.inChat = true;
 			user.updateStatus();
 			if (inChat)
-				getChat((short) 0).add(new ChatMessage(user.name, true));
+				getChat((short) 0).add(new ChatMessage(user.name, ChatMessage.TYPE_ENTER_CHAT));
 		}
 		if (!isUserInChat(id))
 			chatUsers.add(id);
@@ -250,7 +268,7 @@ public class ItemData {
 			user.inChat = false;
 			user.updateStatus();
 			if (inChat)
-				getChat((short) 0).add(new ChatMessage(user.name, false));
+				getChat((short) 0).add(new ChatMessage(user.name, ChatMessage.TYPE_LEAVE_CHAT));
 		}
 		for (int i = 0; i < chatUsers.size(); i++) {
 			if (user.id == id) {
@@ -287,6 +305,8 @@ public class ItemData {
 			menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).remove(2);
 			if (activeView == 2)
 				setActiveView(VentriloidSlidingMenu.MENU_SERVER_VIEW);
+			else if (activeView > 2)
+				setActiveView(activeView - 1);
 			chatPositions.remove((short) 0);
 			Iterator<Entry<Short, Integer>> iterator = chatPositions.entrySet().iterator();
 			while (iterator.hasNext()) {
@@ -306,12 +326,14 @@ public class ItemData {
 	}
 	
 	public synchronized void addChat(short id, String name) {
+		chats.put(id, new ArrayList<ChatMessage>());
 		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).add(name);
 		chatPositions.put(id, menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).size() - 1);
 	}
 	
 	public synchronized void removeChat(short id, String name) {
 		int position = findChatPosition(id);
+		chats.remove(id);
 		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).remove(position);
 		Iterator<Entry<Short, Integer>> iterator = chatPositions.entrySet().iterator();
 		while (iterator.hasNext()) {

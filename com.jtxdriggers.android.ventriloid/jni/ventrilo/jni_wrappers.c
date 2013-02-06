@@ -250,7 +250,7 @@ JNIEXPORT jboolean JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInter
 	v3_get_event(V3_NONBLOCK);
 	v3_set_server_opts(V3_USER_ACCEPT_PAGES, 1);
 	v3_set_server_opts(V3_USER_ACCEPT_U2U,   1);
-	v3_set_server_opts(V3_USER_ACCEPT_CHAT,  0);
+	v3_set_server_opts(V3_USER_ACCEPT_CHAT,  1);
 	v3_set_server_opts(V3_USER_ALLOW_RECORD, 1);
 	jint ret = v3_login(_server, _username, _password, _phonetic);
 	release_string(env, server, _server);
@@ -263,6 +263,12 @@ JNIEXPORT jboolean JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInter
 JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_sendchatmessage(JNIEnv* env, jobject obj, jstring message) {
 	char* _message = get_string(env, message);
 	v3_send_chat_message(_message);
+	release_string(env, message, _message);
+}
+
+JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_sendprivatemessage(JNIEnv* env, jobject obj, jshort userid, jstring message) {
+	char* _message = get_string(env, message);
+	v3_send_privchat_message(userid, _message);
 	release_string(env, message, _message);
 }
 
@@ -398,10 +404,6 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 			case V3_EVENT_USER_TALK_MUTE:
 			case V3_EVENT_CHAT_JOIN:
 			case V3_EVENT_CHAT_LEAVE:
-			case V3_EVENT_PRIVATE_CHAT_START:
-			case V3_EVENT_PRIVATE_CHAT_END:
-			case V3_EVENT_PRIVATE_CHAT_AWAY:
-			case V3_EVENT_PRIVATE_CHAT_BACK:
 			case V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
 			case V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
 			case V3_EVENT_USER_RANK_CHANGE:
@@ -467,6 +469,19 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					// No event data for these types!
 				}
 				break;
+
+
+			case V3_EVENT_PRIVATE_CHAT_START:
+			case V3_EVENT_PRIVATE_CHAT_END:
+			case V3_EVENT_PRIVATE_CHAT_AWAY:
+			case V3_EVENT_PRIVATE_CHAT_BACK:
+				{
+					// User IDs.
+					jobject user = get_object(env, eventdata, event_class, "user", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_user;");
+					jclass  user_class = get_class(env, user);
+					set_short(env, user, user_class, "privchat_user1", ev->user.privchat_user1);
+					set_short(env, user, user_class, "privchat_user2", ev->user.privchat_user2);
+				}
 
 			case V3_EVENT_PRIVATE_CHAT_MESSAGE:
 				{

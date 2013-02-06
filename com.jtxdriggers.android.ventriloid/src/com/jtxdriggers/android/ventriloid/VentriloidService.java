@@ -498,6 +498,37 @@ public class VentriloidService extends Service {
 			items.removeChatUser(data.user.id);
 			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
 			break;
+			
+
+		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_MESSAGE:
+			short id = data.user.privchat_user1 == VentriloInterface.getuserid() ? data.user.privchat_user2 : data.user.privchat_user1;
+			item = items.getUserById(data.user.privchat_user2);
+			if (data.flags > 0)
+				items.chatError(id, item.name);
+			else
+				items.addMessage(id, item.name, bytesToString(data.data.chatmessage));
+			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+			break;
+			
+		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_START:
+			System.out.println(data.user.privchat_user1 + " " + data.user.privchat_user2);
+			item = items.getUserById(data.user.privchat_user1 == VentriloInterface.getuserid() ? data.user.privchat_user2 : data.user.privchat_user1);
+			if (items.chatOpened(item.id))
+				items.reopenChat(item.id, item.name);
+			else
+				items.addChat(item.id, item.name);
+			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+			break;
+			
+		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_END:
+			item = items.getUserById(data.user.privchat_user1 == VentriloInterface.getuserid() ? data.user.privchat_user2 : data.user.privchat_user1);
+			items.closeChat(item.id, item.name);
+			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+			break;
+			
+		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_AWAY:
+		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_BACK:
+			break;
 		}
 
 		if (sendBroadcast) {

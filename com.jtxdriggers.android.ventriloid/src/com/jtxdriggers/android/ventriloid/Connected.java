@@ -416,7 +416,7 @@ public class Connected extends Activity {
 				case VentriloidSlidingMenu.MENU_CHAT:
 					if (s.getItemData().inChat()) {
 						s.leaveChat();
-						if (s.getViewType() == ViewFragment.VIEW_TYPE_CHAT) {
+						if (s.getViewType() == ViewFragment.VIEW_TYPE_CHAT && s.getChatId() == 0) {
 							s.setViewType(ViewFragment.VIEW_TYPE_SERVER, (short) -1);
 							fragment = ViewFragment.newInstance(s.getViewType());
 							getSupportFragmentManager()
