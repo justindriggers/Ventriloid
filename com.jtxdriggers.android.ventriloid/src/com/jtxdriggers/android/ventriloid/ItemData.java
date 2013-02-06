@@ -250,6 +250,10 @@ public class ItemData {
 		getChat(id).add(new ChatMessage(username, ChatMessage.TYPE_ERROR));
 	}
 	
+	public synchronized void chatDisconnect(short id, String username) {
+		getChat(id).add(new ChatMessage(username, ChatMessage.TYPE_DISCONNECT));
+	}
+	
 	public synchronized void addChatUser(short id) {
 		Item.User user = getUserById(id);
 		if (user != null) {
@@ -341,6 +345,12 @@ public class ItemData {
 			if (entry.getValue() > position)
 				chatPositions.put(entry.getKey(), entry.getValue() - 1);
 		}
+	}
+	
+	public synchronized boolean hasChat(short id) {
+		if (chats.get(id) != null)
+			return true;
+		return false;
 	}
 	
 	public synchronized int findChatPosition(short id) {

@@ -33,8 +33,10 @@ public class ChatFragment extends Fragment {
 	private ChatListAdapter adapter;
 	private EditText message;
 	private ImageButton send;
+	private TextView title;
 	
 	private short id;
+	private String name;
 	
 	public static ChatFragment newInstance(short id) {
 		ChatFragment fragment = new ChatFragment();
@@ -46,11 +48,27 @@ public class ChatFragment extends Fragment {
 		return fragment;
 	}
 	
+	public static ChatFragment newInstance(short id, String name) {
+		ChatFragment fragment = new ChatFragment();
+
+		Bundle args = new Bundle();
+		args.putShort("viewId", id);
+		args.putString("viewName", name);
+		fragment.setArguments(args);
+		
+		return fragment;
+	}
+	
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     	id = getArguments().getShort("viewId", (short) -1);
+    	name = getArguments().getString("viewName");
     	
     	RelativeLayout layout = (RelativeLayout) LayoutInflater.inflate(getActivity(), R.layout.chat_fragment);
+    	
+    	title = (TextView) layout.findViewById(R.id.title);
+		title.setText(id == 0 ? "Server Chat" : "Private Chat - " + name);
+    	
     	list = (ListView) layout.findViewById(android.R.id.list);
     	list.setDivider(getResources().getDrawable(R.drawable.abs__list_divider_holo_light));
     	

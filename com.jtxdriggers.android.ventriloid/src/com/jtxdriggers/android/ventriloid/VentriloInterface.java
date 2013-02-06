@@ -36,6 +36,7 @@ public class VentriloInterface {
 	public static native int		channelrequirespassword(short channelid);
 	public static native void 		clearevents();
 	public static native int  		debuglevel(int level);
+	public static native void		endprivatechat(short userid);
 	public static native void		error(VentriloEventData data);
 	public static native void		forcechannelmove(short userid, short channelid);
 	public static native void		getchannel(VentriloEventData data, short channelid);
@@ -61,12 +62,13 @@ public class VentriloInterface {
 	public static native boolean	recv();
 	public static native void		sendaudio(byte[] pcm, int size, int rate);
 	public static native void 		sendchatmessage(String message);
-	public static native void		sendprivatemessage(short userid, String message);
 	public static native void		sendpage(short userid);
+	public static native void		sendprivatemessage(short userid, String message);
 	public static native void 		settext(String comment, String url, String integrationtext, Boolean silent);
 	public static native void 		setuservolume(short id, int level);
 	public static native void 		setxmitvolume(int level);
 	public static native void 		startaudio(short type);
+	public static native void		startprivatechat(short userid);
 	public static native void 		stopaudio();
 	public static native int 		usercount();
 }

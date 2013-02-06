@@ -380,6 +380,10 @@ public class VentriloidService extends Service {
 			
 		case VentriloEvents.V3_EVENT_USER_LOGOUT:
 			item = items.getUserById(data.user.id);
+			if (items.hasChat(data.user.id)) {
+				items.chatDisconnect(item.id, item.name);
+				sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+			}
 			if (((Item.User) item).inChat) {
 				items.removeChatUser(data.user.id);
 				sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
@@ -511,13 +515,18 @@ public class VentriloidService extends Service {
 			break;
 			
 		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_START:
-			System.out.println(data.user.privchat_user1 + " " + data.user.privchat_user2);
 			item = items.getUserById(data.user.privchat_user1 == VentriloInterface.getuserid() ? data.user.privchat_user2 : data.user.privchat_user1);
 			if (items.chatOpened(item.id))
 				items.reopenChat(item.id, item.name);
-			else
+			else {
 				items.addChat(item.id, item.name);
+				Intent chatStart = new Intent(Connected.SERVICE_RECEIVER)
+					.putExtra("type", data.type)
+					.putExtra("id", item.id);
+				sendBroadcast(chatStart);
+			}
 			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+			sendBroadcast = false;
 			break;
 			
 		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_END:

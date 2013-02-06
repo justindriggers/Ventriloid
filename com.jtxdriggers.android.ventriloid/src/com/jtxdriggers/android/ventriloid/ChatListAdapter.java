@@ -54,6 +54,7 @@ public class ChatListAdapter extends BaseAdapter {
 			break;
 		case ChatMessage.TYPE_ENTER_CHAT:
 		case ChatMessage.TYPE_LEAVE_CHAT:
+		case ChatMessage.TYPE_DISCONNECT:
 			convertView = LayoutInflater.inflate(mContext, R.layout.simple_list_item_1);
 			
 			TextView textView = (TextView) convertView.findViewById(android.R.id.text1);

@@ -6,7 +6,7 @@ public class ChatMessage {
 	
 	public static final short JOIN = (short) -1, LEAVE = (short) -2;
 	
-	public static final int TYPE_MESSAGE = 0, TYPE_ENTER_CHAT = 1, TYPE_LEAVE_CHAT = 2, TYPE_CLOSE_CHAT = 3, TYPE_REOPEN_CHAT = 4, TYPE_ERROR = -1;
+	public static final int TYPE_MESSAGE = 0, TYPE_ENTER_CHAT = 1, TYPE_LEAVE_CHAT = 2, TYPE_CLOSE_CHAT = 3, TYPE_REOPEN_CHAT = 4, TYPE_ERROR = -1, TYPE_DISCONNECT = -2;
 	
 	private String username;
 	private String message;
@@ -39,6 +39,8 @@ public class ChatMessage {
 		case TYPE_ERROR:
 			message = "Error sending message.";
 			break;
+		case TYPE_DISCONNECT:
+			message = "has disconnected.";
 		}
 		timestamp = new Date();
 	}

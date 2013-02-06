@@ -45,8 +45,9 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
 public class Connected extends Activity {
-	
+
 	public static final String SERVICE_RECEIVER = "com.jtxdriggers.android.ventriloid.Connected.SERVICE_RECEIVER";
+	public static final String FRAGMENT_RECEIVER = "com.jtxdriggers.android.ventriloid.Connected.FRAGMENT_RECEIVER";
 	
 	public static final int SMALL = 1, MEDIUM = 2, LARGE = 3;
 	
@@ -281,7 +282,7 @@ public class Connected extends Activity {
 					return true;
 				default:
 					s.setViewType(ViewFragment.VIEW_TYPE_CHAT, s.getItemData().getChatIdFromPosition(childPosition));
-					fragment = ChatFragment.newInstance(s.getChatId());
+					fragment = ChatFragment.newInstance(s.getChatId(), s.getItemData().getMenuItems().get(groupPosition).get(childPosition));
 					getSupportFragmentManager()
 						.beginTransaction()
 						.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
@@ -470,7 +471,12 @@ public class Connected extends Activity {
 			setPing(s.getItemData().getPing());
 			
 			if (s.getViewType() == ViewFragment.VIEW_TYPE_CHAT)
-				fragment = ChatFragment.newInstance(s.getChatId());
+				switch (s.getChatId()) {
+				case 0:
+					fragment = ChatFragment.newInstance(s.getChatId());
+				default:
+					fragment = ChatFragment.newInstance(s.getChatId(), s.getItemData().getMenuItems().get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).get(s.getItemData().findChatPosition(s.getChatId())));
+				}
 			else
 				fragment = ViewFragment.newInstance(s.getViewType());
 			getSupportFragmentManager()
@@ -524,6 +530,17 @@ public class Connected extends Activity {
 	            } else
 	                    VentriloInterface.changechannel(c.id, "");
 	            break;
+			case VentriloEvents.V3_EVENT_PRIVATE_CHAT_START:
+				s.setViewType(ViewFragment.VIEW_TYPE_CHAT, intent.getShortExtra("id", (short) -1));
+				fragment = ChatFragment.newInstance(s.getChatId(), s.getItemData().getMenuItems().get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).get(s.getItemData().findChatPosition(s.getChatId())));
+				getSupportFragmentManager()
+					.beginTransaction()
+					.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+					.replace(R.id.content_frame, fragment)
+					.commit();
+				s.getItemData().setActiveView(s.getItemData().findChatPosition(intent.getShortExtra("id", (short) -1)));
+				sm.getAdapter().setMenuItems(s.getItemData());
+				break;
 			default:
 				sendBroadcast(new Intent(ViewFragment.SERVICE_RECEIVER));
 				sm.getAdapter().setMenuItems(s.getItemData());

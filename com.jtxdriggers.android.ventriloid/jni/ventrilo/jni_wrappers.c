@@ -194,6 +194,9 @@ JNIEXPORT jboolean JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInter
 	if (strcmp(_permname, "moveuser") == 0) {
 		permval =  perms->move_user; 
 	}
+	if (strcmp(_permname, "startprivchat") == 0) {
+		permval = perms->start_priv_chat;
+	}
 	release_string(env, permname, _permname);
 	return permval;
 }
@@ -270,6 +273,14 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 	char* _message = get_string(env, message);
 	v3_send_privchat_message(userid, _message);
 	release_string(env, message, _message);
+}
+
+JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_startprivatechat(JNIEnv* env, jobject obj, jshort userid) {
+	v3_start_privchat(userid);
+}
+
+JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_endprivatechat(JNIEnv* env, jobject obj, jshort userid) {
+	v3_end_privchat(userid);
 }
 
 JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface_adminlogin(JNIEnv* env, jobject obj, jstring password) {

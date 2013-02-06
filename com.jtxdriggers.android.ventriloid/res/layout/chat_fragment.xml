@@ -3,6 +3,25 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background_holo_dark"
+        android:textColor="@color/primary_text_holo_dark"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:ellipsize="marquee"
+        android:padding="6dp" />
+    
+    <View
+        android:id="@+id/titleDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@+id/title"
+        android:background="@color/holo_blue" />
+    
 	<RelativeLayout
 	    android:id="@+id/message_layout"
 	    android:layout_width="match_parent"
@@ -50,6 +69,7 @@
         android:id="@android:id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+	    android:layout_below="@+id/titleDivider"
         android:layout_above="@+id/divider"
         android:transcriptMode="normal" />
     
