@@ -335,22 +335,21 @@ public class ItemData {
 		chatPositions.put(id, menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).size() - 1);
 	}
 	
-	public synchronized void removeChat(short id, String name) {
+	public synchronized void removeChat(short id) {
 		int position = findChatPosition(id);
 		chats.remove(id);
+		chatPositions.remove(id);
 		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).remove(position);
+		if (activeView == position)
+			setActiveView(VentriloidSlidingMenu.MENU_SERVER_VIEW);
+		else if (activeView > position)
+			setActiveView(activeView - 1);
 		Iterator<Entry<Short, Integer>> iterator = chatPositions.entrySet().iterator();
 		while (iterator.hasNext()) {
 			Entry<Short, Integer> entry = iterator.next();
 			if (entry.getValue() > position)
 				chatPositions.put(entry.getKey(), entry.getValue() - 1);
 		}
-	}
-	
-	public synchronized boolean hasChat(short id) {
-		if (chats.get(id) != null)
-			return true;
-		return false;
 	}
 	
 	public synchronized int findChatPosition(short id) {

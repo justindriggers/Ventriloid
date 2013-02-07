@@ -68,6 +68,18 @@ public class ChatFragment extends Fragment {
     	
     	title = (TextView) layout.findViewById(R.id.title);
 		title.setText(id == 0 ? "Server Chat" : "Private Chat - " + name);
+		
+		ImageButton close = (ImageButton) layout.findViewById(R.id.close);
+		close.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				VentriloInterface.endprivatechat(id);
+				getActivity().sendBroadcast(new Intent(Connected.FRAGMENT_RECEIVER)
+					.putExtra("type", VentriloEvents.V3_EVENT_PRIVATE_CHAT_END)
+					.putExtra("id", id));
+			}
+		});
+		close.setVisibility(id == 0 ? View.INVISIBLE : View.VISIBLE);
     	
     	list = (ListView) layout.findViewById(android.R.id.list);
     	list.setDivider(getResources().getDrawable(R.drawable.abs__list_divider_holo_light));
@@ -76,14 +88,20 @@ public class ChatFragment extends Fragment {
     	message.setOnEditorActionListener(new OnEditorActionListener() {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-				if (message.getText().toString().length() > 0 && event != null) {
+				if (message.getText().toString().length() > 0 && (actionId == 4 || event != null)) {
+					if (adapter.getCount() > 0) {
+						if (adapter.getItem(adapter.getCount() - 1).getType() == ChatMessage.TYPE_DISCONNECT || adapter.getItem(adapter.getCount() - 1).getType() == ChatMessage.TYPE_CLOSE_CHAT)
+							return false;
+					}
+					
 					if (id == 0)
 						VentriloInterface.sendchatmessage(message.getText().toString());
 					else
 						VentriloInterface.sendprivatemessage(id, message.getText().toString());
 					message.setText("");
+					return true;
 				}
-				return true;
+				return false;
 			}
     	});
     	message.addTextChangedListener(new TextWatcher() {
@@ -97,7 +115,11 @@ public class ChatFragment extends Fragment {
 			public void afterTextChanged(Editable s) {
 				if (s == null || s.length() == 0)
 					send.setEnabled(false);
-				else
+				else if (adapter.getCount() > 0) {
+					if (adapter.getItem(adapter.getCount() - 1).getType() == ChatMessage.TYPE_DISCONNECT || adapter.getItem(adapter.getCount() - 1).getType() == ChatMessage.TYPE_CLOSE_CHAT)
+						send.setEnabled(false);
+					else send.setEnabled(true);
+				} else
 					send.setEnabled(true);
 			}
     	});
@@ -141,6 +163,14 @@ public class ChatFragment extends Fragment {
 
 	    	adapter = new ChatListAdapter(getActivity(), s.getItemData().getChat(id));
 	    	list.setAdapter(adapter);
+			if (message.getText().toString().length() == 0)
+				send.setEnabled(false);
+			else if (adapter.getCount() > 0) {
+				if (adapter.getItem(adapter.getCount() - 1).getType() == ChatMessage.TYPE_DISCONNECT || adapter.getItem(adapter.getCount() - 1).getType() == ChatMessage.TYPE_CLOSE_CHAT)
+					send.setEnabled(false);
+				else send.setEnabled(true);
+			} else
+				send.setEnabled(true);
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
@@ -152,6 +182,14 @@ public class ChatFragment extends Fragment {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			adapter.notifyDataSetChanged();
+			if (message.getText().toString().length() == 0)
+				send.setEnabled(false);
+			else if (adapter.getCount() > 0) {
+				if (adapter.getItem(adapter.getCount() - 1).getType() == ChatMessage.TYPE_DISCONNECT || adapter.getItem(adapter.getCount() - 1).getType() == ChatMessage.TYPE_CLOSE_CHAT)
+					send.setEnabled(false);
+				else send.setEnabled(true);
+			} else
+				send.setEnabled(true);
 		}
 	};
 }

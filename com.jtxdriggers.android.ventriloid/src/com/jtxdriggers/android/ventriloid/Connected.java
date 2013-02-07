@@ -127,6 +127,7 @@ public class Connected extends Activity {
     
 	@Override
     public void onStop() {
+		unregisterReceiver(fragmentReceiver);
     	unregisterReceiver(serviceReceiver);
     	unbindService(serviceConnection);
     	super.onStop();
@@ -461,6 +462,7 @@ public class Connected extends Activity {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
 			registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
+			registerReceiver(fragmentReceiver, new IntentFilter(FRAGMENT_RECEIVER));
 
 			getSupportActionBar().setTitle(s.getServername());
 			
@@ -530,9 +532,21 @@ public class Connected extends Activity {
 	            } else
 	                    VentriloInterface.changechannel(c.id, "");
 	            break;
+			default:
+				sendBroadcast(new Intent(ViewFragment.SERVICE_RECEIVER));
+				sm.getAdapter().setMenuItems(s.getItemData());
+			}
+		}
+	};
+	
+	private BroadcastReceiver fragmentReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			switch (intent.getIntExtra("type", -1)) {
 			case VentriloEvents.V3_EVENT_PRIVATE_CHAT_START:
 				s.setViewType(ViewFragment.VIEW_TYPE_CHAT, intent.getShortExtra("id", (short) -1));
-				fragment = ChatFragment.newInstance(s.getChatId(), s.getItemData().getMenuItems().get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).get(s.getItemData().findChatPosition(s.getChatId())));
+				fragment = ChatFragment.newInstance(s.getChatId(), s.getItemData().getUserById(s.getChatId()).name);
+				sm.showMenu();
 				getSupportFragmentManager()
 					.beginTransaction()
 					.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
@@ -541,9 +555,20 @@ public class Connected extends Activity {
 				s.getItemData().setActiveView(s.getItemData().findChatPosition(intent.getShortExtra("id", (short) -1)));
 				sm.getAdapter().setMenuItems(s.getItemData());
 				break;
-			default:
-				sendBroadcast(new Intent(ViewFragment.SERVICE_RECEIVER));
+			case VentriloEvents.V3_EVENT_PRIVATE_CHAT_END:
+				s.getItemData().removeChat(intent.getShortExtra("id", (short) -1));
+				if (s.getViewType() == ViewFragment.VIEW_TYPE_CHAT && s.getChatId() == intent.getShortExtra("id", (short) -1)) {
+					sm.showMenu();
+					s.setViewType(ViewFragment.VIEW_TYPE_SERVER, (short) -1);
+					fragment = ViewFragment.newInstance(s.getViewType());
+					getSupportFragmentManager()
+						.beginTransaction()
+						.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+						.replace(R.id.content_frame, fragment)
+						.commit();
+				}
 				sm.getAdapter().setMenuItems(s.getItemData());
+				break;
 			}
 		}
 	};

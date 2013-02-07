@@ -3,23 +3,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     
-    <TextView
-        android:id="@+id/title"
+    <RelativeLayout
+        android:id="@+id/titleBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/background_holo_dark"
-        android:textColor="@color/primary_text_holo_dark"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:textAllCaps="true"
-        android:ellipsize="marquee"
-        android:padding="6dp" />
+	    android:background="@color/background_holo_dark">
+    
+	    <TextView
+	        android:id="@+id/title"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentLeft="true"
+	        android:layout_centerVertical="true"
+	        android:textColor="@color/primary_text_holo_dark"
+	        android:textSize="14sp"
+	        android:textStyle="bold"
+	        android:textAllCaps="true"
+	        android:ellipsize="marquee"
+	        android:padding="6dp" />
+	    
+        <ImageButton
+            android:id="@+id/close"
+            android:src="@drawable/remove"
+            android:drawablePadding="0dip"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:contentDescription="@string/close_chat" />
+    
+    </RelativeLayout>
     
     <View
         android:id="@+id/titleDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_below="@+id/title"
+        android:layout_below="@+id/titleBar"
         android:background="@color/holo_blue" />
     
 	<RelativeLayout

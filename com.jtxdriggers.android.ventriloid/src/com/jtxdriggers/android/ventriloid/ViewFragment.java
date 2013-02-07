@@ -165,7 +165,7 @@ public class ViewFragment extends Fragment {
 					menu.add(Menu.NONE, ContextMenuItems.VIEW_URL, ContextMenu.NONE, "View URL");
 				if (s.isAdmin() || VentriloInterface.getpermission("sendpage"))
 					menu.add(Menu.NONE, ContextMenuItems.SEND_PAGE, ContextMenu.NONE, "Send Page");
-				if (VentriloInterface.getpermission("startprivchat") && u.realId != VentriloInterface.getuserid() && !s.getItemData().hasChat(u.id))
+				if (VentriloInterface.getpermission("startprivchat") && u.realId != VentriloInterface.getuserid() && !s.getItemData().chatOpened(u.id))
 					menu.add(Menu.NONE, ContextMenuItems.PRIVATE_CHAT, ContextMenu.NONE, "Private Chat");
 				menu.add(Menu.NONE, ContextMenuItems.MUTE, ContextMenu.NONE, u.muted ? "Unmute" : "Mute");
 				menu.add(Menu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Volume");
@@ -271,6 +271,10 @@ public class ViewFragment extends Fragment {
 			return true;
 		case ContextMenuItems.PRIVATE_CHAT:
 			VentriloInterface.startprivatechat(u.id);
+			s.getItemData().addChat(u.id, u.name);
+			getActivity().sendBroadcast(new Intent(Connected.FRAGMENT_RECEIVER)
+				.putExtra("type", VentriloEvents.V3_EVENT_PRIVATE_CHAT_START)
+				.putExtra("id", u.id));
 			return true;
 		case ContextMenuItems.MUTE:
 			u.muted = !u.muted;

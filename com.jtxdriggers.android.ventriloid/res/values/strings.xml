@@ -35,6 +35,7 @@
     <string name="connected">Connected</string>
     <string name="ptt">Push to Talk</string>
     <string name="chat">Chat</string>
+    <string name="close_chat">Close Chat</string>
     <string name="edit_hint">Type message</string>
 
 </resources>
