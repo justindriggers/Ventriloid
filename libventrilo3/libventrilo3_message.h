@@ -1,10 +1,8 @@
 /*
- * vim: softtabstop=4 shiftwidth=4 cindent foldmethod=marker expandtab
- *
- * $LastChangedDate: 2011-06-27 15:20:10 -0400 (Mon, 27 Jun 2011) $
- * $Revision: 1139 $
- * $LastChangedBy: econnell $
- * $URL: http://svn.mangler.org/mangler/tags/1.2.3/libventrilo3/libventrilo3_message.h $
+ * Modified by Justin Driggers (jtxdriggers)
+ * January 29, 2013
+ * http://ventriloid.googlecode.com/
+ * Revision 75
  *
  * Copyright 2009-2011 Eric Connell
  *
