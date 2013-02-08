@@ -34,6 +34,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -57,14 +59,15 @@ public class VentriloidService extends Service {
 	
 	private SharedPreferences prefs, volumePrefs, passwordPrefs;
 	private NotificationManager nm;
+	private WifiLock wifiLock;
 	private Vibrator vibrator;
 	private Server server;
 	private ConcurrentLinkedQueue<VentriloEventData> queue;
 	private ItemData items;
 	private HashMap<Short, Boolean> notifyMap = new HashMap<Short, Boolean>();
 	
-	private Recorder recorder = new Recorder(this);
-	private Player player = new Player();
+	private Recorder recorder;
+	private Player player;
 	
 	private boolean voiceActivation = false,
 		muted = false,
@@ -125,6 +128,9 @@ public class VentriloidService extends Service {
 	public void onCreate() {
 		super.onCreate();
 		
+		player = new Player(this);
+		recorder = new Recorder(this);
+		
 		registerReceiver(activityReceiver, new IntentFilter(ACTIVITY_RECEIVER));
 
 		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -139,12 +145,17 @@ public class VentriloidService extends Service {
 		
 		items = new ItemData();
 		
+		wifiLock = ((WifiManager) getSystemService(Context.WIFI_SERVICE))
+			    .createWifiLock(WifiManager.WIFI_MODE_FULL, "VentriloidWifiLock");
+		wifiLock.acquire();
+		
 		//VentriloInterface.debuglevel(65535);
 		new Thread(eventHandler).start();
 	}
 
 	@Override
 	public void onDestroy() {
+		wifiLock.release();
 		unregisterReceiver(activityReceiver);
 		player.stop();
 		VentriloInterface.logout();

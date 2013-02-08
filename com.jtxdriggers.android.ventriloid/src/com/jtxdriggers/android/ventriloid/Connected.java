@@ -595,7 +595,6 @@ public class Connected extends Activity {
 			case VentriloEvents.V3_EVENT_PRIVATE_CHAT_START:
 				s.setViewType(ViewFragment.VIEW_TYPE_CHAT, intent.getShortExtra("id", (short) -1));
 				fragment = ChatFragment.newInstance(s.getChatId(), s.getItemData().getUserById(s.getChatId()).name);
-				sm.showMenu();
 				getSupportFragmentManager()
 					.beginTransaction()
 					.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)

@@ -25,18 +25,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.PowerManager;
 
 public class Player {
 	
 	private Map<Short, AudioTrack> tracks;
 	private AudioTrack blankTrack;
+	private PowerManager.WakeLock wakeLock;
 	private boolean running = false;
 	
-	public Player() {
+	public Player(VentriloidService s) {
 		tracks = new HashMap<Short, AudioTrack>();
+		wakeLock = ((PowerManager) s.getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "VentrioidWakeLock");
+		wakeLock.acquire();
 		
 		// This thread tricks the system into letting us control volume no matter what activity is in the foreground.
 		running = true;
@@ -59,6 +64,7 @@ public class Player {
 		blankTrack.pause();
 		blankTrack.flush();
 		blankTrack.release();
+		wakeLock.release();
 	}
 
     public void close(short id) {
