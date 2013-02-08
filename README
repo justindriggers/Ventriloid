@@ -1,0 +1,30 @@
+I) To build this project, you are expected to have the Android SDK installed and be familiar with the Eclipse IDE: http://developer.android.com/sdk/index.html
+
+II) Next, you must download and set up the following libraries:
+
+  1) ActionBarSherlock: http://actionbarsherlock.com/
+    a) Download and import into Eclipse as an existing Android project.
+    b) Right click the project, go to properties, select the Android tab, and ensure that the "is Library" check box is checked.
+
+  2) HoloEverywhere: https://github.com/ChristopheVersieux/HoloEverywhere
+    a) Download and import into Eclipse as an existing Android project.
+    b) Right click the project, go to properties, select the Android tab, and add the ActionBarSherlock project to the list of libraries. Then ensure the "is Library" checkbox is checked for the HoloEverywhere project.
+    c) Open any files in this project that end with "_______Activity.java" (including the base Activity.java) and alter them to extend their SherlockActivity counterparts.
+
+  3) SlidingMenu: https://github.com/jfeinstein10/SlidingMenu
+    a) Download and import into Eclipse as an existing Android project.
+    b) Right click the project, go to properties, select the Android tab, and add the HoloEverywhere project to the list of libraries. Then ensure the "is Library" checkbox is checked for the SlidingMenu project.
+    c) Go through all of the files and remove all the imports. Hover over every error and Eclipse will ask you what you want to import. If there is a HoloEverywhere import available, select it. Otherwise, just select the default Android import.
+
+III) Import com.jtxdriggers.android.ventriloid into Eclipse as an existing Android project.
+  1) Right click on the project, go to properties, select the Android tab, and add the SlidingMenu project to the list of libraries. This should chain all required libraries, resolving all imports.
+
+IV) Download the Android NDK: http://developer.android.com/tools/sdk/ndk/index.html
+  1) Open your command prompt or terminal window.
+  2) cd to the NDK directory.
+  3) Run the following command, replacing the correspoding paths, to compile the libventrilo3 library:
+    a) WINDOWS: ndk-build.cmd -C PATH\TO\ANDROID\PROJECT LIBPATH=PATH\TO\LIBVENTRILO3
+    b) UNIX/OSX: ./ndk-build -C PATH/TO/ANDROID/PROJECT LIBPATH=PATH/TO/LIBVENTRILO3
+  4) Refresh your Android project and ensure the library compiled into the libs/armeabi/ directory.
+
+V) Run the project!
