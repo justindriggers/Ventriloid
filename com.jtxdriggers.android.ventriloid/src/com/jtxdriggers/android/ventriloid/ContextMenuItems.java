@@ -46,6 +46,7 @@ public class ContextMenuItems {
 	public static final int SERVER_ADMIN	= 22;
 	public static final int CHANNEL_ADMIN	= 23;
 	public static final int MOVE_USER		= 24;
+	public static final int CHAT			= 25;
 	
 	// MOVE_USER_TO must be the highest int value for the options to work properly.
 	public static final int MOVE_USER_TO	= 50;

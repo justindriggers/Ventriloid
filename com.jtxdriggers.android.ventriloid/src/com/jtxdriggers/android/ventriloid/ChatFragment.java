@@ -1,3 +1,22 @@
+/*
+ * Copyright 2013 Justin Driggers <jtxdriggers@gmail.com>
+ *
+ * This file is part of Ventriloid.
+ *
+ * Ventriloid is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ventriloid is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ventriloid.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.jtxdriggers.android.ventriloid;
 
 import org.holoeverywhere.LayoutInflater;
@@ -5,6 +24,7 @@ import org.holoeverywhere.app.Fragment;
 import org.holoeverywhere.widget.EditText;
 import org.holoeverywhere.widget.ListView;
 
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -138,6 +158,8 @@ public class ChatFragment extends Fragment {
 		
 		if (getDefaultSharedPreferences().getBoolean("screen_on", false))
 			list.setKeepScreenOn(true);
+    	
+    	((NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE)).cancel(-id);
 		
         return layout;
     }
@@ -150,6 +172,7 @@ public class ChatFragment extends Fragment {
 	
 	@Override
 	public void onStop() {
+		s.setNotify(id, true);
 		getActivity().unregisterReceiver(serviceReceiver);
 		getActivity().unbindService(serviceConnection);
 		super.onStop();
@@ -171,6 +194,8 @@ public class ChatFragment extends Fragment {
 				else send.setEnabled(true);
 			} else
 				send.setEnabled(true);
+			
+			s.setNotify(id, false);
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
@@ -182,6 +207,8 @@ public class ChatFragment extends Fragment {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			adapter.notifyDataSetChanged();
+	    	((NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE)).cancel(-id);
+	    	
 			if (message.getText().toString().length() == 0)
 				send.setEnabled(false);
 			else if (adapter.getCount() > 0) {

@@ -1,4 +1,9 @@
 /*
+ * Modified by Justin Driggers (jtxdriggers)
+ * February 6, 2013
+ * http://ventriloid.googlecode.com/
+ * Revision 114
+ * 
  * Copyright 2010 Daniel Sloof <daniel@danslo.org>
  *
  * This file is part of Mangler.

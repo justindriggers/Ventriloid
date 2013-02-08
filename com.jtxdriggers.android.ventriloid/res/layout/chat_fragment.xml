@@ -14,13 +14,14 @@
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
 	        android:layout_alignParentLeft="true"
+	        android:layout_toLeftOf="@+id/close"
 	        android:layout_centerVertical="true"
 	        android:textColor="@color/primary_text_holo_dark"
 	        android:textSize="14sp"
 	        android:textStyle="bold"
 	        android:textAllCaps="true"
 	        android:ellipsize="marquee"
-	        android:padding="6dp" />
+	        android:paddingLeft="6dp" />
 	    
         <ImageButton
             android:id="@+id/close"
@@ -37,7 +38,7 @@
     <View
         android:id="@+id/titleDivider"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
+        android:layout_height="2dp"
         android:layout_below="@+id/titleBar"
         android:background="@color/holo_blue" />
     

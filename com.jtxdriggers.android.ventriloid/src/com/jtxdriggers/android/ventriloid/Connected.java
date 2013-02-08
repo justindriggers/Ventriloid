@@ -1,3 +1,22 @@
+/*
+ * Copyright 2013 Justin Driggers <jtxdriggers@gmail.com>
+ *
+ * This file is part of Ventriloid.
+ *
+ * Ventriloid is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ventriloid is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ventriloid.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.jtxdriggers.android.ventriloid;
 
 import org.holoeverywhere.app.Activity;
@@ -61,6 +80,7 @@ public class Connected extends Activity {
 		pttEnabled = false,
 		toggleOn = false;
 	private int pttKey;
+	private short chatId;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -113,6 +133,8 @@ public class Connected extends Activity {
 			setPTTSize(prefs.getInt("ptt_size", SMALL));
 		} else
 			bottomBar.setVisibility(LinearLayout.GONE);
+		
+		chatId = getIntent().getShortExtra("id", (short) -1);
 	}
 	
 	@Override
@@ -472,6 +494,9 @@ public class Connected extends Activity {
 			
 			setPing(s.getItemData().getPing());
 			
+			if (chatId >= 0)
+				s.setViewType(ViewFragment.VIEW_TYPE_CHAT, chatId);
+
 			if (s.getViewType() == ViewFragment.VIEW_TYPE_CHAT)
 				switch (s.getChatId()) {
 				case 0:
@@ -543,6 +568,30 @@ public class Connected extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			switch (intent.getIntExtra("type", -1)) {
+			case VentriloEvents.V3_EVENT_CHAT_JOIN:
+				s.joinChat();
+				s.setViewType(ViewFragment.VIEW_TYPE_CHAT, (short) 0);
+				fragment = ChatFragment.newInstance(s.getChatId());
+				getSupportFragmentManager()
+					.beginTransaction()
+					.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+					.replace(R.id.content_frame, fragment)
+					.commit();
+				sm.getAdapter().setMenuItems(s.getItemData());
+				break;
+			case VentriloEvents.V3_EVENT_CHAT_LEAVE:
+				s.leaveChat();
+				if (s.getViewType() == ViewFragment.VIEW_TYPE_CHAT && s.getChatId() == 0) {
+					s.setViewType(ViewFragment.VIEW_TYPE_SERVER, (short) -1);
+					fragment = ViewFragment.newInstance(s.getViewType());
+					getSupportFragmentManager()
+						.beginTransaction()
+						.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+						.replace(R.id.content_frame, fragment)
+						.commit();
+				}
+				sm.getAdapter().setMenuItems(s.getItemData());
+				break;
 			case VentriloEvents.V3_EVENT_PRIVATE_CHAT_START:
 				s.setViewType(ViewFragment.VIEW_TYPE_CHAT, intent.getShortExtra("id", (short) -1));
 				fragment = ChatFragment.newInstance(s.getChatId(), s.getItemData().getUserById(s.getChatId()).name);

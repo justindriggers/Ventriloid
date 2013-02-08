@@ -1,3 +1,22 @@
+/*
+ * Copyright 2013 Justin Driggers <jtxdriggers@gmail.com>
+ *
+ * This file is part of Ventriloid.
+ *
+ * Ventriloid is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ventriloid is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ventriloid.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.jtxdriggers.android.ventriloid;
 
 import java.util.ArrayList;
@@ -148,13 +167,11 @@ public class ViewFragment extends Fragment {
 			
 			if (u.id == VentriloInterface.getuserid()) {
 				// Do stuff if you select yourself
-				if (s.isAdmin())
-					menu.add(Menu.NONE, ContextMenuItems.ADMIN_LOGOUT, ContextMenu.NONE, "Admin Logout");
-				else
-					menu.add(Menu.NONE, ContextMenuItems.ADMIN_LOGIN, ContextMenu.NONE, "Admin Login");
+				menu.add(Menu.NONE, ContextMenuItems.ADMIN_LOGOUT, ContextMenu.NONE, s.isAdmin() ? "Admin Logout" : "Admin Login");
 				menu.add(Menu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Transmit Volume");
 				menu.add(Menu.NONE, ContextMenuItems.SET_COMMENT, ContextMenu.NONE, "Set Comment");
 				menu.add(Menu.NONE, ContextMenuItems.SET_URL, ContextMenu.NONE, "Set URL");
+				menu.add(Menu.NONE, ContextMenuItems.CHAT, ContextMenu.NONE, s.getItemData().inChat() ? "Leave Chat" : "Join Chat");
 			} else {
 				// Do stuff for other users
 				if (u.realId == VentriloInterface.getuserid())
@@ -482,6 +499,8 @@ public class ViewFragment extends Fragment {
 		case ContextMenuItems.SERVER_ADMIN:
 		case ContextMenuItems.CHANNEL_ADMIN:
 			return true;
+		case ContextMenuItems.CHAT:
+			getActivity().sendBroadcast(new Intent(Connected.FRAGMENT_RECEIVER).putExtra("type", s.getItemData().inChat() ? VentriloEvents.V3_EVENT_CHAT_LEAVE : VentriloEvents.V3_EVENT_CHAT_JOIN));
 		default:
 			if (menuItem.getItemId() >= ContextMenuItems.MOVE_USER_TO) { 
 				short channelid = (short) (menuItem.getItemId() - ContextMenuItems.MOVE_USER_TO);
