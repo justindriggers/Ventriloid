@@ -278,6 +278,31 @@ public class Connected extends Activity {
 	private OnChildClickListener menuClickListener = new OnChildClickListener() {
 		@Override
 		public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+			AlertDialog.Builder dialog = new AlertDialog.Builder(Connected.this);
+			
+			LinearLayout layout = new LinearLayout(Connected.this);
+			layout.setOrientation(LinearLayout.VERTICAL);
+			
+			final EditText input = new EditText(Connected.this);
+		    InputFilter[] FilterArray = new InputFilter[1];
+		    FilterArray[0] = new InputFilter.LengthFilter(127);
+		    input.setFilters(FilterArray);
+		    int pixels = (int) (getResources().getDisplayMetrics().density * 20);
+		    LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+		    params.setMargins(pixels, pixels, pixels, pixels);
+		    input.setLayoutParams(params);
+			layout.addView(input);
+			
+			final CheckBox silent = new CheckBox(Connected.this);
+			silent.setChecked(true);
+			silent.setText(" Send Silently ");
+			
+			LinearLayout frame = new LinearLayout(Connected.this);
+			frame.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+			frame.setGravity(Gravity.CENTER);
+			
+			final Item.User u = s.getItemData().getUserById(VentriloInterface.getuserid());
+			
 			switch (groupPosition) {
 			case VentriloidSlidingMenu.MENU_SWITCH_VIEW:
 				switch (childPosition) {
@@ -315,52 +340,11 @@ public class Connected extends Activity {
 					sm.getAdapter().setMenuItems(s.getItemData());
 					return true;
 				}
-			case VentriloidSlidingMenu.MENU_USER_OPTIONS:
-				AlertDialog.Builder dialog = new AlertDialog.Builder(Connected.this);
-				
-				LinearLayout layout = new LinearLayout(Connected.this);
-				layout.setOrientation(LinearLayout.VERTICAL);
-				
-				final EditText input = new EditText(Connected.this);
-			    InputFilter[] FilterArray = new InputFilter[1];
-			    FilterArray[0] = new InputFilter.LengthFilter(127);
-			    input.setFilters(FilterArray);
-			    int pixels = (int) (getResources().getDisplayMetrics().density * 20);
-			    LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-			    params.setMargins(pixels, pixels, pixels, pixels);
-			    input.setLayoutParams(params);
-				layout.addView(input);
-				
-				final CheckBox silent = new CheckBox(Connected.this);
-				silent.setChecked(true);
-				silent.setText(" Send Silently ");
-				
-				LinearLayout frame = new LinearLayout(Connected.this);
-				frame.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-				frame.setGravity(Gravity.CENTER);
-				
-				final Item.User u = s.getItemData().getUserById(VentriloInterface.getuserid());
-				
+			case VentriloidSlidingMenu.MENU_AUDIO_OPTIONS:
 				switch (childPosition) {
-				case VentriloidSlidingMenu.MENU_ADMIN:
-					if (s.isAdmin()) {
-						VentriloInterface.adminlogout();
-						s.setAdmin(false);
-					} else {
-						dialog.setTitle("Enter Admin Password:");
-						input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
-					    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
-						dialog.setView(layout);
-						dialog.setPositiveButton("Login", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								VentriloInterface.adminlogin(input.getText().toString());
-								s.setAdmin(true);
-							}
-						});
-						dialog.setNegativeButton("Cancel", null);
-						dialog.show();
-					}
+				case VentriloidSlidingMenu.MENU_BLUETOOTH:
+					s.toggleBluetooth();
+					sm.getAdapter().setMenuItems(s.getItemData());
 					return true;
 				case VentriloidSlidingMenu.MENU_SET_TRANSMIT:
 					final TextView percent = new TextView(Connected.this);
@@ -402,6 +386,29 @@ public class Connected extends Activity {
 					});
 					dialog.setNegativeButton("Cancel", null);
 					dialog.show();
+					return true;
+				}
+			case VentriloidSlidingMenu.MENU_USER_OPTIONS:				
+				switch (childPosition) {
+				case VentriloidSlidingMenu.MENU_ADMIN:
+					if (s.isAdmin()) {
+						VentriloInterface.adminlogout();
+						s.setAdmin(false);
+					} else {
+						dialog.setTitle("Enter Admin Password:");
+						input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
+					    input.setTransformationMethod(PasswordTransformationMethod.getInstance());
+						dialog.setView(layout);
+						dialog.setPositiveButton("Login", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								VentriloInterface.adminlogin(input.getText().toString());
+								s.setAdmin(true);
+							}
+						});
+						dialog.setNegativeButton("Cancel", null);
+						dialog.show();
+					}
 					return true;
 				case VentriloidSlidingMenu.MENU_SET_COMMENT:
 					dialog.setTitle("Set Comment:");

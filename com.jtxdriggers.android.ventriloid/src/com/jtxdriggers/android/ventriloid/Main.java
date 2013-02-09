@@ -166,9 +166,10 @@ public class Main extends Activity {
 					dialog.dismiss();
 				break;
 			case -1:
+		    	int timer = intent.getIntExtra("timer", -1);
 				if (dialog == null || !dialog.isShowing()) {
 		    		dialog = new ProgressDialog(Main.this);
-					dialog.setMessage("Reconnecting in " + intent.getIntExtra("timer", -1) + "...");
+					dialog.setMessage(timer > 0 ? "Reconnecting in " + timer + "..." : "Reconnecting...");
 					dialog.setCancelable(true);
 					dialog.setOnCancelListener(new OnCancelListener() {
 						public void onCancel(DialogInterface dialog) {
@@ -177,7 +178,7 @@ public class Main extends Activity {
 					});
 					dialog.show();
 				} else {
-					dialog.setMessage("Reconnecting in " + intent.getIntExtra("timer", -1) + "...");
+					dialog.setMessage(timer > 0 ? "Reconnecting in " + timer + "..." : "Reconnecting...");
 				}
 				break;
 			}

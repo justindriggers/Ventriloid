@@ -19,7 +19,9 @@
 
 package com.jtxdriggers.android.ventriloid;
 
+import android.content.Context;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 
@@ -150,6 +152,13 @@ public class Recorder {
 	};
 
 	private int getBufferSize() {
+		if (((AudioManager) s.getSystemService(Context.AUDIO_SERVICE)).isBluetoothScoOn()) {
+			rate = 8000;
+			return AudioRecord.getMinBufferSize(
+					rate,
+					AudioFormat.CHANNEL_IN_MONO,
+					AudioFormat.ENCODING_PCM_16BIT);
+		}
 		if (rate == 48000) {
 			return AudioRecord.getMinBufferSize(
 					48000,

@@ -42,6 +42,7 @@ public class SlidingMenuAdapter extends BaseExpandableListAdapter {
 		
 		groups = new ArrayList<String>();
 		groups.add("Switch View");
+		groups.add("Audio Options");
 		groups.add("User Options");
 		groups.add("Close");
 		
@@ -65,12 +66,17 @@ public class SlidingMenuAdapter extends BaseExpandableListAdapter {
 			default:
 				return R.drawable.comment;
 			}
+		case VentriloidSlidingMenu.MENU_AUDIO_OPTIONS:
+			switch (childPosition) {
+			case VentriloidSlidingMenu.MENU_BLUETOOTH:
+				return R.drawable.bluetooth;
+			case VentriloidSlidingMenu.MENU_SET_TRANSMIT:
+				return R.drawable.transmit;
+			}
 		case VentriloidSlidingMenu.MENU_USER_OPTIONS:
 			switch (childPosition) {
 			case VentriloidSlidingMenu.MENU_ADMIN:
 				return R.drawable.admin;
-			case VentriloidSlidingMenu.MENU_SET_TRANSMIT:
-				return R.drawable.transmit;
 			case VentriloidSlidingMenu.MENU_SET_COMMENT:
 				return R.drawable.edit;
 			case VentriloidSlidingMenu.MENU_SET_URL:

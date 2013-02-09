@@ -24,6 +24,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.media.AudioManager;
+import android.os.Build;
+
 public class ItemData {
 
 	private ArrayList<Item.Channel> channels = new ArrayList<Item.Channel>();
@@ -43,22 +48,26 @@ public class ItemData {
 	private String comment = "", url = "", integrationText = "";
 	private boolean inChat = false;
 	
-	public ItemData() {
+	@TargetApi(Build.VERSION_CODES.FROYO)
+	public ItemData(VentriloidService s) {
 		Item item = new Item();
 		channels.add(item.new Channel());
 		currentChannels.add(item.new Channel());
 		users.add(new ArrayList<Item.User>());
 		currentUsers.add(new ArrayList<Item.User>());
 		
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 4; i++) {
 			menuItems.add(new ArrayList<String>());
         }
 
 		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).add("Server");
 		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).add("Channel");
+		
+		menuItems.get(VentriloidSlidingMenu.MENU_AUDIO_OPTIONS).add("Set Transmit Volume");
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO && ((AudioManager) s.getSystemService(Context.AUDIO_SERVICE)).isBluetoothScoAvailableOffCall())
+			menuItems.get(VentriloidSlidingMenu.MENU_AUDIO_OPTIONS).add(((AudioManager) s.getSystemService(Context.AUDIO_SERVICE)).isBluetoothScoOn() ? "Disable Bluetooth" : "Enable Bluetooth");
 
 		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Admin Login");
-		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Set Transmit Volume");
 		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Set Comment");
 		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Set URL");
 		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).add("Join Chat");
@@ -67,7 +76,7 @@ public class ItemData {
 		menuItems.get(VentriloidSlidingMenu.MENU_CLOSE).add("Disconnect");
 	}
 	
-	public synchronized void addChannel(Item.Channel channel) {
+	public void addChannel(Item.Channel channel) {
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == channel.parent) {
 				channel.indent = channels.get(i).indent + "     ";
@@ -83,12 +92,12 @@ public class ItemData {
 		}
 	}
 	
-	public synchronized void addCurrentUser(Item.User user) {
+	public void addCurrentUser(Item.User user) {
 		if (user.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
 			currentUsers.get(0).add(user);
 	}
 	
-	public synchronized void addUser(Item.User user) {
+	public void addUser(Item.User user) {
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == user.parent) {
 				user.indent = channels.get(i).indent + "     ";
@@ -98,11 +107,11 @@ public class ItemData {
 		}
 	}
 	
-	public synchronized ArrayList<Item.Channel> getChannels() {
+	public ArrayList<Item.Channel> getChannels() {
 		return channels;
 	}
 	
-	public synchronized Item.Channel getChannelById(short id) {
+	public Item.Channel getChannelById(short id) {
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == id) {
 				return channels.get(i);
@@ -111,11 +120,11 @@ public class ItemData {
 		return null;
 	}
 	
-	public synchronized ArrayList<Item.Channel> getCurrentChannel() {
+	public ArrayList<Item.Channel> getCurrentChannel() {
 		return currentChannels;
 	}
 	
-	public synchronized Item.User getCurrentUserById(short id) {
+	public Item.User getCurrentUserById(short id) {
 		for (int i = 0; i < currentUsers.get(0).size(); i++) {
 			if (currentUsers.get(0).get(i).id == id)
 				return currentUsers.get(0).get(i);
@@ -123,15 +132,15 @@ public class ItemData {
 		return null;
 	}
 	
-	public synchronized ArrayList<ArrayList<Item.User>> getCurrentUsers() {
+	public ArrayList<ArrayList<Item.User>> getCurrentUsers() {
 		return currentUsers;
 	}
 	
-	public synchronized ArrayList<ArrayList<Item.User>> getUsers() {
+	public ArrayList<ArrayList<Item.User>> getUsers() {
 		return users;
 	}
 	
-	public synchronized Item.User getUserById(short id) {
+	public Item.User getUserById(short id) {
 		for (int i = 0; i < channels.size(); i++) {
 			for (int j = 0; j < users.get(i).size(); j++) {
 				if (users.get(i).get(j).id == id)
@@ -141,7 +150,7 @@ public class ItemData {
 		return null;
 	}
 	
-	public synchronized void removeCurrentUser(short id) {
+	public void removeCurrentUser(short id) {
 		for (int i = 0; i < currentUsers.get(0).size(); i++) {
 			if (currentUsers.get(0).get(i).id == id) {
 				currentUsers.get(0).remove(i);
@@ -150,7 +159,7 @@ public class ItemData {
 		}
 	}
 	
-	public synchronized void removeUser(short id) {
+	public void removeUser(short id) {
 		for (int i = 0; i < channels.size(); i++) {
 			for (int j = 0; j < users.get(i).size(); j++) {
 				if (users.get(i).get(j).id == id) {
@@ -161,7 +170,7 @@ public class ItemData {
 		}
 	}
 	
-	public synchronized void setCurrentChannel(short id) {
+	public void setCurrentChannel(short id) {
 		currentChannels.clear();
 		currentUsers.get(0).clear();
 		for (int i = 0; i < channels.size(); i++) {
@@ -176,12 +185,12 @@ public class ItemData {
 		}
 	}
 	
-	public synchronized void setLobby(Item.Channel lobby) {
+	public void setLobby(Item.Channel lobby) {
 		channels.set(0, lobby);
 		currentChannels.set(0, lobby);
 	}
 	
-	public synchronized void setXmit(short id, int xmit) {
+	public void setXmit(short id, int xmit) {
 		Item.User u = getUserById(id);
 		try {
 			u.xmit = xmit;
@@ -192,7 +201,7 @@ public class ItemData {
 		return ping;
 	}
 	
-	public synchronized void setPing(int ping) {
+	public void setPing(int ping) {
 		this.ping = ping;
 	}
 
@@ -220,41 +229,41 @@ public class ItemData {
 		this.integrationText = integrationText;
 	}
 	
-	public synchronized void createChat(short id) {
+	public void createChat(short id) {
 		chats.put(id, new ArrayList<ChatMessage>());
 	}
 	
-	public synchronized ArrayList<ChatMessage> getChat(short id) {
+	public ArrayList<ChatMessage> getChat(short id) {
 		return chats.get(id);
 	}
 	
-	public synchronized void addMessage(short id, String username, String message) {
+	public void addMessage(short id, String username, String message) {
 		getChat(id).add(new ChatMessage(username, message));
 	}
 	
-	public synchronized boolean chatOpened(short id) {
+	public boolean chatOpened(short id) {
 		if (getChat(id) != null)
 			return true;
 		return false;
 	}
 	
-	public synchronized void closeChat(short id, String username) {
+	public void closeChat(short id, String username) {
 		getChat(id).add(new ChatMessage(username, ChatMessage.TYPE_CLOSE_CHAT));
 	}
 	
-	public synchronized void reopenChat(short id, String username) {
+	public void reopenChat(short id, String username) {
 		getChat(id).add(new ChatMessage(username, ChatMessage.TYPE_REOPEN_CHAT));
 	}
 	
-	public synchronized void chatError(short id, String username) {
+	public void chatError(short id, String username) {
 		getChat(id).add(new ChatMessage(username, ChatMessage.TYPE_ERROR));
 	}
 	
-	public synchronized void chatDisconnect(short id, String username) {
+	public void chatDisconnect(short id, String username) {
 		getChat(id).add(new ChatMessage(username, ChatMessage.TYPE_DISCONNECT));
 	}
 	
-	public synchronized void addChatUser(short id) {
+	public void addChatUser(short id) {
 		Item.User user = getUserById(id);
 		if (user != null) {
 			user.inChat = true;
@@ -266,7 +275,7 @@ public class ItemData {
 			chatUsers.add(id);
 	}
 	
-	public synchronized void removeChatUser(short id) {
+	public void removeChatUser(short id) {
 		Item.User user = getUserById(id);
 		if (user != null) {
 			user.inChat = false;
@@ -282,7 +291,7 @@ public class ItemData {
 		}
 	}
 	
-	public synchronized boolean isUserInChat(short id) {
+	public boolean isUserInChat(short id) {
 		for (int i = 0; i < chatUsers.size(); i++) {
 			if (chatUsers.get(i) == id)
 				return true;
@@ -290,7 +299,7 @@ public class ItemData {
 		return false;
 	}
 	
-	public synchronized void setInChat(boolean inChat) {
+	public void setInChat(boolean inChat) {
 		this.inChat = inChat;
 		if (inChat) {
 			chats.put((short) 0, new ArrayList<ChatMessage>());
@@ -325,17 +334,17 @@ public class ItemData {
 		return inChat;
 	}
 	
-	public synchronized void setIsAdmin(boolean isAdmin) {
+	public void setIsAdmin(boolean isAdmin) {
 		menuItems.get(VentriloidSlidingMenu.MENU_USER_OPTIONS).set(VentriloidSlidingMenu.MENU_ADMIN, isAdmin ? "Admin Logout" : "Admin Login");
 	}
 	
-	public synchronized void addChat(short id, String name) {
+	public void addChat(short id, String name) {
 		chats.put(id, new ArrayList<ChatMessage>());
 		menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).add(name);
 		chatPositions.put(id, menuItems.get(VentriloidSlidingMenu.MENU_SWITCH_VIEW).size() - 1);
 	}
 	
-	public synchronized void removeChat(short id) {
+	public void removeChat(short id) {
 		int position = findChatPosition(id);
 		chats.remove(id);
 		chatPositions.remove(id);
@@ -352,11 +361,11 @@ public class ItemData {
 		}
 	}
 	
-	public synchronized int findChatPosition(short id) {
+	public int findChatPosition(short id) {
 		return chatPositions.get(id);
 	}
 	
-	public synchronized short getChatIdFromPosition(int position) {
+	public short getChatIdFromPosition(int position) {
 		Iterator<Entry<Short, Integer>> iterator = chatPositions.entrySet().iterator();
 		while (iterator.hasNext()) {
 			Entry<Short, Integer> entry = iterator.next();
@@ -384,6 +393,14 @@ public class ItemData {
 	
 	public short getUserId() {
 		return userId;
+	}
+	
+	public void setBluetoothConnecting(String text) {
+		menuItems.get(VentriloidSlidingMenu.MENU_AUDIO_OPTIONS).set(VentriloidSlidingMenu.MENU_BLUETOOTH, text);
+	}
+	
+	public void setBluetooth(boolean on) {
+		menuItems.get(VentriloidSlidingMenu.MENU_AUDIO_OPTIONS).set(VentriloidSlidingMenu.MENU_BLUETOOTH, on ? "Disable Bluetooth" : "Enable Bluetooth");
 	}
 	
 }

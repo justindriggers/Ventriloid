@@ -31,11 +31,13 @@ import com.slidingmenu.lib.SlidingMenu;
 
 public class VentriloidSlidingMenu extends SlidingMenu {
 	
-	public static final int MENU_SWITCH_VIEW = 0, MENU_USER_OPTIONS = 1, MENU_CLOSE = 2;
+	public static final int MENU_SWITCH_VIEW = 0, MENU_AUDIO_OPTIONS = 1, MENU_USER_OPTIONS = 2, MENU_CLOSE = 3;
 	
 	public static final int MENU_SERVER_VIEW = 0, MENU_CHANNEL_VIEW = 1;
 	
-	public static final int MENU_ADMIN = 0, MENU_SET_TRANSMIT = 1, MENU_SET_COMMENT = 2, MENU_SET_URL = 3, MENU_CHAT = 4;
+	public static final int MENU_SET_TRANSMIT = 0, MENU_BLUETOOTH = 1;
+	
+	public static final int MENU_ADMIN = 0, MENU_SET_COMMENT = 1, MENU_SET_URL = 2, MENU_CHAT = 3;
 	
 	public static final int MENU_MINIMIZE = 0, MENU_DISCONNECT = 1;
 	
@@ -89,11 +91,14 @@ public class VentriloidSlidingMenu extends SlidingMenu {
 		parentParams.addRule(RelativeLayout.ABOVE, viewId);
 		parentLayout.setLayoutParams(parentParams);
 		
+		ViewGroup compatParent = (ViewGroup) v.getParent();
+		if (compatParent != null)
+			((ViewGroup) v.getParent()).removeView(v);
+		layout.addView(v);
+		
 		RelativeLayout.LayoutParams params = (LayoutParams) v.getLayoutParams();
 		params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
 		v.setLayoutParams(params);
-		
-		layout.addView(v);
 		
 		parent.addView(layout);
 	}
