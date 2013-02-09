@@ -29,30 +29,17 @@ import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.os.Handler;
 
 public class Player {
 	
-	private Handler handler = new Handler();
 	private Map<Short, AudioTrack> tracks;
-	private AudioTrack blankTrack;
 	private AudioManager am;
-	private boolean running = false, block = false;
+	private boolean block = false;
 	
 	public Player(VentriloidService s) {
 		tracks = new HashMap<Short, AudioTrack>();
 		
 		am = (AudioManager) s.getSystemService(Context.AUDIO_SERVICE);
-
-		running = true;
-		initBlankTrack();
-	}
-	
-	public void stop() {
-		running = false;
-		blankTrack.pause();
-		blankTrack.flush();
-		blankTrack.release();
 	}
 
     public void close(short id) {
@@ -102,35 +89,6 @@ public class Player {
             track.play();
 		}
 		track.write(sample, 0, length);
-	}
-	
-	public void initBlankTrack() {		
-		// This thread tricks the system into letting us control volume no matter what activity is in the foreground.
-		if (blankTrack != null) {
-			blankTrack.pause();
-			blankTrack.flush();
-			blankTrack.release();
-			blankTrack = null;
-		}
-		
-		blankTrack = new AudioTrack(am.isBluetoothScoOn() ? AudioManager.STREAM_VOICE_CALL : AudioManager.STREAM_MUSIC, 8000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
-				AudioTrack.getMinBufferSize(8000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT),
-				AudioTrack.MODE_STREAM);
-		blankTrack.play();
-		
-		final byte[] blank = new byte[8000000];
-		for (int i = 0; i < blank.length; i++) {
-			blank[i] = 0;
-		}
-		
-		new Thread(new Runnable() {
-			public void run() {
-				if (running) {
-					blankTrack.write(blank, 0, blank.length);
-				}
-				handler.postDelayed(this, 1000);
-			}
-		}).start();
 	}
 	
 	public void setBlock(boolean block) {

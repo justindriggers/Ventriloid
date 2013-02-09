@@ -155,7 +155,6 @@ public class VentriloidService extends Service {
 	@Override
 	public void onDestroy() {
 		unregisterReceiver(activityReceiver);
-		player.stop();
 		VentriloInterface.logout();
 		nm.cancelAll();
 		running = false;
@@ -745,12 +744,7 @@ public class VentriloidService extends Service {
 		player.setBlock(true);
 		
 		if (am.isBluetoothScoOn()) {
-			player.clear();
-			recorder.stop();
 			am.stopBluetoothSco();
-			items.setBluetooth(false);
-			player.setBlock(false);
-			Toast.makeText(VentriloidService.this, "Bluetooth disconnected.", Toast.LENGTH_SHORT).show();
 		} else {
 			bluetoothConnected = false;
 			items.setBluetoothConnecting("Connecting...");
@@ -802,13 +796,15 @@ public class VentriloidService extends Service {
 				Toast.makeText(VentriloidService.this, "Bluetooth connected.", Toast.LENGTH_SHORT).show();
 			} else if (intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1) == AudioManager.SCO_AUDIO_STATE_CONNECTED &&
 					intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1) != AudioManager.SCO_AUDIO_STATE_CONNECTED) {
-				recorder.stop();
+				player.setBlock(true);
 				player.clear();
-				am.stopBluetoothSco();
-				items.setBluetooth(false);
 				player.setBlock(false);
+				recorder.stop();
+				am.stopBluetoothSco();
+				bluetoothConnected = false;
+				items.setBluetooth(false);
 				sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
-				Toast.makeText(VentriloidService.this, "Bluetooth connection lost.", Toast.LENGTH_SHORT).show();
+				Toast.makeText(VentriloidService.this, "Bluetooth disconnected.", Toast.LENGTH_SHORT).show();
 				unregisterReceiver(bluetoothReceiver);
 			}
 		}
