@@ -167,7 +167,7 @@ public class ViewFragment extends Fragment {
 			
 			if (u.id == VentriloInterface.getuserid()) {
 				// Do stuff if you select yourself
-				menu.add(Menu.NONE, ContextMenuItems.ADMIN_LOGOUT, ContextMenu.NONE, s.isAdmin() ? "Admin Logout" : "Admin Login");
+				menu.add(Menu.NONE, s.isAdmin() ? ContextMenuItems.ADMIN_LOGOUT : ContextMenuItems.ADMIN_LOGIN, ContextMenu.NONE, s.isAdmin() ? "Admin Logout" : "Admin Login");
 				menu.add(Menu.NONE, ContextMenuItems.SET_VOLUME, ContextMenu.NONE, "Set Transmit Volume");
 				menu.add(Menu.NONE, ContextMenuItems.SET_COMMENT, ContextMenu.NONE, "Set Comment");
 				menu.add(Menu.NONE, ContextMenuItems.SET_URL, ContextMenu.NONE, "Set URL");
@@ -440,8 +440,10 @@ public class ViewFragment extends Fragment {
 			dialog.setPositiveButton("Login", new OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					VentriloInterface.adminlogin(input.getText().toString());
-					s.setAdmin(true);
+					if (input.getText().toString().length() > 0) {
+						VentriloInterface.adminlogin(input.getText().toString());
+						s.setAdmin(true);
+					}
 				}
 			});
 			dialog.setNegativeButton("Cancel", null);

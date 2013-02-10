@@ -68,7 +68,7 @@ public class Connected extends Activity {
 	public static final String SERVICE_RECEIVER = "com.jtxdriggers.android.ventriloid.Connected.SERVICE_RECEIVER";
 	public static final String FRAGMENT_RECEIVER = "com.jtxdriggers.android.ventriloid.Connected.FRAGMENT_RECEIVER";
 	
-	public static final int SMALL = 1, MEDIUM = 2, LARGE = 3;
+	public static final int SMALL = 1, MEDIUM = 2, LARGE = 3, FULLSCREEN = 4;
 	
 	private VentriloidService s;
 	private VentriloidSlidingMenu sm;
@@ -238,9 +238,9 @@ public class Connected extends Activity {
 		ViewGroup.LayoutParams params = bottomBar.getLayoutParams();
 		ViewGroup.LayoutParams btnParams = ptt.getLayoutParams();
 		
-		Resizer animation = new Resizer(bottomBar, params.width, newSize);
+		Resizer animation = new Resizer(bottomBar, params.width, size == FULLSCREEN ? ViewGroup.LayoutParams.MATCH_PARENT : newSize);
 		bottomBar.startAnimation(animation);
-		Resizer btnAnimation = new Resizer(ptt, btnParams.width, newSize);
+		Resizer btnAnimation = new Resizer(ptt, btnParams.width, size == FULLSCREEN ? ViewGroup.LayoutParams.MATCH_PARENT : newSize);
 		ptt.startAnimation(btnAnimation);
 		
 		switch (size) {
@@ -249,10 +249,11 @@ public class Connected extends Activity {
 			pttSizeDown.setVisibility(View.GONE);
 			break;
 		case MEDIUM:
+		case LARGE:
 			pttSizeUp.setVisibility(View.VISIBLE);
 			pttSizeDown.setVisibility(View.VISIBLE);
 			break;
-		case LARGE:
+		case FULLSCREEN:
 			pttSizeUp.setVisibility(View.GONE);
 			pttSizeDown.setVisibility(View.VISIBLE);
 			break;
@@ -402,8 +403,10 @@ public class Connected extends Activity {
 						dialog.setPositiveButton("Login", new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
-								VentriloInterface.adminlogin(input.getText().toString());
-								s.setAdmin(true);
+								if (input.getText().toString().length() > 0) {
+									VentriloInterface.adminlogin(input.getText().toString());
+									s.setAdmin(true);
+								}
 							}
 						});
 						dialog.setNegativeButton("Cancel", null);
