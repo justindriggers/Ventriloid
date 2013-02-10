@@ -564,6 +564,9 @@ public class Connected extends Activity {
 	            } else
 	                    VentriloInterface.changechannel(c.id, "");
 	            break;
+			case (short) -1:
+	            bottomBar.setBackgroundResource(R.drawable.abs__ab_bottom_solid_light_holo);
+				break;
 			default:
 				sendBroadcast(new Intent(ViewFragment.SERVICE_RECEIVER));
 				sm.getAdapter().setMenuItems(s.getItemData());

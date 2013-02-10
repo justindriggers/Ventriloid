@@ -36,13 +36,17 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 
 public class VentriloidService extends Service {
 	
@@ -59,7 +63,10 @@ public class VentriloidService extends Service {
 	private final Handler HANDLER = new Handler();
 	
 	private SharedPreferences prefs, volumePrefs, passwordPrefs;
+	private PowerManager.WakeLock wakeLock;
+	private WifiManager.WifiLock wifiLock;
 	private NotificationManager nm;
+	private TelephonyManager tm;
 	private AudioManager am;
 	private Vibrator vibrator;
 	private Server server;
@@ -76,8 +83,8 @@ public class VentriloidService extends Service {
 		admin = false,
 		rejoinChat = false,
 		running = false,
-		disconnect,
-		bluetoothConnected;
+		bluetoothConnected = false,
+		disconnect;
 	private int start,
 		reconnectTimer,
 		viewType = ViewFragment.VIEW_TYPE_SERVER;
@@ -92,6 +99,12 @@ public class VentriloidService extends Service {
 
 		volumePrefs = getSharedPreferences("VOLUMES" + server.getId(), Context.MODE_PRIVATE);
         passwordPrefs = getSharedPreferences("PASSWORDS" + server.getId(), Context.MODE_PRIVATE);
+        
+        wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "VentriloidWakeLock");
+        wakeLock.acquire();
+        
+        wifiLock = ((WifiManager) getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "VentriloidWifiLock");
+        wifiLock.acquire();
         
         disconnect = true;
 
@@ -136,6 +149,7 @@ public class VentriloidService extends Service {
 		registerReceiver(activityReceiver, new IntentFilter(ACTIVITY_RECEIVER));
 
 		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 		am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -154,8 +168,17 @@ public class VentriloidService extends Service {
 
 	@Override
 	public void onDestroy() {
+        if(tm != null)
+            tm.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
+        
+		try {
+			unregisterReceiver(bluetoothReceiver);
+		} catch (IllegalArgumentException e) { }
+		
 		unregisterReceiver(activityReceiver);
 		VentriloInterface.logout();
+		wifiLock.release();
+		wakeLock.release();
 		nm.cancelAll();
 		running = false;
 		super.onDestroy();
@@ -231,6 +254,9 @@ public class VentriloidService extends Service {
 					sendBroadcast(new Intent(Main.SERVICE_RECEIVER).putExtra("type", data.type));
 					if (rejoinChat)
 						joinChat();
+			        
+			        if (tm != null)
+			            tm.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
 					break;
 					
 				case VentriloEvents.V3_EVENT_LOGIN_FAIL:
@@ -670,7 +696,9 @@ public class VentriloidService extends Service {
 				.setOngoing(true)
 				.setAutoCancel(false);
 			if (text.contains(10 + ""))
-				notifBuilder.setTicker("Disconnected from Server");
+				notifBuilder.setTicker("Reconnecting to Server");
+			else if (text.contains("call"))
+				notifBuilder.setTicker(text);
 			break;
 		}
 		
@@ -740,14 +768,22 @@ public class VentriloidService extends Service {
 	
 	@TargetApi(Build.VERSION_CODES.FROYO)
 	public void toggleBluetooth() {
+		recorder.stop();
 		setXmit(false);
-		player.setBlock(true);
+		sendBroadcast(new Intent(Connected.SERVICE_RECEIVER).putExtra("type", (short) -1));
 		
 		if (am.isBluetoothScoOn()) {
+			player.setBlock(true);
+			player.clear();
+			recorder.stop();
 			am.stopBluetoothSco();
+			items.setBluetooth(false);
+			player.setBlock(false);
 		} else {
+			player.setBlock(true);
 			bluetoothConnected = false;
 			items.setBluetoothConnecting("Connecting...");
+			sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 			am.startBluetoothSco();
 			registerReceiver(bluetoothReceiver, new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
 			HANDLER.post(new Runnable() {
@@ -756,7 +792,7 @@ public class VentriloidService extends Service {
 				@Override
 				public void run() {
 					if (!bluetoothConnected) {
-						if (counter < 10) {
+						if (counter <= 10) {
 							if (text.equals("Connecting..."))
 								text = "Connecting.";
 							else
@@ -765,7 +801,9 @@ public class VentriloidService extends Service {
 							sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 							
 							counter++;
-							HANDLER.postDelayed(this, 1000);
+							
+							if (!bluetoothConnected)
+								HANDLER.postDelayed(this, 1000);
 						} else {
 							am.stopBluetoothSco();
 							items.setBluetooth(false);
@@ -784,9 +822,8 @@ public class VentriloidService extends Service {
 		@TargetApi(Build.VERSION_CODES.FROYO)
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1) != AudioManager.SCO_AUDIO_STATE_CONNECTED &&
+			if (intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1) == AudioManager.SCO_AUDIO_STATE_CONNECTING &&
 					intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1) == AudioManager.SCO_AUDIO_STATE_CONNECTED) {
-				recorder.stop();
 				player.clear();
 				items.setBluetooth(true);
 				am.setBluetoothScoOn(true);
@@ -794,20 +831,148 @@ public class VentriloidService extends Service {
 				player.setBlock(false);
 				sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 				Toast.makeText(VentriloidService.this, "Bluetooth connected.", Toast.LENGTH_SHORT).show();
-			} else if (intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1) == AudioManager.SCO_AUDIO_STATE_CONNECTED &&
-					intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1) != AudioManager.SCO_AUDIO_STATE_CONNECTED) {
+			} else if (intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1) == AudioManager.SCO_AUDIO_STATE_CONNECTING &&
+					intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1) == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
 				player.setBlock(true);
 				player.clear();
-				player.setBlock(false);
 				recorder.stop();
 				am.stopBluetoothSco();
-				bluetoothConnected = false;
 				items.setBluetooth(false);
+				player.setBlock(false);
 				sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 				Toast.makeText(VentriloidService.this, "Bluetooth disconnected.", Toast.LENGTH_SHORT).show();
 				unregisterReceiver(bluetoothReceiver);
 			}
 		}
 	};
+	
+
+    
+    private PhoneStateListener phoneStateListener = new PhoneStateListener() {
+    	
+    	private Item.Channel c;
+    	private short channelId, userId;
+    	private String comment, url, integrationText;
+    	private boolean inChat, reconnectBluetooth;
+    	
+        @TargetApi(Build.VERSION_CODES.FROYO)
+		@Override
+        public void onCallStateChanged(int state, String incomingNumber) {
+        	switch (state) {
+        	case TelephonyManager.CALL_STATE_OFFHOOK:
+        		disconnect = true;
+        		connected = false;
+        		recorder.stop();
+				c = items.getCurrentChannel().get(0);
+				channelId = c.id;
+				userId = items.getUserId();
+				comment = items.getComment();
+				url = items.getUrl();
+				integrationText = items.getIntegrationText();
+				inChat = items.inChat();
+				reconnectBluetooth = Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO ? am.isBluetoothScoOn() : false;
+				VentriloInterface.logout();
+				nm.notify(userId, createNotification("Disconnected while in call", (short) VentriloEvents.V3_EVENT_DISCONNECT, (short) 0));
+	        	
+	            super.onCallStateChanged(state, incomingNumber);
+	            
+        		break;
+        	case TelephonyManager.CALL_STATE_IDLE:
+                super.onCallStateChanged(state, incomingNumber);
+                
+        		if (!disconnect)
+        			break;
+        		
+        		reconnectTimer = 10;
+				items = new ItemData(VentriloidService.this);
+				new Thread(new Runnable() {					
+					@Override
+					public void run() {
+						if (reconnectTimer > 0) {
+							nm.notify(userId, createNotification("Reconnecting in " + reconnectTimer + " seconds", (short) VentriloEvents.V3_EVENT_DISCONNECT, (short) 0));
+							sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
+								.putExtra("type", (short) -1)
+								.putExtra("timer", reconnectTimer));
+							reconnectTimer--;
+							HANDLER.postDelayed(this, 1000);
+						} else {
+							nm.notify(userId, createNotification("Reconnecting...", (short) VentriloEvents.V3_EVENT_DISCONNECT, (short) 0));
+							sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
+								.putExtra("type", (short) -1));
+							reconnectTimer--;
+							if (VentriloInterface.login(server.getHostname() + ":" + server.getPort(),
+									server.getUsername(), server.getPassword(), server.getPhonetic())) {
+								new Thread(new Runnable() {
+									public void run() {
+										while (VentriloInterface.recv());
+									}
+								}).start();
+								VentriloInterface.settext(comment, url, integrationText, true);
+								items.setComment(comment);
+								items.setUrl(url);
+								items.setIntegrationText(integrationText);
+								VentriloInterface.changechannel(channelId, passwordPrefs.getString(channelId + "pw", ""));
+								rejoinChat = inChat;
+				        		
+				        		if (reconnectBluetooth) {
+					        		player.setBlock(true);
+									bluetoothConnected = false;
+									items.setBluetoothConnecting("Connecting...");
+									sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
+									am.startBluetoothSco();
+									HANDLER.post(new Runnable() {
+										int counter = 0;
+										String text = "Connecting.";
+										@TargetApi(Build.VERSION_CODES.FROYO)
+										@Override
+										public void run() {
+											if (!bluetoothConnected) {
+												if (counter <= 10) {
+													if (text.equals("Connecting..."))
+														text = "Connecting.";
+													else
+														text += ".";
+													items.setBluetoothConnecting(text);
+													sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
+													
+													counter++;
+													
+													if (!bluetoothConnected)
+														HANDLER.postDelayed(this, 1000);
+												} else {
+													am.stopBluetoothSco();
+													items.setBluetooth(false);
+													player.setBlock(false);
+													sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
+													Toast.makeText(VentriloidService.this, "Bluetooth request timed out.", Toast.LENGTH_SHORT).show();
+													unregisterReceiver(bluetoothReceiver);
+												}
+											}
+										}
+									});
+				        		} else {
+				        			items.setBluetooth(false);
+									sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
+				        		}
+							} else {
+								VentriloEventData data = new VentriloEventData();
+								VentriloInterface.error(data);
+								sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
+									.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL));
+								Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+								if (data.error.disconnected)
+									disconnect();
+								reconnectTimer = 10;
+								HANDLER.post(this);
+							}
+						}
+					}
+				}).start();
+        		break;
+        	default:
+                super.onCallStateChanged(state, incomingNumber);
+        	}
+        }
+    };
 	
 }
