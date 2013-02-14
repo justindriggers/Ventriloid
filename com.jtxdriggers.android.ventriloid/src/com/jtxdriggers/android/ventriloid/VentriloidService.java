@@ -272,10 +272,12 @@ public class VentriloidService extends Service {
 							recorder.start(threshold);
 					} else {
 						item = items.getUserById(data.user.id);
-						if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-							nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " joined the channel.", data.type, item.id));
-						else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-							nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " left the channel.", data.type, item.id));
+						if (item != null) {
+							if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+								nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " joined the channel.", data.type, item.id));
+							else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+								nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " left the channel.", data.type, item.id));
+						}
 						player.close(data.user.id);
 					}
 					break;
