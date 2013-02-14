@@ -44,6 +44,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -69,6 +70,7 @@ public class VentriloidService extends Service {
 	private TelephonyManager tm;
 	private AudioManager am;
 	private Vibrator vibrator;
+	private TextToSpeech tts;
 	private Server server;
 	private ConcurrentLinkedQueue<VentriloEventData> queue;
 	private ItemData items;
@@ -78,6 +80,7 @@ public class VentriloidService extends Service {
 	private Player player;
 	
 	private boolean voiceActivation = false,
+		ttsActive = false,
 		muted = false,
 		vibrate = false,
 		admin = false,
@@ -158,6 +161,22 @@ public class VentriloidService extends Service {
 		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 		vibrate = prefs.getBoolean("vibrate", true);
 		
+		if (prefs.getBoolean("tts", true))
+			tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {				
+				@Override
+				public void onInit(int status) {
+					if (status == TextToSpeech.SUCCESS)
+						ttsActive = true;
+					else
+						HANDLER.post(new Runnable() {
+							@Override
+							public void run() {
+								Toast.makeText(getApplicationContext(), "TTS Initialization faled.", Toast.LENGTH_SHORT).show();
+							}
+						});
+				}
+			});
+		
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
 		
 		items = new ItemData(this);
@@ -231,15 +250,29 @@ public class VentriloidService extends Service {
 						VentriloInterface.setxmitvolume(((Item.User) item).volume);
 					else
 						VentriloInterface.setuservolume(data.user.id, ((Item.User) item).muted ? 0 : ((Item.User) item).volume);
-					if ((data.flags & (1 << 0)) == 0 && data.text.real_user_id == 0)
+					if ((data.flags & (1 << 0)) == 0 && data.text.real_user_id == 0) {
 						nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " has logged in.", data.type, item.id));
+						if (ttsActive && !muted) {
+							HashMap<String, String> params = new HashMap<String, String>();
+							if (am.isBluetoothScoOn())
+								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+							tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " has logged in.", TextToSpeech.QUEUE_ADD, params);
+						}
+					}
 					break;
 					
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					player.close(data.user.id);
 					item = items.getUserById(data.user.id);
-					if (((Item.User) item).realId == 0)
+					if (((Item.User) item).realId == 0) {
 						nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " has logged out.", data.type, item.id));
+						if (ttsActive && !muted) {
+							HashMap<String, String> params = new HashMap<String, String>();
+							if (am.isBluetoothScoOn())
+								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+							tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " has logged out.", TextToSpeech.QUEUE_ADD, params);
+						}
+					}
 					break;
 
 				case VentriloEvents.V3_EVENT_LOGIN_COMPLETE:
@@ -248,6 +281,12 @@ public class VentriloidService extends Service {
 					items.setUserId();
 					nm.cancelAll();
 					startForeground(VentriloInterface.getuserid(), createNotification("Now Connected.", data.type, (short) 0));
+					if (ttsActive && !muted) {
+						HashMap<String, String> params = new HashMap<String, String>();
+						if (am.isBluetoothScoOn())
+							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+						tts.speak("Connected.", TextToSpeech.QUEUE_ADD, params);
+					}
 					recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
 					if (voiceActivation)
 						recorder.start(threshold);
@@ -273,10 +312,23 @@ public class VentriloidService extends Service {
 					} else {
 						item = items.getUserById(data.user.id);
 						if (item != null) {
-							if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+							if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 								nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " joined the channel.", data.type, item.id));
-							else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+								if (ttsActive && !muted) {
+									HashMap<String, String> params = new HashMap<String, String>();
+									if (am.isBluetoothScoOn())
+										params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+									tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " joined the channel.", TextToSpeech.QUEUE_ADD, params);
+								}
+							} else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 								nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " left the channel.", data.type, item.id));
+								if (ttsActive && !muted) {
+									HashMap<String, String> params = new HashMap<String, String>();
+									if (am.isBluetoothScoOn())
+										params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+									tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " left the channel.", TextToSpeech.QUEUE_ADD, params);
+								}
+							}
 						}
 						player.close(data.user.id);
 					}
@@ -367,6 +419,12 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_USER_PAGE:
 					item = items.getUserById(data.user.id);
 					nm.notify(item.id, createNotification("Page from " + item.name, data.type, item.id));
+					if (ttsActive && !muted) {
+						HashMap<String, String> params = new HashMap<String, String>();
+						if (am.isBluetoothScoOn())
+							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+						tts.speak("Page from " + (item.phonetic.length() > 0 ? item.phonetic : item.name), TextToSpeech.QUEUE_ADD, params);
+					}
 					break;
 
 				case VentriloEvents.V3_EVENT_PRIVATE_CHAT_MESSAGE:

@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:holo="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:holo="http://schemas.android.com/apk/res-auto" xmlns:android="http://schemas.android.com/apk/res/android">
     
     <PreferenceCategory holo:title="General">
+        
+        <CheckBoxPreference holo:key="tts"
+            holo:title="Text to Speech Notifications"
+            holo:summary="Select if you wish to enable TTS notifications"
+            holo:defaultValue="true"
+            holo:order="0" />
         
         <CheckBoxPreference holo:key="screen_on"
             holo:title="Keep Screen On"
             holo:summary="WARNING: Drains battery!"
             holo:defaultValue="false"
-            holo:order="0" />
+            holo:order="1" />
 	    
 	    <CheckBoxPreference holo:key="voice_activation"
 	        holo:title="Voice Activation"
 	        holo:summary="Select to enable voice activation (highly experimental)"
 	        holo:defaultValue="false"
-	        holo:order="1" />
+	        holo:order="2" />
         
     </PreferenceCategory>
 	
