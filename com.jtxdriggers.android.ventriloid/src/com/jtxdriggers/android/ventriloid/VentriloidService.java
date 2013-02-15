@@ -161,7 +161,7 @@ public class VentriloidService extends Service {
 		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 		vibrate = prefs.getBoolean("vibrate", true);
 		
-		if (prefs.getBoolean("tts", true))
+		if (prefs.getBoolean("tts_active", true))
 			tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {				
 				@Override
 				public void onInit(int status) {
@@ -252,7 +252,7 @@ public class VentriloidService extends Service {
 						VentriloInterface.setuservolume(data.user.id, ((Item.User) item).muted ? 0 : ((Item.User) item).volume);
 					if ((data.flags & (1 << 0)) == 0 && data.text.real_user_id == 0) {
 						nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " has logged in.", data.type, item.id));
-						if (ttsActive && !muted) {
+						if (ttsActive && !muted && prefs.getBoolean("tts_server", true)) {
 							HashMap<String, String> params = new HashMap<String, String>();
 							if (am.isBluetoothScoOn())
 								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
@@ -266,7 +266,7 @@ public class VentriloidService extends Service {
 					item = items.getUserById(data.user.id);
 					if (((Item.User) item).realId == 0) {
 						nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " has logged out.", data.type, item.id));
-						if (ttsActive && !muted) {
+						if (ttsActive && !muted && prefs.getBoolean("tts_server", true)) {
 							HashMap<String, String> params = new HashMap<String, String>();
 							if (am.isBluetoothScoOn())
 								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
@@ -281,7 +281,7 @@ public class VentriloidService extends Service {
 					items.setUserId();
 					nm.cancelAll();
 					startForeground(VentriloInterface.getuserid(), createNotification("Now Connected.", data.type, (short) 0));
-					if (ttsActive && !muted) {
+					if (ttsActive && !muted && prefs.getBoolean("tts_connect", false)) {
 						HashMap<String, String> params = new HashMap<String, String>();
 						if (am.isBluetoothScoOn())
 							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
@@ -314,7 +314,7 @@ public class VentriloidService extends Service {
 						if (item != null) {
 							if (data.channel.id == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 								nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " joined the channel.", data.type, item.id));
-								if (ttsActive && !muted) {
+								if (ttsActive && !muted && prefs.getBoolean("tts_channel", true)) {
 									HashMap<String, String> params = new HashMap<String, String>();
 									if (am.isBluetoothScoOn())
 										params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
@@ -322,7 +322,7 @@ public class VentriloidService extends Service {
 								}
 							} else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 								nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " left the channel.", data.type, item.id));
-								if (ttsActive && !muted) {
+								if (ttsActive && !muted && prefs.getBoolean("tts_channel", true)) {
 									HashMap<String, String> params = new HashMap<String, String>();
 									if (am.isBluetoothScoOn())
 										params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
@@ -358,6 +358,12 @@ public class VentriloidService extends Service {
 								Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
 							}
 						});
+					if (ttsActive && !muted && prefs.getBoolean("tts_disconnect", false)) {
+						HashMap<String, String> params = new HashMap<String, String>();
+						if (am.isBluetoothScoOn())
+							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+						tts.speak("Disconnected.", TextToSpeech.QUEUE_ADD, params);
+					}
 					
 					if (!disconnect) {
 						item = items.getCurrentChannel().get(0);
@@ -419,7 +425,7 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_USER_PAGE:
 					item = items.getUserById(data.user.id);
 					nm.notify(item.id, createNotification("Page from " + item.name, data.type, item.id));
-					if (ttsActive && !muted) {
+					if (ttsActive && !muted && prefs.getBoolean("tts_page", true)) {
 						HashMap<String, String> params = new HashMap<String, String>();
 						if (am.isBluetoothScoOn())
 							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));

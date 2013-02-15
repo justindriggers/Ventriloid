@@ -73,19 +73,25 @@ public class Settings extends Activity {
 			keyMap = KeyCharacterMap.load(KeyCharacterMap.FULL);
 			key = getDefaultSharedPreferences().getInt("ptt_key", KeyEvent.KEYCODE_CAMERA);
 			
+			final Preference tts = findPreference("tts");
 			final Preference ptt = findPreference("ptt");
+
+			tts.setEnabled(getDefaultSharedPreferences().getBoolean("tts_active", true));
+			ptt.setEnabled(getDefaultSharedPreferences().getBoolean("voice_activation", false));
 			
-			if (getDefaultSharedPreferences().getBoolean("voice_activation", false)) {
-				ptt.setEnabled(false);
-			}
+			Preference ttsActive = findPreference("tts_active");
+			ttsActive.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+				@Override
+				public boolean onPreferenceChange(Preference preference, Object newValue) {
+					tts.setEnabled((Boolean) newValue);
+					return true;
+				}
+			});
 			
 			Preference voiceActivation = findPreference("voice_activation");
 			voiceActivation.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 				public boolean onPreferenceChange(Preference preference, Object newValue) {
-					if ((Boolean) newValue)
-						ptt.setEnabled(false);
-					else
-						ptt.setEnabled(true);
+					ptt.setEnabled(!(Boolean) newValue);
 					return true;
 				}
 			});

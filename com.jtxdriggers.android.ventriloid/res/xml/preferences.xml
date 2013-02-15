@@ -3,7 +3,7 @@
     
     <PreferenceCategory holo:title="General">
         
-        <CheckBoxPreference holo:key="tts"
+        <CheckBoxPreference holo:key="tts_active"
             holo:title="Text to Speech Notifications"
             holo:summary="Select if you wish to enable TTS notifications"
             holo:defaultValue="true"
@@ -49,6 +49,36 @@
 			holo:defaultValue="true"
 			holo:order="6" />
 		
+	</PreferenceCategory>
+	
+	<PreferenceCategory holo:key="tts"
+	    holo:title="Text to Speech">
+	    
+	    <CheckBoxPreference holo:key="tts_connect"
+	        holo:title="Connected"
+	        holo:defaultValue="true"
+	        holo:order="0" />
+	    
+	    <CheckBoxPreference holo:key="tts_disconnect"
+	        holo:title="Disonnected"
+	        holo:defaultValue="true"
+	        holo:order="1" />
+	    
+	    <CheckBoxPreference holo:key="tts_server"
+	        holo:title="User Log In/Log Out"
+	        holo:defaultValue="true"
+	        holo:order="2" />
+	    
+	    <CheckBoxPreference holo:key="tts_channel"
+	        holo:title="User Joins/Leaves Channel"
+	        holo:defaultValue="true"
+	        holo:order="3" />
+	    
+	    <CheckBoxPreference holo:key="tts_page"
+	        holo:title="Page Received"
+	        holo:defaultValue="true"
+	        holo:order="4" />
+	    
 	</PreferenceCategory>
 	
 </PreferenceScreen>
