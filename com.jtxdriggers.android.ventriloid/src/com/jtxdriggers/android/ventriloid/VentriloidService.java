@@ -832,6 +832,7 @@ public class VentriloidService extends Service {
 		notifyMap.put(userid, notify);
 	}
 	
+	@SuppressWarnings("deprecation")
 	@TargetApi(Build.VERSION_CODES.FROYO)
 	public void toggleBluetooth() {
 		recorder.stop();
@@ -851,7 +852,7 @@ public class VentriloidService extends Service {
 			items.setBluetoothConnecting("Connecting...");
 			sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 			am.startBluetoothSco();
-			registerReceiver(bluetoothReceiver, new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
+			registerReceiver(bluetoothReceiver, new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED));
 			HANDLER.post(new Runnable() {
 				int counter = 0;
 				String text = "Connecting.";
@@ -876,7 +877,9 @@ public class VentriloidService extends Service {
 							player.setBlock(false);
 							sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 							Toast.makeText(VentriloidService.this, "Bluetooth request timed out.", Toast.LENGTH_SHORT).show();
-							unregisterReceiver(bluetoothReceiver);
+							try {
+								unregisterReceiver(bluetoothReceiver);
+							} catch (IllegalArgumentException e) { }
 						}
 					}
 				}
@@ -888,8 +891,7 @@ public class VentriloidService extends Service {
 		@TargetApi(Build.VERSION_CODES.FROYO)
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1) == AudioManager.SCO_AUDIO_STATE_CONNECTING &&
-					intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1) == AudioManager.SCO_AUDIO_STATE_CONNECTED) {
+			if (!bluetoothConnected && intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1) == AudioManager.SCO_AUDIO_STATE_CONNECTED) {
 				player.clear();
 				items.setBluetooth(true);
 				am.setBluetoothScoOn(true);
@@ -897,8 +899,7 @@ public class VentriloidService extends Service {
 				player.setBlock(false);
 				sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 				Toast.makeText(VentriloidService.this, "Bluetooth connected.", Toast.LENGTH_SHORT).show();
-			} else if (intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1) == AudioManager.SCO_AUDIO_STATE_CONNECTING &&
-					intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1) == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
+			} else if (bluetoothConnected && intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1) == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
 				player.setBlock(true);
 				player.clear();
 				recorder.stop();
@@ -907,7 +908,9 @@ public class VentriloidService extends Service {
 				player.setBlock(false);
 				sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 				Toast.makeText(VentriloidService.this, "Bluetooth disconnected.", Toast.LENGTH_SHORT).show();
-				unregisterReceiver(bluetoothReceiver);
+				try {
+					unregisterReceiver(bluetoothReceiver);
+				} catch (IllegalArgumentException e) { }
 			}
 		}
 	};
@@ -1011,7 +1014,9 @@ public class VentriloidService extends Service {
 													player.setBlock(false);
 													sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 													Toast.makeText(VentriloidService.this, "Bluetooth request timed out.", Toast.LENGTH_SHORT).show();
-													unregisterReceiver(bluetoothReceiver);
+													try {
+														unregisterReceiver(bluetoothReceiver);
+													} catch (IllegalArgumentException e) { }
 												}
 											}
 										}
