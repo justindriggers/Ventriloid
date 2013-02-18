@@ -79,7 +79,8 @@ public class VentriloidService extends Service {
 	private Recorder recorder;
 	private Player player;
 	
-	private boolean voiceActivation = false,
+	private boolean manualSorting = false,
+		voiceActivation = false,
 		ttsActive = false,
 		muted = false,
 		vibrate = false,
@@ -196,6 +197,7 @@ public class VentriloidService extends Service {
 		
 		unregisterReceiver(activityReceiver);
 		VentriloInterface.logout();
+		tts.shutdown();
 		wifiLock.release();
 		wakeLock.release();
 		nm.cancelAll();
@@ -438,6 +440,13 @@ public class VentriloidService extends Service {
 						nm.notify(-data.user.privchat_user2, createNotification(bytesToString(data.data.chatmessage), data.type, data.user.privchat_user2));
 					}
 					break;
+					
+				case VentriloEvents.V3_EVENT_SERVER_PROPERTY_UPDATED:
+					switch (data.serverproperty.property) {
+					case VentriloEvents.V3_SRV_PROP_CHAN_ORDER:
+						manualSorting = data.serverproperty.value == 0 ? false : true;
+					}
+					break;
 				}
 				
 				queue.add(data);
@@ -452,7 +461,7 @@ public class VentriloidService extends Service {
 		}
 	};
 	
-	public void process(final VentriloEventData data) {
+	public synchronized void process(final VentriloEventData data) {
 		Item item;
 		boolean sendBroadcast = true;
 		
@@ -501,21 +510,23 @@ public class VentriloidService extends Service {
 
 		case VentriloEvents.V3_EVENT_USER_CHAN_MOVE:
 			item = items.getUserById(data.user.id);
-			short from = item.parent;
-			item.parent = data.channel.id;
-			items.removeUser(data.user.id);
-			items.addUser((Item.User) item);
-			if (item.id == VentriloInterface.getuserid()) {
-				items.setCurrentChannel(item.parent);
-			} else {
-				if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-					items.addCurrentUser((Item.User) item);
-				else if (from == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-					items.removeCurrentUser(item.id);
-			}
-			if (((Item.User) item).realId == VentriloInterface.getuserid()) {
-				items.getChannelById(from).hasPhantom = false;
-				items.getChannelById(item.parent).hasPhantom = true;
+			if (item != null) {
+				short from = item.parent;
+				item.parent = data.channel.id;
+				items.removeUser(data.user.id);
+				items.addUser((Item.User) item);
+				if (item.id == VentriloInterface.getuserid()) {
+					items.setCurrentChannel(item.parent);
+				} else {
+					if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+						items.addCurrentUser((Item.User) item);
+					else if (from == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
+						items.removeCurrentUser(item.id);
+				}
+				if (((Item.User) item).realId == VentriloInterface.getuserid()) {
+					items.getChannelById(from).hasPhantom = false;
+					items.getChannelById(item.parent).hasPhantom = true;
+				}
 			}
 			break;
 			
@@ -805,6 +816,10 @@ public class VentriloidService extends Service {
 
 	public void setMuted(boolean muted) {
 		this.muted = muted;
+	}
+	
+	public boolean isManuallySorted() {
+		return manualSorting;
 	}
 
 	private BroadcastReceiver activityReceiver = new BroadcastReceiver() {

@@ -637,6 +637,14 @@ JNIEXPORT void JNICALL Java_com_jtxdriggers_android_ventriloid_VentriloInterface
 					set_short(env, user, user_class, "id", ev->user.id);
 				}
 				break;
+			case V3_EVENT_SERVER_PROPERTY_UPDATED:
+				{
+					jobject srvprop = get_object(env, eventdata, event_class, "serverproperty", "Lcom/jtxdriggers/android/ventriloid/VentriloEventData$_serverproperty;");
+					jclass srvprop_class = get_class(env, srvprop);
+					set_short(env, srvprop, srvprop_class, "property", ev->serverproperty.property);
+					set_byte(env, srvprop, srvprop_class, "value", ev->serverproperty.value);
+				}
+				break;
 		}
 		v3_free_event(ev);
 	}

@@ -71,4 +71,10 @@ public class VentriloEvents {
 	public static final int V3_EVENT_ADMIN_BAN_LIST				= 44;
 
 	public static final int V3_EVENT_USER_PAGE					= 64;
+	
+	public static final int V3_EVENT_SERVER_PROPERTY_UPDATED	= 67;
+	
+	public static final int V3_SRV_PROP_CHAT_FILTER				= 2;
+	public static final int V3_SRV_PROP_CHAN_ORDER				= 3;
+	public static final int V3_SRV_PROP_MOTD_ALWAYS				= 5;
 }
