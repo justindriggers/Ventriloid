@@ -23,7 +23,10 @@ import java.util.ArrayList;
 
 import org.holoeverywhere.ArrayAdapter;
 import org.holoeverywhere.app.Activity;
+import org.holoeverywhere.widget.LinearLayout;
+import org.holoeverywhere.widget.TextView;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -31,7 +34,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.util.Linkify;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.view.Menu;
@@ -128,6 +133,29 @@ public class Main extends Activity {
 			return true;
 		case R.id.settings:
 			startActivity(new Intent(this, Settings.class));
+			return true;
+		case R.id.about:
+			AlertDialog.Builder about = new AlertDialog.Builder(this);
+			LinearLayout layout = (LinearLayout) getLayoutInflater().inflate(R.layout.about);
+			Linkify.addLinks((TextView) layout.findViewById(R.id.ventriloidSource), Linkify.ALL);
+			Linkify.addLinks((TextView) layout.findViewById(R.id.manglerSource), Linkify.ALL);
+			Linkify.addLinks((TextView) layout.findViewById(R.id.absSource), Linkify.ALL);
+			Linkify.addLinks((TextView) layout.findViewById(R.id.holoSource), Linkify.ALL);
+			Linkify.addLinks((TextView) layout.findViewById(R.id.smSource), Linkify.ALL);
+			about.setView(layout);
+			about.setNeutralButton("Donate", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=N95UGEQ6FAKPN")));
+				}
+			});
+			about.setPositiveButton("Close", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			about.show();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
