@@ -43,6 +43,8 @@ public class ItemData {
 	private HashMap<Short, Integer> chatPositions = new HashMap<Short, Integer>();
 	private int activeView = VentriloidSlidingMenu.MENU_SERVER_VIEW;
 	
+	private VentriloidService s;
+	
 	private short userId;
 	private int ping = 0;
 	private String comment = "", url = "", integrationText = "";
@@ -50,6 +52,8 @@ public class ItemData {
 	
 	@TargetApi(Build.VERSION_CODES.FROYO)
 	public ItemData(VentriloidService s) {
+		this.s = s;
+		
 		Item item = new Item();
 		channels.add(item.new Channel());
 		currentChannels.add(item.new Channel());
@@ -82,8 +86,12 @@ public class ItemData {
 				channel.indent = channels.get(i).indent + "     ";
 				i++;
 				
-				while (i < channels.size() && channels.get(i).parent == channel.parent)
-					i++;
+				if (s.isManuallySorted())
+					while (i < channels.size() && channels.get(i).parent == channel.parent && channels.get(i).id < channel.id)
+						i++;
+				else
+					while (i < channels.size() && channels.get(i).parent == channel.parent && channels.get(i).name.compareToIgnoreCase(channel.name) < 0)
+						i++;
 				
 				channels.add(i, channel);
 				users.add(i, new ArrayList<Item.User>());
@@ -93,15 +101,22 @@ public class ItemData {
 	}
 	
 	public synchronized void addCurrentUser(Item.User user) {
-		if (user.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid()))
-			currentUsers.get(0).add(user);
+		if (user.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
+			int i = 0;
+			while (i < currentUsers.get(0).size() && (currentUsers.get(0).get(i).formatRank(currentUsers.get(0).get(i).rank) + currentUsers.get(0).get(i).name).compareToIgnoreCase(user.formatRank(user.rank) + user.name) < 0)
+				i++;
+			currentUsers.get(0).add(i, user);
+		}
 	}
 	
 	public synchronized void addUser(Item.User user) {
 		for (int i = 0; i < channels.size(); i++) {
 			if (channels.get(i).id == user.parent) {
 				user.indent = channels.get(i).indent + "     ";
-				users.get(i).add(user);
+				int j = 0;
+				while (j < users.get(i).size() && (users.get(i).get(j).formatRank(users.get(i).get(j).rank) + users.get(i).get(j).name).compareToIgnoreCase(user.formatRank(user.rank) + user.name) < 0)
+					j++;
+				users.get(i).add(j, user);
 				return;
 			}
 		}

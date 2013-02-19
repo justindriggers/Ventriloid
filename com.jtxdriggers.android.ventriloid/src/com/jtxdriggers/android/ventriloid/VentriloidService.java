@@ -197,7 +197,8 @@ public class VentriloidService extends Service {
 		
 		unregisterReceiver(activityReceiver);
 		VentriloInterface.logout();
-		tts.shutdown();
+		if (tts != null)
+			tts.shutdown();
 		wifiLock.release();
 		wakeLock.release();
 		nm.cancelAll();
@@ -440,13 +441,6 @@ public class VentriloidService extends Service {
 						nm.notify(-data.user.privchat_user2, createNotification(bytesToString(data.data.chatmessage), data.type, data.user.privchat_user2));
 					}
 					break;
-					
-				case VentriloEvents.V3_EVENT_SERVER_PROPERTY_UPDATED:
-					switch (data.serverproperty.property) {
-					case VentriloEvents.V3_SRV_PROP_CHAN_ORDER:
-						manualSorting = data.serverproperty.value == 0 ? false : true;
-					}
-					break;
 				}
 				
 				queue.add(data);
@@ -648,6 +642,13 @@ public class VentriloidService extends Service {
 			
 		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_AWAY:
 		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_BACK:
+			break;
+			
+		case VentriloEvents.V3_EVENT_SERVER_PROPERTY_UPDATED:
+			switch (data.serverproperty.property) {
+			case VentriloEvents.V3_SRV_PROP_CHAN_ORDER:
+				manualSorting = data.serverproperty.value == 0 ? false : true;
+			}
 			break;
 		}
 
