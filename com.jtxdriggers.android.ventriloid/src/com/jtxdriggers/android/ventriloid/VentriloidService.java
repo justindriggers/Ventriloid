@@ -19,6 +19,7 @@
 
 package com.jtxdriggers.android.ventriloid;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -232,8 +233,12 @@ public class VentriloidService extends Service {
 		}
 	}
 
-	public static String bytesToString(byte[] bytes) {
-		return new String(bytes, 0, (new String(bytes).indexOf(0)));
+	public String bytesToString(byte[] bytes) {
+		try {
+			return new String(bytes, 0, (new String(bytes).indexOf(0)), prefs.getString("charset", "ISO-8859-1"));
+		} catch (UnsupportedEncodingException e) {
+			return "";
+		}
 	}
 
 	private Runnable eventHandler = new Runnable() {

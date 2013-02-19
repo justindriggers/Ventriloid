@@ -20,6 +20,12 @@
 	        holo:summary="Select to enable voice activation (highly experimental)"
 	        holo:defaultValue="false"
 	        holo:order="2" />
+	    
+	    <ListPreference holo:key="charset"
+	        holo:title="Character Encoding"
+			holo:entries="@array/charsets"
+			holo:entryValues="@array/charsetValues"
+	        holo:order="3" />
         
     </PreferenceCategory>
 	

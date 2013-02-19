@@ -21,6 +21,7 @@ package com.jtxdriggers.android.ventriloid;
 
 import org.holoeverywhere.app.Activity;
 import org.holoeverywhere.app.AlertDialog;
+import org.holoeverywhere.preference.ListPreference;
 import org.holoeverywhere.preference.Preference;
 import org.holoeverywhere.preference.Preference.OnPreferenceChangeListener;
 import org.holoeverywhere.preference.Preference.OnPreferenceClickListener;
@@ -77,7 +78,7 @@ public class Settings extends Activity {
 			final Preference ptt = findPreference("ptt");
 
 			tts.setEnabled(getDefaultSharedPreferences().getBoolean("tts_active", true));
-			ptt.setEnabled(getDefaultSharedPreferences().getBoolean("voice_activation", false));
+			ptt.setEnabled(!getDefaultSharedPreferences().getBoolean("voice_activation", false));
 			
 			Preference ttsActive = findPreference("tts_active");
 			ttsActive.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
@@ -92,6 +93,17 @@ public class Settings extends Activity {
 			voiceActivation.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 				public boolean onPreferenceChange(Preference preference, Object newValue) {
 					ptt.setEnabled(!(Boolean) newValue);
+					return true;
+				}
+			});
+			
+			final ListPreference charset = (ListPreference) findPreference("charset");
+			if (charset.getValue() == null) charset.setValueIndex(0);
+			charset.setSummary(getResources().getStringArray(R.array.charsets)[charset.findIndexOfValue(charset.getValue())]);
+			charset.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+				@Override
+				public boolean onPreferenceChange(Preference preference, Object newValue) {
+					charset.setSummary(getResources().getStringArray(R.array.charsets)[charset.findIndexOfValue((String) newValue)]);
 					return true;
 				}
 			});
