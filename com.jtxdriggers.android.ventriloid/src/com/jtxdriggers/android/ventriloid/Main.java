@@ -58,6 +58,11 @@ public class Main extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		
+		if (VentriloidService.isConnected()) {
+			startActivity(new Intent(this, Connected.class));
+			finish();
+		}
+		
 		db = new ServerAdapter(this);
 		
 		ab = getSupportActionBar();
@@ -66,9 +71,23 @@ public class Main extends Activity {
 		
 		registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
 		
-		if (VentriloidService.isConnected()) {
-			startActivity(new Intent(this, Connected.class));
-			finish();
+		if (getDefaultSharedPreferences().getBoolean("v3FirstRun", true)) {
+			AlertDialog.Builder firstRun = new AlertDialog.Builder(this);
+			firstRun.setView((LinearLayout) getLayoutInflater().inflate(R.layout.first_run));
+			firstRun.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			firstRun.setPositiveButton("Add Server", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					startActivity(new Intent(Main.this, ServerEdit.class));
+				}
+			});
+			firstRun.show();
+			getDefaultSharedPreferences().edit().putBoolean("v3FirstRun", false).commit();
 		}
 	}
     

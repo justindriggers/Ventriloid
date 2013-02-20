@@ -135,6 +135,19 @@ public class Connected extends Activity {
 			bottomBar.setVisibility(LinearLayout.GONE);
 		
 		chatId = getIntent().getShortExtra("id", (short) -1);
+		
+		if (getDefaultSharedPreferences().getBoolean("v3FirstConnect", true)) {
+			AlertDialog.Builder firstRun = new AlertDialog.Builder(this);
+			firstRun.setMessage("To display the menu, press the Menu button at the top-right or your screen, or swipe your finger from left to right.");
+			firstRun.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			firstRun.show();
+			getDefaultSharedPreferences().edit().putBoolean("v3FirstConnect", false).commit();
+		}
 	}
 	
 	@Override

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center">
+    
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="Welcome to Ventriloid!"
+        android:textColor="@color/primary_text_holo_light"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+    
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="To get started, press the 'Add Server' button below. If you are upgrading from a previous version of Ventriloid, then there is no need to add your server information again."
+        android:textColor="@color/primary_text_holo_light"
+        android:textSize="14sp" />
+    
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="To change your settings or server information later, simply return to the main screen, and select the desired option from the menu."
+        android:textColor="@color/primary_text_holo_light"
+        android:textSize="14sp" />
+
+</LinearLayout>
