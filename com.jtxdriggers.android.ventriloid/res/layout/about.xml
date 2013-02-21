@@ -47,7 +47,7 @@
 		    android:layout_height="wrap_content"
 		    android:paddingLeft="10dp"
 		    android:paddingRight="10dp"
-		    android:text="Ventriloid is not associated with Flagship Industries, Inc. or Mangler in any way."
+		    android:text="Ventriloid is not affiliated with Flagship Industries, Inc. or Mangler in any way."
 		    android:textColor="@color/primary_text_holo_light"
 		    android:textSize="14sp"
 		    android:gravity="center" />
