@@ -37,6 +37,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.util.Linkify;
+import android.view.View;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.view.Menu;
@@ -155,7 +156,7 @@ public class Main extends Activity {
 			return true;
 		case R.id.about:
 			AlertDialog.Builder about = new AlertDialog.Builder(this);
-			LinearLayout layout = (LinearLayout) getLayoutInflater().inflate(R.layout.about);
+			View layout = getLayoutInflater().inflate(R.layout.about);
 			Linkify.addLinks((TextView) layout.findViewById(R.id.ventriloidSource), Linkify.ALL);
 			Linkify.addLinks((TextView) layout.findViewById(R.id.manglerSource), Linkify.ALL);
 			Linkify.addLinks((TextView) layout.findViewById(R.id.absSource), Linkify.ALL);

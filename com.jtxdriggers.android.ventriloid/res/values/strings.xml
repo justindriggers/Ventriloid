@@ -37,5 +37,8 @@
     <string name="chat">Chat</string>
     <string name="close_chat">Close Chat</string>
     <string name="edit_hint">Type message</string>
+    <string name="mangler"><b><u>The Developers of Mangler:</u></b>\nEric Connell\nDaniel Sloof\nhumbaba (anonymous)\nHaxar (anonymous)\nFelyza Wishbringer\nBob Shaffer II</string>
+    <string name="spux"><b><u>The Developers of Spux:</u></b>\nMichael Sierks\nCris Favero</string>
+    <string name="vent_enc"><b><u>Ventrilo Encryption Algorithm:</u></b>\nLuigi Auriemma</string>
 
 </resources>
