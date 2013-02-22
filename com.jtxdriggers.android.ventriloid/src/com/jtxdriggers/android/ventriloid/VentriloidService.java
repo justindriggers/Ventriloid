@@ -42,6 +42,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
@@ -62,8 +63,8 @@ public class VentriloidService extends Service {
 	private static boolean connected = false;
 	
 	private final IBinder BINDER = new MyBinder();
-	private final Handler HANDLER = new Handler();
 	
+	private Handler handler;
 	private Runnable r;
 	private SharedPreferences prefs, volumePrefs, passwordPrefs;
 	private PowerManager.WakeLock wakeLock;
@@ -118,7 +119,7 @@ public class VentriloidService extends Service {
 		r = new Runnable() {
 			public void run() {
 				timeout = true;
-				HANDLER.postDelayed(new Runnable() {
+				handler.postDelayed(new Runnable() {
 					@Override
 					public void run() {
 						if (timeout) {
@@ -127,7 +128,7 @@ public class VentriloidService extends Service {
 								.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL));
 							Toast.makeText(getApplicationContext(), "Connection timed out.", Toast.LENGTH_SHORT).show();
 							reconnectTimer = 10;
-							HANDLER.post(r);
+							handler.post(r);
 						}
 					}
 				}, 9500);
@@ -141,7 +142,7 @@ public class VentriloidService extends Service {
 					
 					start = Service.START_STICKY;
 				} else {
-					HANDLER.post(new Runnable() {
+					handler.post(new Runnable() {
 						@Override
 						public void run() {
 							VentriloEventData data = new VentriloEventData();
@@ -157,7 +158,7 @@ public class VentriloidService extends Service {
 				timeout = false;
 			}
 		};
-		HANDLER.post(r);
+		handler.post(r);
 		
 		return start;
 	}
@@ -165,6 +166,15 @@ public class VentriloidService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				Looper.prepare();
+				handler = new Handler();
+				Looper.loop();
+			}
+		}).start();
 		
 		player = new Player(this);
 		recorder = new Recorder(this);
@@ -188,7 +198,7 @@ public class VentriloidService extends Service {
 					if (status == TextToSpeech.SUCCESS)
 						ttsActive = true;
 					else
-						HANDLER.post(new Runnable() {
+						handler.post(new Runnable() {
 							@Override
 							public void run() {
 								Toast.makeText(getApplicationContext(), "TTS Initialization faled.", Toast.LENGTH_SHORT).show();
@@ -378,7 +388,7 @@ public class VentriloidService extends Service {
 					
 					VentriloInterface.error(data);
 					if (data.error.message.length > 0 && !disconnect)
-						HANDLER.post(new Runnable() {
+						handler.post(new Runnable() {
 							@Override
 							public void run() {
 								Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
@@ -411,14 +421,14 @@ public class VentriloidService extends Service {
 											.putExtra("type", (short) -1)
 											.putExtra("timer", reconnectTimer));
 										reconnectTimer--;
-										HANDLER.postDelayed(this, 1000);
+										handler.postDelayed(this, 1000);
 									} else {
 										nm.notify(userId, createNotification("Reconnecting...", data.type, (short) 0));
 										sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
 											.putExtra("type", (short) -1));
 										reconnectTimer--;
 										timeout = true;
-										HANDLER.postDelayed(new Runnable() {
+										handler.postDelayed(new Runnable() {
 											@Override
 											public void run() {
 												if (timeout) {
@@ -427,7 +437,7 @@ public class VentriloidService extends Service {
 														.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL));
 													Toast.makeText(getApplicationContext(), "Connection timed out.", Toast.LENGTH_SHORT).show();
 													reconnectTimer = 10;
-													HANDLER.post(r);
+													handler.post(r);
 												}
 											}
 										}, 9500);
@@ -453,14 +463,14 @@ public class VentriloidService extends Service {
 											if (data.error.disconnected)
 												disconnect();
 											reconnectTimer = 10;
-											HANDLER.post(this);
+											handler.post(this);
 										}
 										timeout = false;
 									}
 								}
 							}
 						};
-						HANDLER.post(r);
+						handler.post(r);
 					}
 					break;
 					
@@ -580,7 +590,7 @@ public class VentriloidService extends Service {
 			if (data.error.disconnected)
 				disconnect();
 			else
-				HANDLER.post(new Runnable() {
+				handler.post(new Runnable() {
 					@Override
 					public void run() {
 						Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
@@ -908,7 +918,7 @@ public class VentriloidService extends Service {
 			sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 			am.startBluetoothSco();
 			registerReceiver(bluetoothReceiver, new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED));
-			HANDLER.post(new Runnable() {
+			handler.post(new Runnable() {
 				int counter = 0;
 				String text = "Connecting.";
 				@Override
@@ -925,7 +935,7 @@ public class VentriloidService extends Service {
 							counter++;
 							
 							if (!bluetoothConnected)
-								HANDLER.postDelayed(this, 1000);
+								handler.postDelayed(this, 1000);
 						} else {
 							am.stopBluetoothSco();
 							items.setBluetooth(false);
@@ -1018,14 +1028,14 @@ public class VentriloidService extends Service {
 								.putExtra("type", (short) -1)
 								.putExtra("timer", reconnectTimer));
 							reconnectTimer--;
-							HANDLER.postDelayed(this, 1000);
+							handler.postDelayed(this, 1000);
 						} else {
 							nm.notify(userId, createNotification("Reconnecting...", (short) VentriloEvents.V3_EVENT_DISCONNECT, (short) 0));
 							sendBroadcast(new Intent(Main.SERVICE_RECEIVER)
 								.putExtra("type", (short) -1));
 							reconnectTimer--;
 							timeout = true;
-							HANDLER.postDelayed(new Runnable() {
+							handler.postDelayed(new Runnable() {
 								@Override
 								public void run() {
 									if (timeout) {
@@ -1034,7 +1044,7 @@ public class VentriloidService extends Service {
 											.putExtra("type", (short)VentriloEvents.V3_EVENT_LOGIN_FAIL));
 										Toast.makeText(getApplicationContext(), "Connection timed out.", Toast.LENGTH_SHORT).show();
 										reconnectTimer = 10;
-										HANDLER.post(r);
+										handler.post(r);
 									}
 								}
 							}, 9500);
@@ -1058,7 +1068,7 @@ public class VentriloidService extends Service {
 									items.setBluetoothConnecting("Connecting...");
 									sendBroadcast(new Intent(Connected.SERVICE_RECEIVER));
 									am.startBluetoothSco();
-									HANDLER.post(new Runnable() {
+									handler.post(new Runnable() {
 										int counter = 0;
 										String text = "Connecting.";
 										@TargetApi(Build.VERSION_CODES.FROYO)
@@ -1076,7 +1086,7 @@ public class VentriloidService extends Service {
 													counter++;
 													
 													if (!bluetoothConnected)
-														HANDLER.postDelayed(this, 1000);
+														handler.postDelayed(this, 1000);
 												} else {
 													am.stopBluetoothSco();
 													items.setBluetooth(false);
@@ -1103,13 +1113,13 @@ public class VentriloidService extends Service {
 								if (data.error.disconnected)
 									disconnect();
 								reconnectTimer = 10;
-								HANDLER.post(this);
+								handler.post(this);
 							}
 							timeout = false;
 						}
 					}
 				};
-				HANDLER.post(r);
+				handler.post(r);
         		break;
         	default:
                 super.onCallStateChanged(state, incomingNumber);
