@@ -26,6 +26,7 @@ import org.holoeverywhere.preference.Preference;
 import org.holoeverywhere.preference.Preference.OnPreferenceChangeListener;
 import org.holoeverywhere.preference.Preference.OnPreferenceClickListener;
 import org.holoeverywhere.preference.PreferenceFragment;
+import org.holoeverywhere.preference.RingtonePreference;
 import org.holoeverywhere.widget.LinearLayout;
 import org.holoeverywhere.widget.TextView;
 
@@ -34,6 +35,8 @@ import com.actionbarsherlock.view.MenuItem;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnKeyListener;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.view.Gravity;
@@ -75,16 +78,21 @@ public class Settings extends Activity {
 			key = getDefaultSharedPreferences().getInt("ptt_key", KeyEvent.KEYCODE_CAMERA);
 			
 			final Preference tts = findPreference("tts");
+			final Preference ringer = findPreference("notifications");
 			final Preference ptt = findPreference("ptt");
 
-			tts.setEnabled(getDefaultSharedPreferences().getBoolean("tts_active", true));
+			tts.setEnabled(getDefaultSharedPreferences().getString("notification_type", "Text to Speech").equals("Text to Speech"));
+			ringer.setEnabled(getDefaultSharedPreferences().getString("notification_type", "Text to Speech").equals("Ringtone"));
 			ptt.setEnabled(!getDefaultSharedPreferences().getBoolean("voice_activation", false));
 			
-			Preference ttsActive = findPreference("tts_active");
-			ttsActive.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			Preference notificationType = findPreference("notification_type");
+			notificationType.setSummary(getDefaultSharedPreferences().getString("notification_type", "Text to Speech"));
+			notificationType.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 				@Override
 				public boolean onPreferenceChange(Preference preference, Object newValue) {
-					tts.setEnabled((Boolean) newValue);
+					preference.setSummary((String) newValue);
+					tts.setEnabled(newValue.equals("Text to Speech"));
+					ringer.setEnabled(newValue.equals("Ringtone"));
 					return true;
 				}
 			});
@@ -150,7 +158,57 @@ public class Settings extends Activity {
 					return true;
 				}
 			});
+			
+			String defaultRingtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString();
+			
+			RingtonePreference connectedNotif = (RingtonePreference) findPreference("connect_notification");
+			connectedNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("connect_notification", defaultRingtone))).getTitle(getActivity()));
+			connectedNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
+			
+			RingtonePreference disconnectedNotif = (RingtonePreference) findPreference("disconnect_notification");
+			disconnectedNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("disconnect_notification", defaultRingtone))).getTitle(getActivity()));
+			disconnectedNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
+			
+			RingtonePreference loginNotif = (RingtonePreference) findPreference("login_notification");
+			loginNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("login_notification", defaultRingtone))).getTitle(getActivity()));
+			loginNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
+			
+			RingtonePreference logoutNotif = (RingtonePreference) findPreference("logout_notification");
+			logoutNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("logout_notification", defaultRingtone))).getTitle(getActivity()));
+			logoutNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
+			
+			RingtonePreference moveNotif = (RingtonePreference) findPreference("move_notification");
+			moveNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("move_notification", defaultRingtone))).getTitle(getActivity()));
+			moveNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
+			
+			RingtonePreference joinNotif = (RingtonePreference) findPreference("join_notification");
+			joinNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("join_notification", defaultRingtone))).getTitle(getActivity()));
+			joinNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
+			
+			RingtonePreference leaveNotif = (RingtonePreference) findPreference("leave_notification");
+			leaveNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("leave_notification", defaultRingtone))).getTitle(getActivity()));
+			leaveNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
+			
+			RingtonePreference pmNotif = (RingtonePreference) findPreference("pm_notification");
+			pmNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("pm_notification", defaultRingtone))).getTitle(getActivity()));
+			pmNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
+			
+			RingtonePreference pageNotif = (RingtonePreference) findPreference("page_notification");
+			pageNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("page_notification", defaultRingtone))).getTitle(getActivity()));
+			pageNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
 	    }
+	    
+	    private OnPreferenceChangeListener ringtoneChangedListener = new OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				if (((String) newValue).length() > 0) {
+					preference.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse((String) newValue)).getTitle(getActivity()));
+					return true;
+				}
+				
+				return false;
+			}
+	    };
 	    
 		private String getKeyName(int keyCode) {
 			if (keyMap.isPrintingKey(keyCode))

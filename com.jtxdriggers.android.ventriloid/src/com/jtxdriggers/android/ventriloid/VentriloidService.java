@@ -37,6 +37,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Build;
@@ -85,6 +88,7 @@ public class VentriloidService extends Service {
 	private boolean manualSorting = false,
 		voiceActivation = false,
 		ttsActive = false,
+		ringtoneActive = false,
 		muted = false,
 		vibrate = false,
 		admin = false,
@@ -191,7 +195,7 @@ public class VentriloidService extends Service {
 		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 		vibrate = prefs.getBoolean("vibrate", true);
 		
-		if (prefs.getBoolean("tts_active", true))
+		if (prefs.getString("notification_type", "Text to Speech").equals("Text to Speech"))
 			tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {				
 				@Override
 				public void onInit(int status) {
@@ -206,6 +210,8 @@ public class VentriloidService extends Service {
 						});
 				}
 			});
+		else if (prefs.getString("notification_type", "Text to Speech").equals("Ringtone"))
+			ringtoneActive = true;
 		
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
 		
@@ -293,6 +299,9 @@ public class VentriloidService extends Service {
 							if (am.isBluetoothScoOn())
 								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 							tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " has logged in.", TextToSpeech.QUEUE_ADD, params);
+						} else if (ringtoneActive && !muted) {
+							Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("login_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+							ringtone.play();
 						}
 					}
 					break;
@@ -300,13 +309,16 @@ public class VentriloidService extends Service {
 				case VentriloEvents.V3_EVENT_USER_LOGOUT:
 					player.close(data.user.id);
 					item = items.getUserById(data.user.id);
-					if (((Item.User) item).realId == 0) {
+					if (item != null && ((Item.User) item).realId == 0) {
 						nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " has logged out.", data.type, item.id));
 						if (ttsActive && !muted && prefs.getBoolean("tts_server", true)) {
 							HashMap<String, String> params = new HashMap<String, String>();
 							if (am.isBluetoothScoOn())
 								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 							tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " has logged out.", TextToSpeech.QUEUE_ADD, params);
+						} else if (ringtoneActive && !muted) {
+							Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("logout_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+							ringtone.play();
 						}
 					}
 					break;
@@ -322,6 +334,9 @@ public class VentriloidService extends Service {
 						if (am.isBluetoothScoOn())
 							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 						tts.speak("Connected.", TextToSpeech.QUEUE_ADD, params);
+					} else if (ringtoneActive && !muted) {
+						Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("connect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+						ringtone.play();
 					}
 					recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
 					if (voiceActivation)
@@ -345,6 +360,10 @@ public class VentriloidService extends Service {
 						recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(data.user.id)));
 						if (voiceActivation)
 							recorder.start(threshold);
+						if (ringtoneActive && !muted) {
+							Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("move_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+							ringtone.play();
+						}
 					} else {
 						item = items.getUserById(data.user.id);
 						if (item != null) {
@@ -355,6 +374,9 @@ public class VentriloidService extends Service {
 									if (am.isBluetoothScoOn())
 										params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 									tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " joined the channel.", TextToSpeech.QUEUE_ADD, params);
+								} else if (ringtoneActive && !muted) {
+									Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("join_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+									ringtone.play();
 								}
 							} else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 								nm.notify(VentriloInterface.getuserid(), createNotification(item.name + " left the channel.", data.type, item.id));
@@ -363,6 +385,9 @@ public class VentriloidService extends Service {
 									if (am.isBluetoothScoOn())
 										params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 									tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " left the channel.", TextToSpeech.QUEUE_ADD, params);
+								} else if (ringtoneActive && !muted) {
+									Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("leave_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+									ringtone.play();
 								}
 							}
 						}
@@ -399,6 +424,9 @@ public class VentriloidService extends Service {
 						if (am.isBluetoothScoOn())
 							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 						tts.speak("Disconnected.", TextToSpeech.QUEUE_ADD, params);
+					} else if (ringtoneActive && !muted) {
+						Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("disconnect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+						ringtone.play();
 					}
 					
 					if (!disconnect) {
@@ -482,12 +510,19 @@ public class VentriloidService extends Service {
 						if (am.isBluetoothScoOn())
 							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 						tts.speak("Page from " + (item.phonetic.length() > 0 ? item.phonetic : item.name), TextToSpeech.QUEUE_ADD, params);
+					} else if (ringtoneActive && !muted) {
+						Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("page_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+						ringtone.play();
 					}
 					break;
 
 				case VentriloEvents.V3_EVENT_PRIVATE_CHAT_MESSAGE:
 					if (data.user.privchat_user2 != VentriloInterface.getuserid() && (notifyMap.get(data.user.privchat_user2) == null || notifyMap.get(data.user.privchat_user2))) {
 						nm.notify(-data.user.privchat_user2, createNotification(bytesToString(data.data.chatmessage), data.type, data.user.privchat_user2));
+					}
+					if (ringtoneActive && !muted) {
+						Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("pm_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+						ringtone.play();
 					}
 					break;
 				}

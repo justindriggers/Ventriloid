@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     
+    <string-array name="notificationTypes">
+        
+        <item>Silent</item>
+        <item>Text to Speech</item>
+        <item>Ringtone</item>
+        
+    </string-array>
+    
     <string-array name="charsets">
         
 		<item>ISO-8859-1 (Latin1)</item>

@@ -3,16 +3,16 @@
     
     <PreferenceCategory holo:title="General">
         
-        <CheckBoxPreference holo:key="tts_active"
-            holo:title="Text to Speech Notifications"
-            holo:summary="Select if you wish to enable TTS notifications"
-            holo:defaultValue="true"
-            holo:order="0" />
-        
         <CheckBoxPreference holo:key="screen_on"
             holo:title="Keep Screen On"
             holo:summary="WARNING: Drains battery!"
             holo:defaultValue="false"
+            holo:order="0" />
+        
+        <ListPreference holo:key="notification_type"
+            holo:title="Notifications"
+			holo:entries="@array/notificationTypes"
+			holo:entryValues="@array/notificationTypes"
             holo:order="1" />
 	    
 	    <CheckBoxPreference holo:key="voice_activation"
@@ -84,6 +84,65 @@
 	        holo:title="Page Received"
 	        holo:defaultValue="true"
 	        holo:order="4" />
+	    
+	</PreferenceCategory>
+	
+	<PreferenceCategory holo:key="notifications"
+	    holo:title="Notifications">
+	    
+	    <RingtonePreference holo:key="connect_notification"
+	        holo:title="Connected"
+	        holo:ringtoneType="notification"
+	        holo:showDefault="true"
+	        holo:order="0" />
+	    
+	    <RingtonePreference holo:key="disconnect_notification"
+	        holo:title="Disconnected"
+	        holo:ringtoneType="notification"
+	        holo:showDefault="true"
+	        holo:order="1" />
+	    
+	    <RingtonePreference holo:key="login_notification"
+	        holo:title="User Log In"
+	        holo:ringtoneType="notification"
+	        holo:showDefault="true"
+	        holo:order="2" />
+	    
+	    <RingtonePreference holo:key="logout_notification"
+	        holo:title="User Log Out"
+	        holo:ringtoneType="notification"
+	        holo:showDefault="true"
+	        holo:order="3" />
+	    
+	    <RingtonePreference holo:key="move_notification"
+	        holo:title="Switch Channels"
+	        holo:ringtoneType="notification"
+	        holo:showDefault="true"
+	        holo:order="4" />
+	    
+	    <RingtonePreference holo:key="join_notification"
+	        holo:title="User Joins Channel"
+	        holo:ringtoneType="notification"
+	        holo:showDefault="true"
+	        holo:order="5" />
+	    
+	    <RingtonePreference holo:key="leave_notification"
+	        holo:title="User Leaves Channel"
+	        holo:ringtoneType="notification"
+	        holo:showDefault="true"
+	        holo:order="6" />
+	    
+	    <RingtonePreference holo:key="pm_notification"
+	        holo:title="Private Message Received"
+	        holo:ringtoneType="notification"
+	        holo:showDefault="true"
+	        holo:order="7" />
+	    
+	    <RingtonePreference holo:key="page_notification"
+	        holo:title="Page Received"
+	        holo:ringtoneType="notification"
+	        holo:showDefault="true"
+	        holo:order="8" />
 	    
 	</PreferenceCategory>
 	
