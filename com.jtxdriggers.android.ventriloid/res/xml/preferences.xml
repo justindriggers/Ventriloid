@@ -13,6 +13,7 @@
             holo:title="Notifications"
 			holo:entries="@array/notificationTypes"
 			holo:entryValues="@array/notificationTypes"
+			holo:defaultValue="Text to Speech"
             holo:order="1" />
 	    
 	    <CheckBoxPreference holo:key="voice_activation"

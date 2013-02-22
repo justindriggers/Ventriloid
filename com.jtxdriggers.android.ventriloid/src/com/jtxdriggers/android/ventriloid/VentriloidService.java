@@ -50,6 +50,7 @@ import android.os.PowerManager;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.TextToSpeech.OnUtteranceCompletedListener;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -195,22 +196,25 @@ public class VentriloidService extends Service {
 		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 		vibrate = prefs.getBoolean("vibrate", true);
 		
-		if (prefs.getString("notification_type", "Text to Speech").equals("Text to Speech"))
+		if (prefs.getString("notification_type", "Text to Speech").equals("Text to Speech")) {
+			ttsActive = true;
 			tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {				
 				@Override
 				public void onInit(int status) {
 					if (status == TextToSpeech.SUCCESS)
 						ttsActive = true;
-					else
+					else {
+						ttsActive = false;
 						handler.post(new Runnable() {
 							@Override
 							public void run() {
 								Toast.makeText(getApplicationContext(), "TTS Initialization faled.", Toast.LENGTH_SHORT).show();
 							}
 						});
+					}
 				}
 			});
-		else if (prefs.getString("notification_type", "Text to Speech").equals("Ringtone"))
+		} else if (prefs.getString("notification_type", "Text to Speech").equals("Ringtone"))
 			ringtoneActive = true;
 		
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
@@ -232,8 +236,6 @@ public class VentriloidService extends Service {
 		
 		unregisterReceiver(activityReceiver);
 		VentriloInterface.logout();
-		if (tts != null)
-			tts.shutdown();
 		wifiLock.release();
 		wakeLock.release();
 		nm.cancelAll();
@@ -329,7 +331,7 @@ public class VentriloidService extends Service {
 					items.setUserId();
 					nm.cancelAll();
 					startForeground(VentriloInterface.getuserid(), createNotification("Now Connected.", data.type, (short) 0));
-					if (ttsActive && !muted && prefs.getBoolean("tts_connect", false)) {
+					if (ttsActive && !muted && prefs.getBoolean("tts_connect", true)) {
 						HashMap<String, String> params = new HashMap<String, String>();
 						if (am.isBluetoothScoOn())
 							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
@@ -419,17 +421,18 @@ public class VentriloidService extends Service {
 								Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
 							}
 						});
-					if (ttsActive && !muted && prefs.getBoolean("tts_disconnect", false)) {
-						HashMap<String, String> params = new HashMap<String, String>();
-						if (am.isBluetoothScoOn())
-							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
-						tts.speak("Disconnected.", TextToSpeech.QUEUE_ADD, params);
-					} else if (ringtoneActive && !muted) {
-						Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("disconnect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
-						ringtone.play();
-					}
 					
 					if (!disconnect) {
+						if (ttsActive && !muted && prefs.getBoolean("tts_disconnect", true)) {
+							HashMap<String, String> params = new HashMap<String, String>();
+							if (am.isBluetoothScoOn())
+								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+							tts.speak("Disconnected.", TextToSpeech.QUEUE_ADD, params);
+						} else if (ringtoneActive && !muted) {
+							Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("disconnect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+							ringtone.play();
+						}
+						
 						item = items.getCurrentChannel().get(0);
 						final short id = item.id;
 						final short userId = items.getUserId();
@@ -871,11 +874,38 @@ public class VentriloidService extends Service {
 		return notifBuilder.getNotification();
 	}
 	
+	@SuppressWarnings("deprecation")
 	public void disconnect() {
 		disconnect = true;
 		connected = false;
-		stopForeground(true);
-		stopSelf();
+		
+		if (ttsActive && !muted && prefs.getBoolean("tts_disconnect", true)) {
+			HashMap<String, String> params = new HashMap<String, String>();
+			if (am.isBluetoothScoOn())
+				params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+			params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "Disconnected");
+			tts.speak("Disconnected.", TextToSpeech.QUEUE_ADD, params);
+			tts.setOnUtteranceCompletedListener(new OnUtteranceCompletedListener() {
+				@Override
+				public void onUtteranceCompleted(String utteranceId) {
+					if (utteranceId.equals("Disconnected")) {
+						tts.shutdown();
+						
+						stopForeground(true);
+						stopSelf();
+					}
+				}
+			});
+		} else if (ringtoneActive && !muted) {
+			Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("disconnect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+			ringtone.play();
+			
+			stopForeground(true);
+			stopSelf();
+		} else {
+			stopForeground(true);
+			stopSelf();
+		}
 	}
 	
 	public static boolean isConnected() {
