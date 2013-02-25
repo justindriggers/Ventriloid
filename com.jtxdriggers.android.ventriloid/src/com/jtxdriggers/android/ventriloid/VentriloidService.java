@@ -98,8 +98,7 @@ public class VentriloidService extends Service {
 		bluetoothConnected = false,
 		timeout = false,
 		disconnect;
-	private int start,
-		reconnectTimer,
+	private int reconnectTimer,
 		viewType = ViewFragment.VIEW_TYPE_SERVER;
 	private short chatId = -1;
 	private double threshold;
@@ -120,7 +119,8 @@ public class VentriloidService extends Service {
         wifiLock.acquire();
         
         disconnect = true;
-        
+
+		items = new ItemData(this);
 		r = new Runnable() {
 			public void run() {
 				timeout = true;
@@ -144,8 +144,6 @@ public class VentriloidService extends Service {
 							while (VentriloInterface.recv());
 						}
 					}).start();
-					
-					start = Service.START_STICKY;
 				} else {
 					handler.post(new Runnable() {
 						@Override
@@ -157,15 +155,13 @@ public class VentriloidService extends Service {
 							Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
 						}
 					});
-					
-					start = Service.START_NOT_STICKY;
 				}
 				timeout = false;
 			}
 		};
 		handler.post(r);
 		
-		return start;
+		return Service.START_NOT_STICKY;
 	}
 	
 	@Override
@@ -219,14 +215,14 @@ public class VentriloidService extends Service {
 		
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
 		
-		items = new ItemData(this);
-		
 		//VentriloInterface.debuglevel(65535);
 		new Thread(eventHandler).start();
 	}
 
 	@Override
 	public void onDestroy() {
+		running = false;
+		connected = false;
         if(tm != null)
             tm.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
         
@@ -239,7 +235,6 @@ public class VentriloidService extends Service {
 		wifiLock.release();
 		wakeLock.release();
 		nm.cancelAll();
-		running = false;
 		super.onDestroy();
 	}
 
@@ -287,7 +282,7 @@ public class VentriloidService extends Service {
 				final VentriloEventData data = new VentriloEventData();
 				VentriloInterface.getevent(data);
 				
-				switch (data.type) {					
+				switch (data.type) {
 				case VentriloEvents.V3_EVENT_USER_LOGIN:
 					item = getUserFromData(data);
 					if (item.id == VentriloInterface.getuserid())
@@ -432,6 +427,8 @@ public class VentriloidService extends Service {
 							Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("disconnect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 							ringtone.play();
 						}
+						
+						if (!running) break;
 						
 						item = items.getCurrentChannel().get(0);
 						final short id = item.id;
@@ -1045,8 +1042,6 @@ public class VentriloidService extends Service {
 		}
 	};
 	
-
-    
     private PhoneStateListener phoneStateListener = new PhoneStateListener() {
     	
     	private Item.Channel c;
