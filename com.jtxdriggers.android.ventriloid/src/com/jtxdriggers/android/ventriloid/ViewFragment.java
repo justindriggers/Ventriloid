@@ -139,8 +139,9 @@ public class ViewFragment extends Fragment {
 		packedPosition = ((ExpandableListContextMenuInfo) menuInfo).packedPosition;
 		int packedPositionType = ExpandableListView.getPackedPositionType(packedPosition);
 		
-		Item.Channel c = s.getItemData().getChannels()
-			.get(ExpandableListView.getPackedPositionGroup(packedPosition));
+		Item.Channel c = viewType == VIEW_TYPE_SERVER ?
+				s.getItemData().getChannels().get(ExpandableListView.getPackedPositionGroup(packedPosition)) :
+				s.getItemData().getCurrentChannel().get(0);
 		
 		if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
 			// Do stuff for group long click
@@ -156,9 +157,12 @@ public class ViewFragment extends Fragment {
 				menu.add(Menu.NONE, ContextMenuItems.CLEAR_PASSWORD, ContextMenu.NONE, "Clear Saved Password");
 		} else if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
 			// Do stuff for child long click
-			Item.User u = s.getItemData().getUsers()
-				.get(ExpandableListView.getPackedPositionGroup(packedPosition))
-				.get(ExpandableListView.getPackedPositionChild(packedPosition));
+			Item.User u = viewType == VIEW_TYPE_SERVER ?
+				s.getItemData().getUsers()
+					.get(ExpandableListView.getPackedPositionGroup(packedPosition))
+					.get(ExpandableListView.getPackedPositionChild(packedPosition)) :
+				s.getItemData().getCurrentUsers()
+					.get(0).get(ExpandableListView.getPackedPositionChild(packedPosition));
 			
 			if (u.parent != VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 				// Do stuff if you select a user not in your current channel
