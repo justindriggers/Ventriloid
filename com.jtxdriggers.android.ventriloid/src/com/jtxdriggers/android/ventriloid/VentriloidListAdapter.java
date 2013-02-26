@@ -43,8 +43,8 @@ public class VentriloidListAdapter extends BaseExpandableListAdapter {
 	}
 	
 	public void setContent(ItemData items) {
-		channels = isChannelView ? items.getCurrentChannel() : items.getChannels();
-		users = isChannelView ? items.getCurrentUsers() : items.getUsers();
+		channels = isChannelView ? new ArrayList<Item.Channel>(items.getCurrentChannel()) : new ArrayList<Item.Channel>(items.getChannels());
+		users = isChannelView ? new ArrayList<ArrayList<Item.User>>(items.getCurrentUsers()) : new ArrayList<ArrayList<Item.User>>(items.getUsers());
 		notifyDataSetChanged();
 	}
 

@@ -556,6 +556,7 @@ public class VentriloidService extends Service {
 			admin = VentriloInterface.getpermission("serveradmin");
 			item = items.getChannels().get(0);
 			((Item.Channel) item).changeStatus(admin);
+			items.refreshAll();
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_LOGIN:
@@ -626,12 +627,13 @@ public class VentriloidService extends Service {
 			if (data.error.disconnected)
 				disconnect();
 			else
-				handler.post(new Runnable() {
-					@Override
-					public void run() {
-						Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
-					}
-				});
+				if (bytesToString(data.error.message).length() > 0)
+					handler.post(new Runnable() {
+						@Override
+						public void run() {
+							Toast.makeText(getApplicationContext(), bytesToString(data.error.message), Toast.LENGTH_SHORT).show();
+						}
+					});
 			sendBroadcast = false;
 			break;
 
@@ -733,6 +735,7 @@ public class VentriloidService extends Service {
 			switch (data.serverproperty.property) {
 			case VentriloEvents.V3_SRV_PROP_CHAN_ORDER:
 				manualSorting = data.serverproperty.value == 0 ? false : true;
+				items.refreshAll();
 			}
 			break;
 		}

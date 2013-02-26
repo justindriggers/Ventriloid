@@ -20,9 +20,13 @@
 package com.jtxdriggers.android.ventriloid;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+
+import com.jtxdriggers.android.ventriloid.Item.Channel;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -100,6 +104,36 @@ public class ItemData {
 		}
 	}
 	
+	public synchronized void refreshAll() {
+		ArrayList<Item.Channel> channelsCopy = new ArrayList<Item.Channel>(channels);
+		ArrayList<ArrayList<Item.User>> usersCopy = new ArrayList<ArrayList<Item.User>>(users);
+		
+		Collections.sort(channelsCopy, new Comparator<Item.Channel>() {
+			@Override
+			public int compare(Channel c1, Channel c2) {
+				return c1.parent - c2.parent;
+			}
+		});
+		
+		channels.clear();
+		users.clear();
+		Item item = new Item();
+		channels.add(item.new Channel());
+		users.add(new ArrayList<Item.User>());
+		
+		setLobby(channelsCopy.get(0));
+		
+		for (int i = 1; i < channelsCopy.size(); i++) {
+			addChannel(channelsCopy.get(i));
+		}
+		
+		for (int i = 0; i < usersCopy.size(); i++) {
+			for (int j = 0; j < usersCopy.get(i).size(); j++) {
+				addUser(usersCopy.get(i).get(j));
+			}
+		}
+	}
+	
 	public synchronized void addCurrentUser(Item.User user) {
 		if (user.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 			int i = 0;
@@ -114,7 +148,7 @@ public class ItemData {
 			if (channels.get(i).id == user.parent) {
 				user.indent = channels.get(i).indent + "     ";
 				int j = 0;
-				while (j < users.get(i).size() && (users.get(i).get(j).formatRank(users.get(i).get(j).rank) + users.get(i).get(j).name).compareToIgnoreCase(user.formatRank(user.rank) + user.name) < 0)
+				while (j < users.get(i).size() && ((users.get(i).get(j).rank.length() > 0 ? " " : "") + users.get(i).get(j).name).compareToIgnoreCase((user.rank.length() > 0 ? " " : "") + user.name) < 0)
 					j++;
 				users.get(i).add(j, user);
 				return;
