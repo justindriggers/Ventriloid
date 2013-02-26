@@ -35,6 +35,7 @@ import com.actionbarsherlock.view.MenuItem;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnKeyListener;
+import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -162,40 +163,48 @@ public class Settings extends Activity {
 			String defaultRingtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString();
 			
 			RingtonePreference connectedNotif = (RingtonePreference) findPreference("connect_notification");
-			connectedNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("connect_notification", defaultRingtone))).getTitle(getActivity()));
+			connectedNotif.setSummary(getRingtoneName("connect_notification", defaultRingtone));
 			connectedNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
 			
 			RingtonePreference disconnectedNotif = (RingtonePreference) findPreference("disconnect_notification");
-			disconnectedNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("disconnect_notification", defaultRingtone))).getTitle(getActivity()));
+			disconnectedNotif.setSummary(getRingtoneName("disconnect_notification", defaultRingtone));
 			disconnectedNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
 			
 			RingtonePreference loginNotif = (RingtonePreference) findPreference("login_notification");
-			loginNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("login_notification", defaultRingtone))).getTitle(getActivity()));
+			loginNotif.setSummary(getRingtoneName("login_notification", defaultRingtone));
 			loginNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
 			
 			RingtonePreference logoutNotif = (RingtonePreference) findPreference("logout_notification");
-			logoutNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("logout_notification", defaultRingtone))).getTitle(getActivity()));
+			logoutNotif.setSummary(getRingtoneName("logout_notification", defaultRingtone));
 			logoutNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
 			
 			RingtonePreference moveNotif = (RingtonePreference) findPreference("move_notification");
-			moveNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("move_notification", defaultRingtone))).getTitle(getActivity()));
+			moveNotif.setSummary(getRingtoneName("move_notification", defaultRingtone));
 			moveNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
 			
 			RingtonePreference joinNotif = (RingtonePreference) findPreference("join_notification");
-			joinNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("join_notification", defaultRingtone))).getTitle(getActivity()));
+			joinNotif.setSummary(getRingtoneName("join_notification", defaultRingtone));
 			joinNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
 			
 			RingtonePreference leaveNotif = (RingtonePreference) findPreference("leave_notification");
-			leaveNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("leave_notification", defaultRingtone))).getTitle(getActivity()));
+			leaveNotif.setSummary(getRingtoneName("leave_notification", defaultRingtone));
 			leaveNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
 			
 			RingtonePreference pmNotif = (RingtonePreference) findPreference("pm_notification");
-			pmNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("pm_notification", defaultRingtone))).getTitle(getActivity()));
+			pmNotif.setSummary(getRingtoneName("pm_notification", defaultRingtone));
 			pmNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
 			
 			RingtonePreference pageNotif = (RingtonePreference) findPreference("page_notification");
-			pageNotif.setSummary(RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString("page_notification", defaultRingtone))).getTitle(getActivity()));
+			pageNotif.setSummary(getRingtoneName("page_notification", defaultRingtone));
 			pageNotif.setOnPreferenceChangeListener(ringtoneChangedListener);
+	    }
+	    
+	    private String getRingtoneName(String preferenceName, String defaultRingtone) {
+	    	Ringtone ringtone = RingtoneManager.getRingtone(getActivity(), Uri.parse(getDefaultSharedPreferences().getString(preferenceName, defaultRingtone)));
+	    	if (ringtone != null)
+	    		return ringtone.getTitle(getActivity());
+	    	
+	    	return "";
 	    }
 	    
 	    private OnPreferenceChangeListener ringtoneChangedListener = new OnPreferenceChangeListener() {

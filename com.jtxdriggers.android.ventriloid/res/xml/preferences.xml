@@ -67,7 +67,7 @@
 	        holo:order="0" />
 	    
 	    <CheckBoxPreference holo:key="tts_disconnect"
-	        holo:title="Disonnected"
+	        holo:title="Disconnected"
 	        holo:defaultValue="true"
 	        holo:order="1" />
 	    

@@ -162,8 +162,12 @@ public class Connected extends Activity {
     
 	@Override
     public void onStop() {
-		unregisterReceiver(fragmentReceiver);
-    	unregisterReceiver(serviceReceiver);
+		try {
+			unregisterReceiver(fragmentReceiver);
+		} catch (IllegalArgumentException e) { }
+		try {
+			unregisterReceiver(serviceReceiver);
+		} catch (IllegalArgumentException e) { }
     	unbindService(serviceConnection);
     	super.onStop();
     }

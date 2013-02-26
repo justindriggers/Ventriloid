@@ -109,6 +109,9 @@ public class VentriloidService extends Service {
 		int id = intent.getExtras().getInt("id");
 		ServerAdapter db = new ServerAdapter(this);
 		server = db.getServer(id);
+		
+		items = new ItemData(this);
+		queue.clear();
 
 		volumePrefs = getSharedPreferences("VOLUMES" + server.getId(), Context.MODE_PRIVATE);
         passwordPrefs = getSharedPreferences("PASSWORDS" + server.getId(), Context.MODE_PRIVATE);
@@ -121,7 +124,6 @@ public class VentriloidService extends Service {
         
         disconnect = true;
 
-		items = new ItemData(this);
 		r = new Runnable() {
 			public void run() {
 				timeout = true;
