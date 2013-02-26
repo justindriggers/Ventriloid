@@ -63,8 +63,12 @@ public class Player {
 	private AudioTrack open(short id, int rate, int channels, int buffer) {
         AudioTrack track;
         close(id);
-    	track = new AudioTrack(am.isBluetoothScoOn() ? AudioManager.STREAM_VOICE_CALL : AudioManager.STREAM_MUSIC, rate, channels,
-    			AudioFormat.ENCODING_PCM_16BIT, buffer, AudioTrack.MODE_STREAM);
+        try {
+	    	track = new AudioTrack(am.isBluetoothScoOn() ? AudioManager.STREAM_VOICE_CALL : AudioManager.STREAM_MUSIC, rate, channels,
+	    			AudioFormat.ENCODING_PCM_16BIT, buffer, AudioTrack.MODE_STREAM);
+        } catch (IllegalArgumentException e) {
+        	return null;
+        }
         tracks.put(id, track);
         return track;
 	}
@@ -86,6 +90,7 @@ public class Player {
 				bufferSize = VentriloInterface.pcmlengthforrate(rate) * channels * 2;
 			
             track = open(id, rate, channelsConfig, bufferSize);
+            if (track == null) return;
             track.play();
 		}
 		track.write(sample, 0, length);

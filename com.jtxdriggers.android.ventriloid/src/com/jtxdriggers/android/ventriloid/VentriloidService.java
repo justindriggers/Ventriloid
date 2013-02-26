@@ -78,6 +78,7 @@ public class VentriloidService extends Service {
 	private AudioManager am;
 	private Vibrator vibrator;
 	private TextToSpeech tts;
+	private Ringtone ringtone;
 	private Server server;
 	private ConcurrentLinkedQueue<VentriloEventData> queue;
 	private ItemData items;
@@ -297,7 +298,7 @@ public class VentriloidService extends Service {
 								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 							tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " has logged in.", TextToSpeech.QUEUE_ADD, params);
 						} else if (ringtoneActive && !muted) {
-							Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("login_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+							ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("login_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 							ringtone.play();
 						}
 					}
@@ -314,7 +315,7 @@ public class VentriloidService extends Service {
 								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 							tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " has logged out.", TextToSpeech.QUEUE_ADD, params);
 						} else if (ringtoneActive && !muted) {
-							Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("logout_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+							ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("logout_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 							ringtone.play();
 						}
 					}
@@ -332,7 +333,7 @@ public class VentriloidService extends Service {
 							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 						tts.speak("Connected.", TextToSpeech.QUEUE_ADD, params);
 					} else if (ringtoneActive && !muted) {
-						Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("connect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+						ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("connect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 						ringtone.play();
 					}
 					recorder.rate(VentriloInterface.getchannelrate(VentriloInterface.getuserchannel(VentriloInterface.getuserid())));
@@ -358,7 +359,7 @@ public class VentriloidService extends Service {
 						if (voiceActivation)
 							recorder.start(threshold);
 						if (ringtoneActive && !muted) {
-							Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("move_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+							ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("move_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 							ringtone.play();
 						}
 					} else {
@@ -372,7 +373,7 @@ public class VentriloidService extends Service {
 										params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 									tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " joined the channel.", TextToSpeech.QUEUE_ADD, params);
 								} else if (ringtoneActive && !muted) {
-									Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("join_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+									ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("join_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 									ringtone.play();
 								}
 							} else if (item.parent == VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
@@ -383,7 +384,7 @@ public class VentriloidService extends Service {
 										params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 									tts.speak((item.phonetic.length() > 0 ? item.phonetic : item.name) + " left the channel.", TextToSpeech.QUEUE_ADD, params);
 								} else if (ringtoneActive && !muted) {
-									Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("leave_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+									ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("leave_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 									ringtone.play();
 								}
 							}
@@ -424,7 +425,7 @@ public class VentriloidService extends Service {
 								params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 							tts.speak("Disconnected.", TextToSpeech.QUEUE_ADD, params);
 						} else if (ringtoneActive && !muted) {
-							Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("disconnect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+							ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("disconnect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 							ringtone.play();
 						}
 						
@@ -511,7 +512,7 @@ public class VentriloidService extends Service {
 							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
 						tts.speak("Page from " + (item.phonetic.length() > 0 ? item.phonetic : item.name), TextToSpeech.QUEUE_ADD, params);
 					} else if (ringtoneActive && !muted) {
-						Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("page_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+						ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("page_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 						ringtone.play();
 					}
 					break;
@@ -521,7 +522,7 @@ public class VentriloidService extends Service {
 						nm.notify(-data.user.privchat_user2, createNotification(bytesToString(data.data.chatmessage), data.type, data.user.privchat_user2));
 					}
 					if (ringtoneActive && !muted) {
-						Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("pm_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+						ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("pm_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 						ringtone.play();
 					}
 					break;
@@ -894,7 +895,7 @@ public class VentriloidService extends Service {
 				}
 			});
 		} else if (ringtoneActive && !muted) {
-			Ringtone ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("disconnect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+			ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("disconnect_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
 			ringtone.play();
 			
 			stopForeground(true);
