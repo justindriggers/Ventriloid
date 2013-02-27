@@ -128,7 +128,9 @@ public class ViewFragment extends Fragment {
 	
 	@Override
 	public void onStop() {
-		getActivity().unregisterReceiver(serviceReceiver);
+		try {
+			getActivity().unregisterReceiver(serviceReceiver);
+		} catch (IllegalArgumentException e) { }
 		getActivity().unbindService(serviceConnection);
 		super.onStop();
 	}
@@ -145,6 +147,7 @@ public class ViewFragment extends Fragment {
 		
 		if (packedPositionType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
 			// Do stuff for group long click
+			menu.setHeaderTitle(c.name);
 			if (c.id != VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 				// Do stuff if you don't select your current channel
 				menu.add(Menu.NONE, ContextMenuItems.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");
@@ -164,6 +167,7 @@ public class ViewFragment extends Fragment {
 				s.getItemData().getCurrentUsers()
 					.get(0).get(ExpandableListView.getPackedPositionChild(packedPosition));
 			
+			menu.setHeaderTitle(u.name);
 			if (u.parent != VentriloInterface.getuserchannel(VentriloInterface.getuserid())) {
 				// Do stuff if you select a user not in your current channel
 				menu.add(Menu.NONE, ContextMenuItems.MOVE_TO_CHANNEL, ContextMenu.NONE, "Move to Channel");

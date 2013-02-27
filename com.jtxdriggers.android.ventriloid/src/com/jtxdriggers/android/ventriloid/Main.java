@@ -23,11 +23,11 @@ import java.util.ArrayList;
 
 import org.holoeverywhere.ArrayAdapter;
 import org.holoeverywhere.app.Activity;
+import org.holoeverywhere.app.AlertDialog;
+import org.holoeverywhere.app.ProgressDialog;
 import org.holoeverywhere.widget.LinearLayout;
 import org.holoeverywhere.widget.TextView;
 
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -195,7 +195,7 @@ public class Main extends Activity {
 			}
 		}
 		
-    	invalidateOptionsMenu();
+    	supportInvalidateOptionsMenu();
 	}
     
     private BroadcastReceiver serviceReceiver = new BroadcastReceiver() {

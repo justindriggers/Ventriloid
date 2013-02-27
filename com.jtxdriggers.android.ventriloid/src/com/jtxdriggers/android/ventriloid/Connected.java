@@ -496,9 +496,10 @@ public class Connected extends Activity {
 					finish();
 					return true;
 				case VentriloidSlidingMenu.MENU_DISCONNECT:
-					s.disconnect();
-					startActivity(new Intent(Connected.this, Main.class));
-					finish();
+					if (s.disconnect()) {
+						startActivity(new Intent(Connected.this, Main.class));
+						finish();
+					}
 					return true;
 				}
 				break;

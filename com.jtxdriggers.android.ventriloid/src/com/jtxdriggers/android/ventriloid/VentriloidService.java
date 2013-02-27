@@ -576,16 +576,18 @@ public class VentriloidService extends Service {
 			
 		case VentriloEvents.V3_EVENT_USER_LOGOUT:
 			item = items.getUserById(data.user.id);
-			if (items.chatOpened(data.user.id)) {
-				items.chatDisconnect(item.id, item.name);
-				sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+			if (item != null) {
+				if (items.chatOpened(data.user.id)) {
+					items.chatDisconnect(item.id, item.name);
+					sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+				}
+				if (((Item.User) item).inChat) {
+					items.removeChatUser(data.user.id);
+					sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+				}
+				if (((Item.User) item).realId == VentriloInterface.getuserid())
+					items.getChannelById(item.parent).hasPhantom = false;
 			}
-			if (((Item.User) item).inChat) {
-				items.removeChatUser(data.user.id);
-				sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
-			}
-			if (((Item.User) item).realId == VentriloInterface.getuserid())
-				items.getChannelById(item.parent).hasPhantom = false;
 			items.removeUser(data.user.id);
 			items.removeCurrentUser(data.user.id);
 			break;
@@ -878,7 +880,7 @@ public class VentriloidService extends Service {
 	}
 	
 	@SuppressWarnings("deprecation")
-	public void disconnect() {
+	public boolean disconnect() {
 		disconnect = true;
 		connected = false;
 		
@@ -909,6 +911,8 @@ public class VentriloidService extends Service {
 			stopForeground(true);
 			stopSelf();
 		}
+		
+		return true;
 	}
 	
 	public static boolean isConnected() {

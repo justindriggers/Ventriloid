@@ -178,7 +178,7 @@ public class Manage extends ListActivity implements ActionMode.Callback {
 				android.R.id.text1, db.getAllServersAsStrings());
 		setListAdapter(adapter);
 		
-    	invalidateOptionsMenu();
+    	supportInvalidateOptionsMenu();
 	}
 
 }
