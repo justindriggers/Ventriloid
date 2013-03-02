@@ -68,7 +68,7 @@ public class VentriloidService extends Service {
 	
 	private final IBinder BINDER = new MyBinder();
 	
-	private Handler handler;
+	private Handler handler = new Handler();
 	private Runnable r;
 	private SharedPreferences prefs, volumePrefs, passwordPrefs;
 	private PowerManager.WakeLock wakeLock;
@@ -169,8 +169,8 @@ public class VentriloidService extends Service {
 	
 	@Override
 	public void onCreate() {
-		super.onCreate();
-		
+		stopForeground(true);
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -179,25 +179,16 @@ public class VentriloidService extends Service {
 				Looper.loop();
 			}
 		}).start();
-		
+
+		items = new ItemData(this);
 		player = new Player(this);
 		recorder = new Recorder(this);
 		
-		registerReceiver(activityReceiver, new IntentFilter(ACTIVITY_RECEIVER));
-
-		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-		am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		voiceActivation = prefs.getBoolean("voice_activation", false);
-		threshold = voiceActivation ? 55.03125 : -1;
-		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-		vibrate = prefs.getBoolean("vibrate", true);
 		
 		if (prefs.getString("notification_type", "Text to Speech").equals("Text to Speech")) {
 			ttsActive = true;
-			tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {				
+			tts = new TextToSpeech(VentriloidService.this, new TextToSpeech.OnInitListener() {				
 				@Override
 				public void onInit(int status) {
 					if (status == TextToSpeech.SUCCESS)
@@ -215,6 +206,16 @@ public class VentriloidService extends Service {
 			});
 		} else if (prefs.getString("notification_type", "Text to Speech").equals("Ringtone"))
 			ringtoneActive = true;
+		
+		registerReceiver(activityReceiver, new IntentFilter(ACTIVITY_RECEIVER));
+
+		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+		am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		voiceActivation = prefs.getBoolean("voice_activation", false);
+		threshold = voiceActivation ? 55.03125 : -1;
+		vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+		vibrate = prefs.getBoolean("vibrate", true);
 		
 		queue = new ConcurrentLinkedQueue<VentriloEventData>();
 		
@@ -238,7 +239,6 @@ public class VentriloidService extends Service {
 		wifiLock.release();
 		wakeLock.release();
 		nm.cancelAll();
-		super.onDestroy();
 	}
 
 	@Override
@@ -545,6 +545,9 @@ public class VentriloidService extends Service {
 	public synchronized void process(final VentriloEventData data) {
 		Item item;
 		boolean sendBroadcast = true;
+		
+		if (data == null)
+			return;
 		
 		switch (data.type) {
 		case VentriloEvents.V3_EVENT_PING:

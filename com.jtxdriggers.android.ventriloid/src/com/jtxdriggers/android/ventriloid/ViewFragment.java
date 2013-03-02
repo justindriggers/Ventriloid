@@ -123,7 +123,11 @@ public class ViewFragment extends Fragment {
 	@Override
 	public void onStart() {
 		super.onStart();
+		if (!VentriloidService.isConnected())
+			return;
+		
 		getActivity().bindService(new Intent(VentriloidService.SERVICE_INTENT), serviceConnection, Context.BIND_AUTO_CREATE);
+		getActivity().registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
 	}
 	
 	@Override
@@ -131,7 +135,9 @@ public class ViewFragment extends Fragment {
 		try {
 			getActivity().unregisterReceiver(serviceReceiver);
 		} catch (IllegalArgumentException e) { }
-		getActivity().unbindService(serviceConnection);
+		try {
+			getActivity().unbindService(serviceConnection);
+		} catch (IllegalArgumentException e) { }
 		super.onStop();
 	}
     
@@ -580,8 +586,6 @@ public class ViewFragment extends Fragment {
     private ServiceConnection serviceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
-			
-			getActivity().registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
 
 	    	prepareAdapter(viewType);
 	    	list.setAdapter(adapter);

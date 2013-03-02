@@ -156,8 +156,11 @@ public class Connected extends Activity {
 		if (!VentriloidService.isConnected()) {
 			startActivity(new Intent(this, Main.class));
 			finish();
+		} else {
+			bindService(new Intent(VentriloidService.SERVICE_INTENT), serviceConnection, Context.BIND_AUTO_CREATE);
+			registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
+			registerReceiver(fragmentReceiver, new IntentFilter(FRAGMENT_RECEIVER));
 		}
-		bindService(new Intent(VentriloidService.SERVICE_INTENT), serviceConnection, Context.BIND_AUTO_CREATE);
 	}
     
 	@Override
@@ -168,9 +171,14 @@ public class Connected extends Activity {
 		try {
 			unregisterReceiver(serviceReceiver);
 		} catch (IllegalArgumentException e) { }
-    	unbindService(serviceConnection);
+		try {
+			unbindService(serviceConnection);
+		} catch (IllegalArgumentException e) { }
     	super.onStop();
     }
+	
+	@Override
+    public void onSaveInstanceState(Bundle outState) { }
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -511,8 +519,6 @@ public class Connected extends Activity {
 	private ServiceConnection serviceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
-			registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
-			registerReceiver(fragmentReceiver, new IntentFilter(FRAGMENT_RECEIVER));
 
 			getSupportActionBar().setTitle(s.getServername());
 			
@@ -590,7 +596,8 @@ public class Connected extends Activity {
 				break;
 			default:
 				sendBroadcast(new Intent(ViewFragment.SERVICE_RECEIVER));
-				sm.getAdapter().setMenuItems(s.getItemData());
+				if (s != null)
+					sm.getAdapter().setMenuItems(s.getItemData());
 			}
 		}
 	};

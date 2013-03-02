@@ -167,22 +167,27 @@ public class ChatFragment extends Fragment {
 	@Override
 	public void onStart() {
 		super.onStart();
+		if (!VentriloidService.isConnected())
+			return;
+		
 		getActivity().bindService(new Intent(VentriloidService.SERVICE_INTENT), serviceConnection, Context.BIND_AUTO_CREATE);
+		getActivity().registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
 	}
 	
 	@Override
 	public void onStop() {
-		s.setNotify(id, true);
-		getActivity().unregisterReceiver(serviceReceiver);
-		getActivity().unbindService(serviceConnection);
+		try {
+			getActivity().unregisterReceiver(serviceReceiver);
+		} catch (IllegalArgumentException e) { }
+		try {
+			getActivity().unbindService(serviceConnection);
+		} catch (IllegalArgumentException e) { }
 		super.onStop();
 	}
     
     private ServiceConnection serviceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder binder) {
 			s = ((VentriloidService.MyBinder) binder).getService();
-			
-			getActivity().registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
 
 	    	adapter = new ChatListAdapter(getActivity(), s.getItemData().getChat(id));
 	    	list.setAdapter(adapter);
@@ -199,6 +204,7 @@ public class ChatFragment extends Fragment {
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
+			s.setNotify(id, true);
 			s = null;
 		}
 	};
