@@ -507,16 +507,18 @@ public class VentriloidService extends Service {
 					
 				case VentriloEvents.V3_EVENT_USER_PAGE:
 					item = items.getUserById(data.user.id);
-					nm.notify(item.id, createNotification("Page from " + item.name, data.type, item.id));
-					if (ttsActive && !muted && prefs.getBoolean("tts_page", true)) {
-						HashMap<String, String> params = new HashMap<String, String>();
-						if (am.isBluetoothScoOn())
-							params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
-						tts.speak("Page from " + (item.phonetic.length() > 0 ? item.phonetic : item.name), TextToSpeech.QUEUE_ADD, params);
-					} else if (ringtoneActive && !muted) {
-						ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("page_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
-						ringtone.play();
-					}
+                    if (item != null) {
+                        nm.notify(item.id, createNotification("Page from " + item.name, data.type, item.id));
+                        if (ttsActive && !muted && prefs.getBoolean("tts_page", true)) {
+                            HashMap<String, String> params = new HashMap<String, String>();
+                            if (am.isBluetoothScoOn())
+                                params.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_VOICE_CALL));
+                            tts.speak("Page from " + (item.phonetic.length() > 0 ? item.phonetic : item.name), TextToSpeech.QUEUE_ADD, params);
+                        } else if (ringtoneActive && !muted) {
+                            ringtone = RingtoneManager.getRingtone(VentriloidService.this, Uri.parse(prefs.getString("page_notification", RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION).toString())));
+                            ringtone.play();
+                        }
+                    }
 					break;
 
 				case VentriloEvents.V3_EVENT_PRIVATE_CHAT_MESSAGE:
@@ -645,10 +647,12 @@ public class VentriloidService extends Service {
 			break;
 
 		case VentriloEvents.V3_EVENT_PLAY_AUDIO:
-			if (((Item.User) items.getUserById(data.user.id)).xmit != Item.User.XMIT_ON) {
-				items.setXmit(data.user.id, Item.User.XMIT_ON);
-			} else
-				sendBroadcast = false;
+            item = items.getUserById(data.user.id);
+            if (item != null && ((Item.User) item).xmit != Item.User.XMIT_ON) {
+                items.setXmit(data.user.id, Item.User.XMIT_ON);
+            } else {
+                sendBroadcast = false;
+            }
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_TALK_START:
@@ -666,35 +670,43 @@ public class VentriloidService extends Service {
 		case VentriloEvents.V3_EVENT_USER_GLOBAL_MUTE_CHANGED:
 			items.setXmit(data.user.id, Item.User.XMIT_OFF);
 			item = items.getUserById(data.user.id);
-			((Item.User) item).globalMute = !((Item.User) item).globalMute;
-			((Item.User) item).updateStatus();
+            if (item != null) {
+                ((Item.User) item).globalMute = !((Item.User) item).globalMute;
+                ((Item.User) item).updateStatus();
+            }
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_CHANNEL_MUTE_CHANGED:
 			items.setXmit(data.user.id, Item.User.XMIT_OFF);
 			item = items.getUserById(data.user.id);
-			((Item.User) item).channelMute = !((Item.User) item).channelMute;
-			((Item.User) item).updateStatus();
+            if (item != null) {
+                ((Item.User) item).channelMute = !((Item.User) item).channelMute;
+                ((Item.User) item).updateStatus();
+            }
 			break;
 			
 		case VentriloEvents.V3_EVENT_USER_MODIFY:
 			Item old = items.getUserById(data.user.id);
-			item = getUserFromData(data);
-			((Item.User) item).channelMute = ((Item.User) old).channelMute;
-			((Item.User) item).globalMute = ((Item.User) old).globalMute;
-			((Item.User) item).inChat = ((Item.User) old).inChat;
-			((Item.User) item).updateStatus();
-			items.removeUser(item.id);
-			items.removeCurrentUser(item.id);
-			items.addUser((Item.User) item);
-			items.addCurrentUser((Item.User) item);
+            if (old != null) {
+                item = getUserFromData(data);
+                ((Item.User) item).channelMute = ((Item.User) old).channelMute;
+                ((Item.User) item).globalMute = ((Item.User) old).globalMute;
+                ((Item.User) item).inChat = ((Item.User) old).inChat;
+                ((Item.User) item).updateStatus();
+                items.removeUser(item.id);
+                items.removeCurrentUser(item.id);
+                items.addUser((Item.User) item);
+                items.addCurrentUser((Item.User) item);
+            }
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAT_MESSAGE:
 			item = items.getUserById(data.user.id);
-			items.addMessage((short) 0, item.name, bytesToString(data.data.chatmessage));
-			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
-			sendBroadcast = false;
+            if (item != null) {
+                items.addMessage((short) 0, item.name, bytesToString(data.data.chatmessage));
+                sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+                sendBroadcast = false;
+            }
 			break;
 			
 		case VentriloEvents.V3_EVENT_CHAT_JOIN:
@@ -711,27 +723,33 @@ public class VentriloidService extends Service {
 		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_MESSAGE:
 			short id = data.user.privchat_user1 == VentriloInterface.getuserid() ? data.user.privchat_user2 : data.user.privchat_user1;
 			item = items.getUserById(data.user.privchat_user2);
-			if (data.flags > 0)
-				items.chatError(id, item.name);
-			else
-				items.addMessage(id, item.name, bytesToString(data.data.chatmessage));
-			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+            if (item != null) {
+                if (data.flags > 0)
+                    items.chatError(id, item.name);
+                else
+                    items.addMessage(id, item.name, bytesToString(data.data.chatmessage));
+                sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+            }
 			break;
 			
 		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_START:
 			item = items.getUserById(data.user.privchat_user1 == VentriloInterface.getuserid() ? data.user.privchat_user2 : data.user.privchat_user1);
-			if (items.chatOpened(item.id))
-				items.reopenChat(item.id, item.name);
-			else
-				items.addChat(item.id, item.name);
-			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
-			sendBroadcast = false;
+            if (item != null) {
+                if (items.chatOpened(item.id))
+                    items.reopenChat(item.id, item.name);
+                else
+                    items.addChat(item.id, item.name);
+                sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+                sendBroadcast = false;
+            }
 			break;
 			
 		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_END:
 			item = items.getUserById(data.user.privchat_user1 == VentriloInterface.getuserid() ? data.user.privchat_user2 : data.user.privchat_user1);
-			items.closeChat(item.id, item.name);
-			sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+            if (item != null) {
+                items.closeChat(item.id, item.name);
+                sendBroadcast(new Intent(ChatFragment.SERVICE_RECEIVER));
+            }
 			break;
 			
 		case VentriloEvents.V3_EVENT_PRIVATE_CHAT_AWAY:
