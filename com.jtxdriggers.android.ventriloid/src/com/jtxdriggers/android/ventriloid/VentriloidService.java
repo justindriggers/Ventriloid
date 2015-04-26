@@ -270,7 +270,7 @@ public class VentriloidService extends Service {
 	public String bytesToString(byte[] bytes) {
 		try {
 			return new String(bytes, 0, (new String(bytes).indexOf(0)), prefs.getString("charset", "ISO-8859-1"));
-		} catch (UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException | StringIndexOutOfBoundsException e) {
 			return "";
 		}
 	}
