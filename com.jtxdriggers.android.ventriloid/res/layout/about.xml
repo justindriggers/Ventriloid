@@ -21,7 +21,7 @@
 		<TextView
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
-		    android:text="Copyright 2010-2013"
+		    android:text="Copyright 2010-2015"
 		    android:textColor="@color/primary_text_holo_light"
 		    android:textSize="14sp" />
 		
@@ -31,16 +31,28 @@
 		    android:text="Justin Driggers (jtxdriggers)"
 		    android:textColor="@color/primary_text_holo_light"
 		    android:textSize="14sp" />
-		
-		<TextView
-		    android:id="@+id/ventriloidSource"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:padding="10dp"
-		    android:text="Ventriloid is licensed under the GNU General Public License version 3. Source available at http://ventriloid.googlecode.com/"
-		    android:textColor="@color/primary_text_holo_light"
-		    android:textSize="14sp"
-		    android:gravity="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingBottom="0dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="Ventriloid is licensed under the GNU General Public License version 3. Source available on GitHub."
+            android:textColor="@color/primary_text_holo_light"
+            android:textSize="14sp"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/ventriloidSource"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="http://github.com/justindriggers/Ventriloid"
+            android:textColor="@color/primary_text_holo_light"
+            android:textSize="14sp"
+            android:gravity="center" />
 		
 		<TextView
 		    android:layout_width="wrap_content"
@@ -165,7 +177,7 @@
 		    android:paddingLeft="10dp"
 		    android:paddingRight="10dp"
 		    android:paddingBottom="10dp"
-		    android:text="http://www.github.com/ChristopheVersieux/HoloEverywhere"
+		    android:text="http://www.github.com/Prototik/HoloEverywhere"
 		    android:textSize="14sp"
 		    android:gravity="center" />
 		
