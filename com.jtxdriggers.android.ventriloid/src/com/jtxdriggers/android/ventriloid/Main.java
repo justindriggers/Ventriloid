@@ -21,6 +21,7 @@ package com.jtxdriggers.android.ventriloid;
 
 import java.util.ArrayList;
 
+import android.widget.ImageButton;
 import org.holoeverywhere.ArrayAdapter;
 import org.holoeverywhere.app.Activity;
 import org.holoeverywhere.app.AlertDialog;
@@ -71,6 +72,40 @@ public class Main extends Activity {
 		ab.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
 		
 		registerReceiver(serviceReceiver, new IntentFilter(SERVICE_RECEIVER));
+
+        findViewById(R.id.aboutButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder about = new AlertDialog.Builder(Main.this);
+                View layout = getLayoutInflater().inflate(R.layout.about);
+                Linkify.addLinks((TextView) layout.findViewById(R.id.ventriloidSource), Linkify.ALL);
+                Linkify.addLinks((TextView) layout.findViewById(R.id.manglerSource), Linkify.ALL);
+                Linkify.addLinks((TextView) layout.findViewById(R.id.absSource), Linkify.ALL);
+                Linkify.addLinks((TextView) layout.findViewById(R.id.holoSource), Linkify.ALL);
+                Linkify.addLinks((TextView) layout.findViewById(R.id.smSource), Linkify.ALL);
+                about.setView(layout);
+                about.setNeutralButton("Donate", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=N95UGEQ6FAKPN")));
+                    }
+                });
+                about.setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                about.show();
+            }
+        });
+
+        findViewById(R.id.settingsButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(Main.this, Settings.class));
+            }
+        });
 		
 		if (getDefaultSharedPreferences().getBoolean("v3FirstRun", true)) {
 			AlertDialog.Builder firstRun = new AlertDialog.Builder(this);
@@ -148,44 +183,27 @@ public class Main extends Activity {
     		serviceIntent = new Intent(VentriloidService.SERVICE_INTENT).putExtra("id", serverId);
 			startService(serviceIntent);
 			return true;
-		case R.id.manage:
-			startActivity(new Intent(this, Manage.class));
-			return true;
-		case R.id.settings:
-			startActivity(new Intent(this, Settings.class));
-			return true;
-		case R.id.about:
-			AlertDialog.Builder about = new AlertDialog.Builder(this);
-			View layout = getLayoutInflater().inflate(R.layout.about);
-			Linkify.addLinks((TextView) layout.findViewById(R.id.ventriloidSource), Linkify.ALL);
-			Linkify.addLinks((TextView) layout.findViewById(R.id.manglerSource), Linkify.ALL);
-			Linkify.addLinks((TextView) layout.findViewById(R.id.absSource), Linkify.ALL);
-			Linkify.addLinks((TextView) layout.findViewById(R.id.holoSource), Linkify.ALL);
-			Linkify.addLinks((TextView) layout.findViewById(R.id.smSource), Linkify.ALL);
-			about.setView(layout);
-			about.setNeutralButton("Donate", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=N95UGEQ6FAKPN")));
-				}
-			});
-			about.setPositiveButton("Close", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.dismiss();
-				}
-			});
-			about.show();
-			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 	
 	private void loadServers() {
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(ab.getThemedContext(), R.layout.spinner_item,
-			android.R.id.text1, db.getAllServersAsStrings());
-		adapter.setDropDownViewResource(R.layout.sherlock_spinner_dropdown_item);
-		ab.setListNavigationCallbacks(adapter, null);
+        ArrayList<String> serverList = db.getAllServersAsStrings();
+        serverList.add("Manage Servers...");
+
+		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(ab.getThemedContext(), R.layout.spinner_item,
+			android.R.id.text1, serverList);
+		adapter.setDropDownViewResource(R.layout.server_selection_item);
+		ab.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
+            @Override
+            public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+                if (itemPosition == adapter.getCount() - 1) {
+                    startActivity(new Intent(Main.this, Manage.class));
+                    return true;
+                }
+                return false;
+            }
+        });
 
 		ArrayList<Server> servers = db.getAllServers();
 		for (int i = 0; i < servers.size(); i++) {
@@ -194,7 +212,7 @@ public class Main extends Activity {
 				break;
 			}
 		}
-		
+
     	supportInvalidateOptionsMenu();
 	}
     

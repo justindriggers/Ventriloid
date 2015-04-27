@@ -7,6 +7,8 @@
     <style name="AppBaseTheme" parent="Holo.Theme.Light.DarkActionBar">
         <item name="actionBarStyle">@style/Widget.Styled.ActionBar</item>
         <item name="android:actionBarStyle">@style/Widget.Styled.ActionBar</item>
+        <item name="actionDropDownStyle">@style/Widget.Sherlock.Light.Spinner.DropDown.ActionBar</item>
+        <item name="android:actionDropDownStyle">@style/Widget.Sherlock.Light.Spinner.DropDown.ActionBar</item>
     </style>
 
 	<style name="Widget.Styled.ActionBar" parent="Widget.Sherlock.ActionBar">

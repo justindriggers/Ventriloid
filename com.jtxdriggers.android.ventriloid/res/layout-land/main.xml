@@ -36,9 +36,32 @@
 		    android:layout_width="wrap_content"
 		    android:layout_above="@id/title"
 		    android:layout_marginBottom="10dp"
+            android:layout_centerHorizontal="true"
 		    android:src="@drawable/ventriloid"
 		    android:contentDescription="@string/app_name" />
 	  
 	</RelativeLayout>
+
+    <ImageButton
+        android:id="@+id/aboutButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:padding="10dp"
+        android:contentDescription="About"
+        android:src="@drawable/about"
+        android:background="@android:color/transparent"/>
+
+    <ImageButton
+        android:id="@+id/settingsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:padding="10dp"
+        android:contentDescription="Settings"
+        android:src="@drawable/settings"
+        android:background="@android:color/transparent"/>
 
 </RelativeLayout>
