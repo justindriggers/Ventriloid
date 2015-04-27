@@ -6,7 +6,7 @@ II) Next, you must download and set up the following libraries:
     a) Download and import into Eclipse as an existing Android project.
     b) Right click the project, go to properties, select the Android tab, and ensure that the "is Library" check box is checked.
 
-  2) HoloEverywhere: https://github.com/ChristopheVersieux/HoloEverywhere
+  2) HoloEverywhere: https://github.com/Prototik/HoloEverywhere
     a) Download and import into Eclipse as an existing Android project.
     b) Right click the project, go to properties, select the Android tab, and add the ActionBarSherlock project to the list of libraries. Then ensure the "is Library" checkbox is checked for the HoloEverywhere project.
     c) Open any files in this project that end with "_______Activity.java" (including the base Activity.java) and alter them to extend their SherlockActivity counterparts.
